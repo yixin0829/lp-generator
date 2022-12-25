@@ -1,0 +1,32 @@
+{
+    "topic": "React",
+    "completion": {
+        "Beginner": [
+            "Components",
+            "JSX",
+            "Props & State",
+            "Events & Refs",
+            "Lifecycle Methods"
+        ],
+        "Intermediate": [
+            "React Router",
+            "Context API",
+            "Error Boundaries",
+            "Hooks",
+            "Render Props"
+        ],
+        "Advanced": [
+            "React Native",
+            "Animations",
+            "Server Side Rendering",
+            "Reconciliation",
+            "Higher Order Components"
+        ]
+    },
+    "usage": {
+        "prompt_tokens": 151,
+        "completion_tokens": 94,
+        "total_tokens": 245
+    },
+    "status_code": 200
+}
