@@ -1,0 +1,16 @@
+.loading-spinner {
+  width: 45px;
+  height: 45px;
+  border-radius: 15px;
+  border: #1c3e6f solid 5px;
+  animation: spin ease 700ms infinite forwards;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(90deg);
+  }
+}

@@ -1,0 +1,101 @@
+.learning-path-page {
+  margin: 0px max(10px, 5%);
+  margin-top: 100px;
+
+  h1 {
+    font-size: 50px;
+    font-weight: 700;
+    text-transform: capitalize;
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    font-size: 27px;
+    font-weight: 600;
+  }
+
+  li {
+    font-size: 20px;
+    padding: 0 5px;
+    transition: background-color 500ms;
+    &:hover {
+      background-color: #80808028;
+      cursor: move;
+      border-radius: 5px;
+    }
+  }
+
+  @media (max-width: 767px) {
+    h1 {
+      width: 100%;
+      font-size: 35px;
+      text-align: center;
+      line-height: 1.1;
+    }
+    h2 {
+      width: 100%;
+      font-size: 24px;
+    }
+    li {
+      font-size: 15px;
+    }
+  }
+
+  .flex-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    @media (max-width: 767px) {
+      display: unset;
+    }
+  }
+
+  .level-container {
+    border-radius: 10px;
+    border-color: #00000025;
+    border-width: 2px;
+    padding: 20px 30px;
+    border-style: solid;
+    margin-bottom: 15px;
+    margin-right: 15px;
+    @media (max-width: 767px) {
+      margin-right: 0;
+      padding: 15px 20px;
+    }
+    opacity: 0;
+  }
+  @for $i from 1 to 100 {
+    div > .level-container:nth-child(#{$i}) {
+      animation: float-in 1000ms forwards;
+      animation-delay: $i * 200ms;
+    }
+  }
+  .title-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .copy-button {
+    margin-top: 5px;
+    width: 40px;
+    height: 40px;
+    transition: opacity 500ms;
+    &:hover {
+      opacity: 0.4;
+      cursor: pointer;
+    }
+    @media (max-width: 767px) {
+      width: 30px;
+      height: 30px;
+    }
+  }
+}
+
+@keyframes float-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

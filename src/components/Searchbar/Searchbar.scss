@@ -1,0 +1,49 @@
+.text-input-search {
+  font-size: 17px;
+  background-color: white;
+  border-radius: 10px;
+  margin: 4px;
+  padding: 12px 25px;
+  width: 100%;
+  box-shadow: 0px 2px 6px 3px #c5c5c56a;
+  outline: none;
+  border: none;
+  transition: box-shadow 300ms, padding 300ms;
+
+  &::placeholder {
+    transition: opacity 300ms, transform 700ms;
+  }
+
+  &:focus::placeholder {
+    opacity: 0;
+  }
+
+  &:hover {
+    box-shadow: 0px 1px 4px 2px #5757576a;
+    padding: 12px 30px;
+    transition: box-shadow 500ms, padding 500ms;
+  }
+
+  &:focus {
+    box-shadow: 0px 0px 6px 4px #65656547;
+    padding: 12px 25px;
+    transition: box-shadow 500ms, padding 500ms;
+  }
+
+  @media (max-width: 767px) {
+    font-size: 14px;
+    margin: 2px;
+    padding: 12px 22px;
+    &:hover {
+      padding: 12px 22px;
+    }
+    &:focus {
+      padding: 12px 22px;
+    }
+  }
+}
+
+.text-input-search-placeholder-transition::placeholder {
+  transform: translateY(10px);
+  opacity: 0;
+}
