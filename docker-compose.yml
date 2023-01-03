@@ -7,14 +7,14 @@ services:
   #   ports:
   #     - 3000:3000
   lp-frontend:
-    container_name: lp-frontend
+    image: lp-frontend
     build: ./client
     volumes:
       - ./client:/app
     ports:
       - 3000:3000
   lp-backend:
-    container_name: lp-backend
+    image: lp-backend
     build: ./server
     ports:
       - 8000:8000

@@ -4,8 +4,8 @@ WORKDIR /client
 
 COPY package*.json /client
 RUN npm i --force --slient
-RUN npm install react-scripts@5.0.1 -g
+# RUN npm install react-scripts@5.0.1 -g
 
 COPY . ./
 
-CMD [ "npm", "start"]
+CMD [ "npm", "start" ]

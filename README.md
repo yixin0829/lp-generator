@@ -94,5 +94,30 @@ with open("./path/to/file.json", "r") as f:
     - Issue: one response model will cause `pydantic` validation error when response is a HTTPException
     - Solution: created multiple response models. one for success output (`LeaningPath`), one for error output (`HTTPError`) and config in decorator using `responses={}` parameter
 
-### 6.5 Next Step
-- Work on user DB endpoints and DB set up
+### 6.6 Set up Docker Dev Env(2022-12-31)
+- [dockerize Full Stack Applications With Python and ReactJS](https://www.youtube.com/watch?v=Jx39roFmTNg&ab_channel=Docker)
+    - BE
+        - Add `Dockerfile` and `.dockerignore` file
+        - Build backend image running `docker build -t lp-backend .`
+        - Issue: access denied to unix socket when building image
+            - Solution: [link](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user)
+        - Run container from BE image running `docker run --env-file=.env --name lp-backend --rm -p 8000:8000 lp-backend`
+            - read .env securely on run time
+            - `-rm` will clean up stuff after exiting container
+    - FE - Same steps to add docker file and ignore and then build the FE image
+        - `docker run --name lp-frontend --rm -p 3000:3000 lp-frontend`
+    - Docker network
+        - `docker network create lp-network`
+    - Run both FE and BE container on image additional  `--network lp-network` flag
+    - [*]  Everytime you build image with the same tag name. It won't overwrite previous image. Instead, the old image will lose its tag and become a "dangling" image which can be deleted manually in desktop application or through `rmi` command
+    - SEt up `docker-compose.yml` in root to automate running multiple containers
+        - later just need to run `docker compose up` in root to kick off FE and BE containers while set up the network
+        - `--build` will tell compose to rebuild the image every time with new source code otherwise will use the same images
+    - [*] Best practice: creating a ==dev container== and mount in your source code~ [tutorial](https://youtu.be/QeQ2MH5f_BE?t=607)
+    - 
+
+### 6.7 Next Step
+- [ ] Docker live reload set up with docker Volume [link](https://www.freecodecamp.org/news/how-to-enable-live-reload-on-docker-based-applications/)
+- [ ] Deploy full-stack app first [link](https://www.youtube.com/watch?v=ir5qqByo04g&ab_channel=MajorLeagueHacking) + setup CICD
+- [ ] Work on user DB set up (try Fauna?)
+- [ ] Learn SCSS and FE [link](https://github.com/jenita-john/jenita-john.github.io)+ FE polishment
