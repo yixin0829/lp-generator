@@ -25,7 +25,7 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      <h1>Learn Anything</h1>
+      <h1>Learn Everything!!</h1>
       <h2>Generate a learning path for anything that's on your mind</h2>
       <div style={{ height: "15px" }} />
       <div style={{ width: "100%", display: "flex", flexDirection: "row" }}>
