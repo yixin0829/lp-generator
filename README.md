@@ -44,14 +44,14 @@ Future Roadmap: ebsite you can search for JavaScript. then the platform pits out
 - [x] Additional safety practices
     - [x] Leverage OpenAI's [Moderation Endpoint](https://beta.openai.com/docs/guides/moderation/overview) to filter sensitive topics such as learn about mass shooting, racism, discrimination
     - [x] Limit client input length to prevent prompt injection attack
-    - [ ] Allow users to report inappropriate learning path (later)
-- [ ] Stretch Goal 1: Add enrichment to the initially generated LP to further improve the UI (e.g. add relevant blogs, videos, images using Google APi)
+    - [ ] Add contact form allowing reporting issues
+- [ ] Stretch Goal 1: Add enrichment to the initially generated LP to further improve the UI (e.g. add relevant blogs, videos, images using Google APi, [Awesome](https://github.com/sindresorhus/awesome) list  resources)
 - [ ] Stretch Goal 2: build out user database that allow users to publish their learning path to our DB and generate a link for them to share with friends on our web (kinda like Wordle or [ShareGPT's](https://sharegpt.com/explore) idea)
     - Note: eventually I think this will enable us to do some wonderful stuff with the data we gathered. **what if we can consolidate learning paths around same topic into a "master learning path"? 0.o**
     - A future site for learning everything
 - [ ] Deploy to production
-    - [ ] [Deploy FastAPI](https://fastapi.tiangolo.com/deployment/)to AWS API Gateway (w/ [Set up SSL certificate for security](https://fastapi.tiangolo.com/deployment/https/))
-    - [ ] Deploy using AWS EB and set up CICD with Codepipeline
+    - [x] Deploy FE using Vercel
+    - [/] [Deploy FastAPI](https://fastapi.tiangolo.com/deployment/)with [[AWS Lambda]]
 
 ## 6 Learning Log
 ### 6.1 Model Selection (2022-12-08)
@@ -94,6 +94,11 @@ with open("./path/to/file.json", "r") as f:
     - Issue: one response model will cause `pydantic` validation error when response is a HTTPException
     - Solution: created multiple response models. one for success output (`LeaningPath`), one for error output (`HTTPError`) and config in decorator using `responses={}` parameter
 
+### 6.5 Merge 2 repos  (2022-12-31)
+- Merged FE repo into BE repo based on [this medium blog](https://blog.devgenius.io/how-to-merge-two-repositories-on-git-b0ed5e3b4448)
+    - Renamed BE repo from `lp-generator-backend` to `lp-generator`
+        - Reset remote origin by running `git remote set-url origin https://github.com/yixin0829/lp-generator.git`
+
 ### 6.6 Set up Docker Dev Env(2022-12-31)
 - [dockerize Full Stack Applications With Python and ReactJS](https://www.youtube.com/watch?v=Jx39roFmTNg&ab_channel=Docker)
     - BE
@@ -114,10 +119,37 @@ with open("./path/to/file.json", "r") as f:
         - later just need to run `docker compose up` in root to kick off FE and BE containers while set up the network
         - `--build` will tell compose to rebuild the image every time with new source code otherwise will use the same images
     - [*] Best practice: creating a ==dev container== and mount in your source code~ [tutorial](https://youtu.be/QeQ2MH5f_BE?t=607)
-    - 
 
-### 6.7 Next Step
+### 6.7 Docker live reload + Deployment
+#### 6.7.1 [[Deployment]]
+- Deploy React FE to [[Vercel]] (super easy) - [prod link](https://lp-generator.vercel.app/)
+- [deploy fastAPI BE to [[AWS Lambda]]](https://www.youtube.com/watch?v=RGIM4JfsSk0&ab_channel=pixegami)
+    - Serverless hosting - scalable, affordable
+    - Only one file `main.py`
+    - Note: Lambda doesn't understand fastAPI's ASGI interface but understand `handler function`
+        - Use a package called [==Mangum==](https://mangum.io/) to create handler function for us to decide which endpoint to use - simply write `handler = Mangum(app)`
+    - Create Lambda with python 3.9
+    - Test hello world
+    - copy paste in the fastAPI code and **deploy**
+    - Issue: "unable to find lambda function"
+        - Solution: editting runtime handler settings to `main.handler` to be consistent with source code's naming convention ("main" is the file name and "handler" is the handler object instantiated by **Mangum**)
+    - Issue: couldn't find module "fastapi" - import python environment
+        - solution 1: zip up all dependencies and upload to cloud
+            - `pip install -t lib -r requirements.txt` - install libs in lib directory
+            - zip all up -> add `main.py` and upload
+            - Issue: Too big > 50MB --> try solution 1
+            - Solution: try upload zip through [[AWS S3]]
+        - solution 2: import through docker container built from AWS ECR
+            - Issue: trouble include openai's credential in docker container and unsuccessful
+        - solution 3: lambda layer [tutorial](https://www.linkedin.com/pulse/deploying-python-dependencies-using-aws-lambda-layer-anurag-mishra/)
+            - ==Issue: Still facing import openai module error after adding the layer==
+    - Api gateway proxy to customize a payload for testing the Lambda function
+    - Adding HTTP endpoint
+        - used to be super hard. need AWS APIGateway
+        - These days, a new feature in Lambda makes it easy - **"create function URL"**
+        - Downside: URL is ugly. probably still need APIGateway to hook to your FE
+    - Conclusion: 
+
+### 6.8 Next Step
 - [ ] Docker live reload set up with docker Volume [link](https://www.freecodecamp.org/news/how-to-enable-live-reload-on-docker-based-applications/)
-- [ ] Deploy full-stack app first [link](https://www.youtube.com/watch?v=ir5qqByo04g&ab_channel=MajorLeagueHacking) + setup CICD
 - [ ] Work on user DB set up (try Fauna?)
-- [ ] Learn SCSS and FE [link](https://github.com/jenita-john/jenita-john.github.io)+ FE polishment

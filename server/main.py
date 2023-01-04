@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from utils import generate_prompt
+from mangum import Mangum
 import json
 
 app = FastAPI(
@@ -12,6 +13,9 @@ app = FastAPI(
     description="An API that leverage OpenAI's GPT-3 API to generate learning path for any topic (e.g. React).",
     version="1",
 )
+
+# Create an adapter for running ASGI applications in AWS Lambda
+handler = Mangum(app)
 
 app.add_middleware(
     CORSMiddleware,
