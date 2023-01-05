@@ -1,4 +1,5 @@
 import { Page404 } from "../pages/404/404";
+import AboutPage from "../pages/AboutPage/AboutPage";
 import HomePage from "../pages/HomePage/HomePage";
 import LearningPath from "../pages/LearningPath/LearningPath";
 
@@ -15,7 +16,7 @@ export const pages = {
     },
     {
       label: "About",
-      component: <div />,
+      component: <AboutPage />,
       path: "/about",
     },
   ],

@@ -1,18 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import { Container, Draggable } from "react-smooth-dnd";
 
 import "./LearningPath.scss";
 
 import CopyToClip from "../../assets/copy-regular.svg";
+import SpaceShip from "../../assets/spaceship.png";
+import { SearchbarHome } from "../HomePage/HomePage";
+import Button from "../../components/Button/Button";
 
 async function generateLp(topic) {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/v1/lp/${topic}`);
+    // const response = await fetch(`http://127.0.0.1:8000/v1/lp/${topic}`);
+    const response = await fetch(`https://n2fi23iz5klmks57q44kdsnrem0znvyc.lambda-url.us-east-2.on.aws/v1/lp/${topic}`);
     const data = await response.json();
-    console.log(data.completion);
-    return data.completion;
+    return data;
   } catch (error) {
     console.error(error);
   }
@@ -54,6 +57,7 @@ function copyToClipboard(lp) {
 
 export default function LearningPath() {
   const [lp, setLp] = useState();
+  const [badRequest, setBadRequest] = useState();
   const [searchParams] = useSearchParams();
   const topic = searchParams.get("term");
   const forceUpdate = useForceUpdate();
@@ -61,7 +65,11 @@ export default function LearningPath() {
   useEffect(() => {
     const getLp = async () => {
       const result = await generateLp(topic);
-      setLp(result);
+      if (result.status_code !== 200) {
+        setBadRequest(true);
+      } else {
+        setLp(result.completion);
+      }
     };
     getLp();
   }, []);
@@ -69,7 +77,7 @@ export default function LearningPath() {
   return (
     <div className="learning-path-page">
       <div className="title-container">
-        <h1>{topic}</h1>
+        <h1>Learning <mark>{topic}</mark> ...</h1>
         <img
           src={CopyToClip}
           className="copy-button"
@@ -79,7 +87,15 @@ export default function LearningPath() {
           alt="copy"
         ></img>
       </div>
-      {lp ? (
+      {badRequest || lp ? <SearchMore /> : <div></div>}
+      {badRequest ? (
+        <div>
+          <img src={SpaceShip} className="full-img" alt="" />
+          <h2 className="bad-request">
+            Please try again with another response.
+          </h2>
+        </div>
+      ) : lp ? (
         <div className="flex-container">
           {Object.keys(lp).map((lpSection) => {
             return (
@@ -107,18 +123,6 @@ export default function LearningPath() {
                   })}
                 </Container>
               </div>
-              // <div key={lpSection.toString()} className="level-container">
-              //   <h2>{lpSection}</h2>
-              //   <ul>
-              //     {lp[lpSection].map((item, index) => {
-              //       return (
-              //         <li key={item.toString() + indexedDB.toString()}>
-              //           {item}
-              //         </li>
-              //       );
-              //     })}
-              //   </ul>
-              // </div>
             );
           })}
         </div>
@@ -136,6 +140,36 @@ export default function LearningPath() {
           <LoadingSpinner />
         </div>
       )}
+      <div style={{ height: "30px" }} />
     </div>
   );
 }
+
+const SearchMore = () => {
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const onChange = (text) => {
+    setSearchTerm(text);
+  };
+
+  const goSearch = () => {
+    if (searchTerm === "") {
+      return;
+    }
+    navigate({
+      pathname: "/learningpath",
+      search: `?term=${searchTerm}`,
+    });
+  };
+  return (
+    <div style={{ textAlign: "center" }} className="search-more">
+      <div style={{ width: "100%", display: "flex", flexDirection: "row" }}>
+        <SearchbarHome onChange={onChange} onEnter={goSearch} />
+        <div style={{ width: "15px" }} className="desktop-only" />
+        <Button label={"Search"} className="desktop-only" onClick={goSearch} />
+      </div>
+      <div style={{ height: "15px" }} />
+    </div>
+  );
+};

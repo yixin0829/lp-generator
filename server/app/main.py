@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from utils import generate_prompt
 from mangum import Mangum
+import string
 import json
 
 app = FastAPI(
@@ -14,8 +14,6 @@ app = FastAPI(
     version="1",
 )
 
-# Create an adapter for running ASGI applications in AWS Lambda
-handler = Mangum(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,8 +41,28 @@ class HTTPError(BaseModel):
             "example": {"detail": "HTTPException raised."},
         }
 
+# Helper
+def generate_prompt(topic:str):
+    """
+    Helper to generate the prompt as input to OpenAI's completions endpoint.
+    Input topic is any string key phrase to generate learning path for (e.g. React, Fishing)
+    """
+    # Remove punctuations from the user input topic
+    topic = topic.translate(str.maketrans('', '', string.punctuation))
+
+    return """Task: Generate a list of key concepts for learning a topic grouped by beginner, intermediate, advanced levels and output the result in JSON format.
+
+Output for learning Angular:
+{{
+"Beginner": ["Modules", "Components", "Data Binding", "Directives", "Routing", "Forms", "Pipes", "Services"],
+"Intermediate": ["Dependency Injection", "HTTP Requests", "Change Detection", "Angular CLI", "State Management", "Unit Testing"],
+"Advanced": ["Web Workers", "Dynamic Components", "Optimizing Performance", "Angular Universal", "Advanced Routing", "Progressive Web Apps"]
+}}
+
+Output for learning {}:""".format(topic)
+
 @app.get("/")
-def get_root():
+async def get_root():
     return {
         "Hello": "this is Learning Path Generator's BE."
     }
@@ -57,7 +75,7 @@ def get_root():
         status.HTTP_400_BAD_REQUEST: {"model": HTTPError},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": HTTPError},
         })
-def get_lp(topic:str):
+async def get_lp(topic:str):
     """Take any topic and call OpenAI's Completion engpoint to generate a learning path in JSON string format"""
 
     try:
@@ -100,3 +118,6 @@ def get_lp(topic:str):
 
     except Exception as error:
         return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error)
+
+# Create an adapter for running ASGI applications in AWS Lambda
+handler = Mangum(app)
