@@ -12,8 +12,8 @@ import Button from "../../components/Button/Button";
 
 async function generateLp(topic) {
   try {
-    // const response = await fetch(`http://127.0.0.1:8000/v1/lp/${topic}`);
-    const response = await fetch(`https://n2fi23iz5klmks57q44kdsnrem0znvyc.lambda-url.us-east-2.on.aws/v1/lp/${topic}`);
+    const response = await fetch(`http://127.0.0.1:8000/v1/lp/${topic}`);
+    // const response = await fetch(`https://n2fi23iz5klmks57q44kdsnrem0znvyc.lambda-url.us-east-2.on.aws/v1/lp/${topic}`);
     const data = await response.json();
     return data;
   } catch (error) {
@@ -77,7 +77,7 @@ export default function LearningPath() {
   return (
     <div className="learning-path-page">
       <div className="title-container">
-        <h1>Learning <mark>{topic}</mark> ...</h1>
+        <h1>Learning <div className="gradient-text">{topic}</div> ...</h1>
         <img
           src={CopyToClip}
           className="copy-button"
@@ -87,6 +87,7 @@ export default function LearningPath() {
           alt="copy"
         ></img>
       </div>
+      <p>Drag and drop bullets to reorder and copy the result to your own notes!</p>
       {badRequest || lp ? <SearchMore /> : <div></div>}
       {badRequest ? (
         <div>

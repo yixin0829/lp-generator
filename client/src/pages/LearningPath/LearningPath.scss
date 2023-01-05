@@ -126,3 +126,13 @@
 .search-more {
   animation: float-in 1s;
 }
+
+.gradient-text {
+  background-image: linear-gradient(to right, #9123d1ee, #5e5ec2cb);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  color: transparent;
+  display: inline;
+}
