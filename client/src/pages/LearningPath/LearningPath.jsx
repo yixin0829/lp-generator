@@ -77,7 +77,7 @@ export default function LearningPath() {
   return (
     <div className="learning-path-page">
       <div className="title-container">
-        <h1>Learning <mark>{topic}</mark> ...</h1>
+        <h1>Learning <div className="gradient-text">{topic}</div> ...</h1>
         <img
           src={CopyToClip}
           className="copy-button"
@@ -87,6 +87,7 @@ export default function LearningPath() {
           alt="copy"
         ></img>
       </div>
+      <p>Drag and drop bullets to reorder and copy the result to your own notes!</p>
       {badRequest || lp ? <SearchMore /> : <div></div>}
       {badRequest ? (
         <div>

@@ -4,10 +4,22 @@ import Searchbar from "../../components/Searchbar/Searchbar";
 import Button from "../../components/Button/Button";
 
 import "./HomePage.scss";
+import logo from '../../assets/logo.png'
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [lpCounter, setLpCounter] = useState(0)
+
+  useEffect(() => {
+    // Use https://api.countapi.xyz/get/learn-anything.ca/test for testing
+    fetch("https://api.countapi.xyz/get/learn-anything.ca/lp_counter").then(
+      res => res.json()
+    ).then(
+      res => {
+        setLpCounter(res.value);
+    });
+  }, []);
 
   const onChange = (text) => {
     setSearchTerm(text);
@@ -17,6 +29,14 @@ export default function HomePage() {
     if (searchTerm === "") {
       return;
     }
+
+    fetch("https://api.countapi.xyz/update/learn-anything.ca/lp_counter/?amount=1").then(
+      res => res.json()
+    ).then(
+      res => {
+        setLpCounter(res.value);
+      });
+
     navigate({
       pathname: "/learningpath",
       search: `?term=${searchTerm}`,
@@ -25,11 +45,16 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      <h1>LearnAnything</h1>
+      <div style={{ width: "100%", display: "flex", flexDirection: "row" }}>
+        <h1>LearnAnything</h1>
+        <div style={{ width: "15px" }} className="desktop-only" />
+        <img src={logo} width={100} height={100}></img>
+      </div>
+      <div style={{ height: "4px" }} />
       <h2>Generate a learning path for anything that's on your mind</h2>
       <div style={{ height: "4px" }} />
       <h2>
-        <div className="gradient-text">500</div> paths have been generated for learning:
+        <div className="gradient-text">{lpCounter!=0 ? lpCounter : ""}</div> paths have been generated and learnt.
       </h2>
       <div style={{ height: "25px" }} />
       <div style={{ width: "100%", display: "flex", flexDirection: "row" }}>
@@ -164,7 +189,7 @@ export const SearchbarHome = ({ onChange, onEnter }) => {
   }, []);
   return (
     <Searchbar
-      placeholder={placeholders[placeholderIndex] + "..."}
+      placeholder={"e.g. " + placeholders[placeholderIndex] + "..."}
       className={
         placeholderSwitch ? "text-input-search-placeholder-transition" : ""
       }
