@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from mangum import Mangum
+import string
 import json
 
 app = FastAPI(
@@ -46,6 +47,8 @@ def generate_prompt(topic:str):
     Helper to generate the prompt as input to OpenAI's completions endpoint.
     Input topic is any string key phrase to generate learning path for (e.g. React, Fishing)
     """
+    # Remove punctuations from the user input topic
+    topic = topic.translate(str.maketrans('', '', string.punctuation))
 
     return """Task: Generate a list of key concepts for learning a topic grouped by beginner, intermediate, advanced levels and output the result in JSON format.
 
@@ -56,7 +59,7 @@ Output for learning Angular:
 "Advanced": ["Web Workers", "Dynamic Components", "Optimizing Performance", "Angular Universal", "Advanced Routing", "Progressive Web Apps"]
 }}
 
-Output for learning {}:""".format(topic.capitalize())
+Output for learning {}:""".format(topic)
 
 @app.get("/")
 async def get_root():
