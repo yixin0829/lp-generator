@@ -9,7 +9,8 @@ import CopyToClip from "../../assets/copy-regular.svg";
 
 async function generateLp(topic) {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/v1/lp/${topic}`);
+    // const response = await fetch(`http://127.0.0.1:8000/v1/lp/${topic}`);
+    const response = await fetch(`https://z5dtsiczx6hp666hw5gwnw4iza0ufawt.lambda-url.us-east-2.on.aws/v1/lp/${topic}`);
     const data = await response.json();
     console.log(data.completion);
     return data.completion;
