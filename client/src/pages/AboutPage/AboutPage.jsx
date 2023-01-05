@@ -9,15 +9,14 @@ export default function AboutPage() {
     <div className="about-page">
       <div style={{ height: "100px" }} />
       <h1>About</h1>
-      <p>This application helps people learn anything they want!</p>
-      <p>Write something more detailed here eventually...</p>
+      <p>Why did we build LearnAnything? You might ask. Well, we want you to think of LearnAnything as more than just a learning path generator, but as an entry point for YOU to begin your learning journey on any topic that you could possibly imagine. Just as Mahatma Gandhi once said, "Live as if you were to die tomorrow. Learn as if you were to live forever."</p>
       <div style={{ height: "30px" }} />
       <h1>Meet the Devs</h1>
       <div style={{ height: "10px" }} />
       <div className="about-container">
         <Person
           personDescription={
-            "Artist at heart, Yixin is a senior Computer Engineering student studying at the University of Toronto. He is currently interested in running, chess, NLP, graph learning, Techno, films and digital painting."
+            "Artist at heart, Yixin is a senior Computer Engineering student. He is currently interested in running, chess, NLP, graph learning, Techno, films and digital painting."
           }
           personImage={YT}
           personName={"Yixin Tian"}
