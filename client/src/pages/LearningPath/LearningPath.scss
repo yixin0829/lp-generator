@@ -66,8 +66,8 @@
   }
   @for $i from 1 to 100 {
     div > .level-container:nth-child(#{$i}) {
-      animation: float-in 1000ms forwards;
-      animation-delay: $i * 200ms;
+      animation: fade-in 1000ms forwards;
+      animation-delay: $i * 200ms + 200ms;
     }
   }
   .title-container {
@@ -94,8 +94,35 @@
 @keyframes float-in {
   from {
     opacity: 0;
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
   }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.full-img {
+  max-width: 400px;
+  width: 80vw;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.bad-request {
+  text-align: center;
+  margin: 5px 0px;
+}
+
+.search-more {
+  animation: float-in 1s;
 }

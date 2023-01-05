@@ -2,7 +2,7 @@
   font-size: 17px;
   background-color: white;
   border-radius: 10px;
-  margin: 4px;
+  margin: 4px 0px;
   padding: 12px 25px;
   width: 100%;
   box-shadow: 0px 2px 6px 3px #c5c5c56a;
@@ -32,7 +32,7 @@
 
   @media (max-width: 767px) {
     font-size: 14px;
-    margin: 2px;
+    margin: 2px 0px;
     padding: 12px 22px;
     &:hover {
       padding: 12px 22px;
