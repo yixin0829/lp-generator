@@ -24,11 +24,11 @@ app.add_middleware(
 )
 
 # Development code: Retrieve from local .env to os.environ dictionary for os.getenv() to work
-# load_dotenv()
-# openai.api_key = os.getenv("OPENAI_API_KEY", default=None)
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY", default=None)
 
 # Production code: Retrieve from AWS Lambda encrypted env variables
-openai.api_key = os.environ["OPENAI_API_KEY"]
+# openai.api_key = os.environ["OPENAI_API_KEY"]
 
 
 class LearningPath(BaseModel):

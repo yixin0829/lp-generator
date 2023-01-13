@@ -12,7 +12,6 @@ export default function HomePage() {
   const [lpCounter, setLpCounter] = useState(0)
 
   useEffect(() => {
-    // Use https://api.countapi.xyz/get/learn-anything.ca/test for testing
     fetch("https://api.countapi.xyz/get/learn-anything.ca/lp_counter").then(
       res => res.json()
     ).then(
@@ -45,10 +44,16 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
+      <div
+        style={{ textAlign: "center", width: "100%" }}
+        className="mobile-only"
+      >
+        <img inline src={logo} width={100} height={100}></img>
+      </div>
       <div style={{ width: "100%", display: "flex", flexDirection: "row" }}>
         <h1>LearnAnything</h1>
         <div style={{ width: "15px" }} className="desktop-only" />
-        <img src={logo} width={100} height={100}></img>
+        <img className="desktop-only" src={logo} width={100} height={100}></img>
       </div>
       <div style={{ height: "4px" }} />
       <h2>Generate a learning path for anything that's on your mind</h2>
@@ -60,14 +65,14 @@ export default function HomePage() {
       <div style={{ width: "100%", display: "flex", flexDirection: "row" }}>
         <SearchbarHome onChange={onChange} onEnter={goSearch} />
         <div style={{ width: "15px" }} className="desktop-only" />
-        <Button label={"Search"} className="desktop-only" onClick={goSearch} />
+        <Button label={"Generate"} className="desktop-only" onClick={goSearch} />
       </div>
       <div style={{ height: "15px" }} />
       <div
         style={{ textAlign: "center", width: "100%" }}
         className="mobile-only"
       >
-        <Button label={"Search"} inline onClick={goSearch} />
+        <Button label={"Generate"} inline onClick={goSearch} />
       </div>
     </div>
   );
