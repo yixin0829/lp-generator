@@ -4,12 +4,17 @@ import ScrollToTop from "./components/misc/ScrollToTop/ScrollToTop";
 import "./App.css";
 import { pages } from "./util/pages";
 import NavBar from "./components/NavBar/NavBar";
+import { SnackbarProvider } from "notistack";
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <TransitionRoutes />
-    </BrowserRouter>
+    <>
+      <SnackbarProvider>
+        <BrowserRouter>
+          <TransitionRoutes />
+        </BrowserRouter>
+      </SnackbarProvider>
+    </>
   );
 }
 

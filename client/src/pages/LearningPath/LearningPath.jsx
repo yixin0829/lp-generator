@@ -1,7 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
-import { Container, Draggable } from "react-smooth-dnd";
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  defaultDropAnimationSideEffects,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  sortableKeyboardCoordinates,
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
 
 import "./LearningPath.scss";
 
@@ -9,11 +27,14 @@ import CopyToClip from "../../assets/copy-regular.svg";
 import SpaceShip from "../../assets/spaceship.png";
 import { SearchbarHome } from "../HomePage/HomePage";
 import Button from "../../components/Button/Button";
+import { useSnackbar } from "notistack";
 
 async function generateLp(topic) {
   try {
     // const response = await fetch(`http://127.0.0.1:8000/v1/lp/${topic}`);
-    const response = await fetch(`https://n2fi23iz5klmks57q44kdsnrem0znvyc.lambda-url.us-east-2.on.aws/v1/lp/${topic}`);
+    const response = await fetch(
+      `https://n2fi23iz5klmks57q44kdsnrem0znvyc.lambda-url.us-east-2.on.aws/v1/lp/${topic}`
+    );
     const data = await response.json();
     return data;
   } catch (error) {
@@ -21,30 +42,11 @@ async function generateLp(topic) {
   }
 }
 
-const applyDrag = (arr, dragResult) => {
-  const { removedIndex, addedIndex, payload } = dragResult;
-  if (removedIndex === null && addedIndex === null) return arr;
-
-  const result = [...arr];
-  let itemToAdd = payload;
-
-  if (removedIndex !== null) {
-    itemToAdd = result.splice(removedIndex, 1)[0];
+function copyToClipboard(lp, showSnackbar) {
+  if (!lp) {
+    showSnackbar("Please wait until the learning path is generated!");
+    return;
   }
-
-  if (addedIndex !== null) {
-    result.splice(addedIndex, 0, itemToAdd);
-  }
-
-  return result;
-};
-
-function useForceUpdate() {
-  const [value, setValue] = useState(0);
-  return () => setValue((value) => value + 1);
-}
-
-function copyToClipboard(lp) {
   let out = "";
   for (const title of Object.keys(lp)) {
     out = out + title + "\n";
@@ -53,6 +55,7 @@ function copyToClipboard(lp) {
     }
   }
   navigator.clipboard.writeText(out);
+  showSnackbar("Copied to clipboard!");
 }
 
 export default function LearningPath() {
@@ -60,7 +63,7 @@ export default function LearningPath() {
   const [badRequest, setBadRequest] = useState();
   const [searchParams] = useSearchParams();
   const topic = searchParams.get("term");
-  const forceUpdate = useForceUpdate();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   useEffect(() => {
     const getLp = async () => {
@@ -77,17 +80,21 @@ export default function LearningPath() {
   return (
     <div className="learning-path-page">
       <div className="title-container">
-        <h1>Learning <div className="gradient-text">{topic}</div> ...</h1>
+        <h1>
+          Learning <div className="gradient-text">{topic}</div> ...
+        </h1>
         <img
           src={CopyToClip}
           className="copy-button"
           onClick={(e) => {
-            copyToClipboard(lp);
+            copyToClipboard(lp, enqueueSnackbar);
           }}
           alt="copy"
         ></img>
       </div>
-      <p>Drag and drop bullets to reorder and copy the result to your own notes!</p>
+      <p>
+        Drag and drop bullets to reorder and copy the result to your own notes!
+      </p>
       {badRequest || lp ? <SearchMore /> : <div></div>}
       {badRequest ? (
         <div>
@@ -97,36 +104,7 @@ export default function LearningPath() {
           </h2>
         </div>
       ) : lp ? (
-        <div className="flex-container">
-          {Object.keys(lp).map((lpSection) => {
-            return (
-              <div key={lpSection.toString()} className="level-container">
-                <h2>{lpSection}</h2>
-                <Container
-                  dragBeginDelay={window.innerWidth <= 767 ? 500 : 0}
-                  key={lpSection.toString()}
-                  groupName={"1"}
-                  getChildPayload={(i) => lp[lpSection][i]}
-                  onDrop={(dropResult) => {
-                    lp[lpSection] = applyDrag(lp[lpSection], dropResult);
-                    setLp(lp);
-                    forceUpdate();
-                  }}
-                >
-                  {lp[lpSection].map((item, index) => {
-                    return (
-                      <Draggable key={item.toString() + indexedDB.toString()}>
-                        <li key={item.toString() + indexedDB.toString()}>
-                          {item}
-                        </li>
-                      </Draggable>
-                    );
-                  })}
-                </Container>
-              </div>
-            );
-          })}
-        </div>
+        <LPItems lp={lp} setLp={setLp} />
       ) : (
         <div
           style={{
@@ -171,6 +149,185 @@ const SearchMore = () => {
         <Button label={"Search"} className="desktop-only" onClick={goSearch} />
       </div>
       <div style={{ height: "15px" }} />
+    </div>
+  );
+};
+
+const LPItems = ({ lp, setLp }) => {
+  const [items, setItems] = useState(lp);
+  const [activeId, setActiveId] = useState();
+  const sensors = useSensors(
+    useSensor(MouseSensor),
+    useSensor(TouchSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  function findContainer(id) {
+    if (id in items) {
+      return id;
+    }
+
+    return Object.keys(items).find((key) => items[key].includes(id));
+  }
+
+  function handleDragStart(event) {
+    const { active } = event;
+    const { id } = active;
+
+    setActiveId(id);
+  }
+
+  function handleDragOver(event) {
+    const { active, over, draggingRect } = event;
+    const { id } = active;
+    const { id: overId } = over;
+
+    const activeContainer = findContainer(id);
+    const overContainer = findContainer(overId);
+
+    if (
+      !activeContainer ||
+      !overContainer ||
+      activeContainer === overContainer
+    ) {
+      return;
+    }
+
+    setItems((prev) => {
+      const activeItems = prev[activeContainer];
+      const overItems = prev[overContainer];
+      const activeIndex = activeItems.indexOf(id);
+      const overIndex = overItems.indexOf(overId);
+      let newIndex;
+      if (overId in prev) {
+        newIndex = overItems.length + 1;
+      } else {
+        const isBelowLastItem =
+          over &&
+          overIndex === overItems.length - 1 &&
+          draggingRect?.offsetTop > over.rect?.offsetTop + over.rect.height;
+        const modifier = isBelowLastItem ? 1 : 0;
+        newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
+      }
+      const out = {
+        ...prev,
+        [activeContainer]: [
+          ...prev[activeContainer].filter((item) => item !== active.id),
+        ],
+        [overContainer]: [
+          ...prev[overContainer].slice(0, newIndex),
+          items[activeContainer][activeIndex],
+          ...prev[overContainer].slice(newIndex, prev[overContainer].length),
+        ],
+      };
+      setLp(out);
+      return out;
+    });
+  }
+
+  function handleDragEnd(event) {
+    const { active, over } = event;
+    const { id } = active;
+    const { id: overId } = over;
+    const activeContainer = findContainer(id);
+    const overContainer = findContainer(overId);
+    if (
+      !activeContainer ||
+      !overContainer ||
+      activeContainer !== overContainer
+    ) {
+      return;
+    }
+    const activeIndex = items[activeContainer].indexOf(active.id);
+    const overIndex = items[overContainer].indexOf(overId);
+    if (activeIndex !== overIndex) {
+      setItems((items) => ({
+        ...items,
+        [overContainer]: arrayMove(
+          items[overContainer],
+          activeIndex,
+          overIndex
+        ),
+      }));
+    }
+    setActiveId(null);
+  }
+
+  const dropAnimation = {
+    sideEffects: defaultDropAnimationSideEffects({
+      styles: {
+        active: {
+          opacity: "0.5",
+        },
+      },
+    }),
+  };
+
+  return (
+    <div className="flex-container">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        {Object.keys(items).map((itemsKey) => {
+          return <Container id={itemsKey} items={items[itemsKey]} />;
+        })}
+        <DragOverlay dropAnimation={dropAnimation}>
+          {activeId ? <Item id={activeId} /> : null}
+        </DragOverlay>
+      </DndContext>
+    </div>
+  );
+};
+
+const Container = (props) => {
+  const { id, items } = props;
+  const { setNodeRef } = useDroppable({ id });
+  return (
+    <SortableContext
+      id={id}
+      items={items}
+      strategy={verticalListSortingStrategy}
+    >
+      <div ref={setNodeRef} className="level-container">
+        <h2>{id}</h2>
+        {items.map((id) => (
+          <SortableItem key={id} id={id} />
+        ))}
+      </div>
+    </SortableContext>
+  );
+};
+
+const SortableItem = (props) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: props.id });
+  const style = {
+    transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : "",
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <Item id={props.id} style={{ opacity: isDragging ? 0.5 : 1 }} />
+    </div>
+  );
+};
+
+const Item = ({ id, style }) => {
+  return (
+    <div style={{ ...style }}>
+      <li>{id}</li>
     </div>
   );
 };
