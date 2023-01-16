@@ -42,6 +42,7 @@
   }
 
   .flex-container {
+    user-select: none;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -66,10 +67,11 @@
   }
   @for $i from 1 to 100 {
     div > .level-container:nth-child(#{$i}) {
-      animation: fade-in 1000ms forwards;
+      animation: float-in 1000ms forwards;
       animation-delay: $i * 200ms + 200ms;
     }
   }
+
   .title-container {
     display: flex;
     flex-direction: row;
@@ -77,6 +79,7 @@
   }
   .copy-button {
     margin-top: 5px;
+    margin-left: 15px;
     width: 40px;
     height: 40px;
     transition: opacity 500ms;
