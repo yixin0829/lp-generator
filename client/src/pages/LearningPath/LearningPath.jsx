@@ -146,7 +146,7 @@ const SearchMore = () => {
       <div style={{ width: "100%", display: "flex", flexDirection: "row" }}>
         <SearchbarHome onChange={onChange} onEnter={goSearch} />
         <div style={{ width: "15px" }} className="desktop-only" />
-        <Button label={"Search"} className="desktop-only" onClick={goSearch} />
+        <Button label={"Generate"} className="desktop-only" onClick={goSearch} />
       </div>
       <div style={{ height: "15px" }} />
     </div>
