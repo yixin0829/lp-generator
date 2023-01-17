@@ -188,7 +188,7 @@ export const Recommended = () => {
 
   const onClick = (searchTerm) => {
     fetch(
-      "https://api.countapi.xyz/update/learn-anything.ca/lp_counter/?amount=1"
+      "https://api.countapi.xyz/update/learn-anything.ca/lp_counter_new/?amount=1"
     );
 
     navigate({
