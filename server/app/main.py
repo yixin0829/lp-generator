@@ -53,19 +53,19 @@ def generate_prompt(topic: str):
     Helper to generate the prompt as input to OpenAI's completions endpoint.
     Input topic is any string key phrase to generate learning path for (e.g. React, Fishing)
     """
-    # Remove punctuations from the user input topic
-    topic = topic.translate(str.maketrans("", "", string.punctuation))
+    # Remove punctuations from the user input topic and capitalize the first letter
+    topic = topic.translate(str.maketrans("", "", string.punctuation)).title()
 
-    return """Task: Generate a list of key concepts for learning a topic grouped by beginner, intermediate, advanced levels and output the result in JSON format.
+    return """Generate a list of key concepts for learning a new topic and rank them from easiest to most difficult. The generated key concepts should then be classified as "beginner", "intermediate", or "advanced". Finally, the result is output in JSON format.
 
-Output for learning Angular:
+Example output for learning "JavaScript":
 {{
-"Beginner": ["Modules", "Components", "Data Binding", "Directives", "Routing", "Forms", "Pipes", "Services"],
-"Intermediate": ["Dependency Injection", "HTTP Requests", "Change Detection", "Angular CLI", "State Management", "Unit Testing"],
-"Advanced": ["Web Workers", "Dynamic Components", "Optimizing Performance", "Angular Universal", "Advanced Routing", "Progressive Web Apps"]
+  "Beginner": ["Variables", "Data Types", "Operators", "Conditional Statements", "Arrays", "Loops", "Functions", "Scope", "Objects"],
+  "Intermediate": ["Events", "DOM Manipulation", "Error Handling", "Regular Expressions", "JSON", "AJAX", "Promises"],
+  "Advanced": ["Prototypal Inheritance", "Closures", "Currying", "Async/Await", "ES6 Features", "Webpack", "Babel", "TypeScript"]
 }}
 
-Output for learning {}:""".format(
+Output for learning "{}":""".format(
         topic
     )
 
@@ -107,8 +107,11 @@ async def get_lp(topic: str):
         response = openai.Completion.create(
             model="text-davinci-003",
             prompt=generate_prompt(topic),
-            max_tokens=200,
-            temperature=1,
+            temperature=0.75,
+            max_tokens=250,
+            top_p=1,
+            frequency_penalty=0.5,
+            presence_penalty=0.5
         )
 
         return {

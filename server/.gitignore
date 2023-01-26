@@ -10,6 +10,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+lambda.zip
 .Python
 build/
 develop-eggs/
