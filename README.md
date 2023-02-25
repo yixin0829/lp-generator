@@ -42,8 +42,8 @@ Why did we build LearnAnything? You might ask. Well, we want you to think of Lea
 - Similar ideas
     - [Similar idea: Learn from anyone](https://twitter.com/mckaywrigley/status/1284110063498522624)
     - [Roadmap.sh - open source learning groadmap project](https://roadmap.sh/frontend)
-    - [*] [Learn Anything xyz](https://learn-anything.xyz/)
-    - [*] [Learney - closest example](https://maps.joindeltaacademy.com/)
+    - [Learn Anything xyz](https://learn-anything.xyz/)
+    - [Learney - closest example](https://maps.joindeltaacademy.com/)
     - [Map of Reddit](https://anvaka.github.io/map-of-reddit/) by [Anvaka (graph lover)](https://github.com/anvaka)
 - Miscellaneous
     - [Github Copilot code assistant](https://docs.github.com/en/copilot/quickstart)
