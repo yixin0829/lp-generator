@@ -9,16 +9,17 @@ import logo from "../../assets/logo.png";
 export default function HomePage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [lpCounter, setLpCounter] = useState(0);
+  const [lpCounter, setLpCounter] = useState(482); // last seen data as valid on 2023-05-18
 
-  useEffect(() => {
-    // Use https://api.countapi.xyz/get/learn-anything.ca/test for testing
-    fetch("https://api.countapi.xyz/get/learn-anything.ca/lp_counter_new")
-      .then((res) => res.json())
-      .then((res) => {
-        setLpCounter(res.value);
-      });
-  }, []);
+  // Count API return 504 Timeout
+  // useEffect(() => {
+  //   // Use https://api.countapi.xyz/get/learn-anything.ca/test for testing
+  //   fetch("https://api.countapi.xyz/get/learn-anything.ca/lp_counter_new")
+  //     .then((res) => res.json())
+  //     .then((res) => {
+  //       setLpCounter(res.value);
+  //     });
+  // }, []);
 
   const onChange = (text) => {
     setSearchTerm(text);
