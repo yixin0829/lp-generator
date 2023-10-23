@@ -31,11 +31,12 @@ import { useSnackbar } from "notistack";
 
 async function generateLp(topic) {
   try {
-    // const response = await fetch(`http://127.0.0.1:8000/v1/lp/${topic}`);
+    // const response = await fetch(`http://127.0.0.1:8000/v2/lp/${topic}`);
     const response = await fetch(
-      `http://3.12.34.202:8000/v2/lp/${topic}`
+      `http://lp-app-load-balancer-1350610118.us-east-2.elb.amazonaws.com/v2/lp/${topic}`
     );
     const data = await response.json();
+    console.log(data)
     return data;
   } catch (error) {
     console.error(error);
