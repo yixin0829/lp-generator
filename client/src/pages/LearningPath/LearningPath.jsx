@@ -31,13 +31,12 @@ import { useSnackbar } from "notistack";
 
 async function generateLp(topic) {
   try {
-    // const response = await fetch(`http://127.0.0.1:8000/v2/lp/${topic}`);
-    const response = await fetch(
-      `http://lp-app-load-balancer-1350610118.us-east-2.elb.amazonaws.com/v2/lp/${topic}`
-    );
+    const response = await fetch(`http://127.0.0.1:8000/v2/lp/${topic}`);
+    // const response = await fetch(
+    //   `http://lp-app-load-balancer-1350610118.us-east-2.elb.amazonaws.com/v2/lp/${topic}`
+    // );
     const data = await response.json();
-    console.log(data)
-    return data;
+    return [data, response.status];
   } catch (error) {
     console.error(error);
   }
@@ -68,8 +67,8 @@ export default function LearningPath() {
 
   useEffect(() => {
     const getLp = async () => {
-      const result = await generateLp(topic);
-      if (result.status_code !== 200) {
+      const [result, status_code] = await generateLp(topic);
+      if (status_code !== 200) {
         setBadRequest(true);
       } else {
         setLp(result.completion);

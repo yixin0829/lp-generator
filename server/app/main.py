@@ -58,7 +58,7 @@ class HTTPError(BaseModel):
 
 @app.get("/")
 async def get_root():
-    return {"Hello": "this is Learning Path Generator's BE {}.".format(VERSION)}
+    return {"Hello": "this is Learning Path Generator's BE {}!".format(VERSION)}
 
 
 @app.get(
@@ -70,55 +70,56 @@ async def get_root():
     },
 )
 async def get_lp(topic: str):
-    """Take any topic and call OpenAI's Completion engpoint to generate a learning path in JSON string format"""
+    """Take any topic and call OpenAI's new message endpoint to generate a learning path in JSON string format"""
 
-    try:
-        # Remove punctuations from the user input topic and capitalize the first letter
-        topic = topic.translate(str.maketrans("", "", string.punctuation)).title()
+    # Remove punctuations from the user input topic and capitalize the first letter
+    topic = topic.translate(str.maketrans("", "", string.punctuation)).title()
 
-        # Enforce client input length to prevent prompt injection
-        if len(topic) > 60:
-            return HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Input path parameter exceeds maximum length allowed (60 characters).",
-            )
-
-        # Enforce client content moderation
-        mod_response = openai.Moderation.create(input=topic)
-        content_flag = mod_response.get("results")[0].get("flagged")
-        if content_flag:
-            return HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User input does not complies with OpenAI's content policy. https://beta.openai.com/docs/usage-policies/content-policy",
-            )
-
-        # Call OpenAI's Completion endpoint
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {
-                    "role": "system",
-                    "content": SYSTEM_PROMPT,
-                },
-                {"role": "user", "content": f'Output for learning "{topic}":'},
-            ],
+    # Enforce client input length to prevent prompt injection
+    if len(topic) > 60:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Input path parameter exceeds maximum length allowed (60 characters).",
         )
 
-        return {
-            "topic": topic,
-            "completion": json.loads(response.choices[0].message.content),
-            "usage": response.usage,
-            "model": response.model,
-            "status_code": status.HTTP_200_OK,
-        }
+    # Enforce client content moderation
+    mod_response = openai.Moderation.create(input=topic)
+    content_flag = mod_response.get("results")[0].get("flagged")
+    if content_flag:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User input does not complies with OpenAI's content policy. https://beta.openai.com/docs/usage-policies/content-policy",
+        )
+
+    # Call OpenAI's Completion endpoint
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT,
+            },
+            {"role": "user", "content": f'JSON output for learning "{topic}":'},
+        ],
+    )
+
+    # Parse learning path from OpenAI's response
+    try:
+        lp = json.loads(response.choices[0].message.content)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error while parsing OpenAI's response for learning path.",
+        )
+
+    return {
+        "topic": topic,
+        "completion": lp,
+        "usage": response.usage,
+        "model": response.model,
+    }
 
     # Code for testing FE (fetching from json)
     # with open("./mock_response.json", "r") as f:
     #     response = json.load(f)
     #     return response
-
-    except Exception as e:
-        return HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal Server Error. Please try again later. Error: {e}",
-        )
