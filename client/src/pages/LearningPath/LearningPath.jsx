@@ -31,12 +31,12 @@ import { useSnackbar } from "notistack";
 
 async function generateLp(topic) {
   try {
-    // const response = await fetch(`http://127.0.0.1:8000/v1/lp/${topic}`);
+    // const response = await fetch(`http://127.0.0.1:8000/v2/lp/${topic}`);
     const response = await fetch(
-      `https://n2fi23iz5klmks57q44kdsnrem0znvyc.lambda-url.us-east-2.on.aws/v1/lp/${topic}`
+      `https://vpax2alohwscr46l4vb23buoii0kkigb.lambda-url.us-east-2.on.aws/v2/lp/${topic}`
     );
     const data = await response.json();
-    return data;
+    return [data, response.status];
   } catch (error) {
     console.error(error);
   }
@@ -67,8 +67,8 @@ export default function LearningPath() {
 
   useEffect(() => {
     const getLp = async () => {
-      const result = await generateLp(topic);
-      if (result.status_code !== 200) {
+      const [result, status_code] = await generateLp(topic);
+      if (status_code !== 200) {
         setBadRequest(true);
       } else {
         setLp(result.completion);

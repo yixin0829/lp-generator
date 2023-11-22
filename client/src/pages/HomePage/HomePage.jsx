@@ -11,16 +11,6 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [lpCounter, setLpCounter] = useState(482); // last seen data as valid on 2023-05-18
 
-  // Count API return 504 Timeout
-  // useEffect(() => {
-  //   // Use https://api.countapi.xyz/get/learn-anything.ca/test for testing
-  //   fetch("https://api.countapi.xyz/get/learn-anything.ca/lp_counter_new")
-  //     .then((res) => res.json())
-  //     .then((res) => {
-  //       setLpCounter(res.value);
-  //     });
-  // }, []);
-
   const onChange = (text) => {
     setSearchTerm(text);
   };
@@ -29,14 +19,6 @@ export default function HomePage() {
     if (searchTerm === "") {
       return;
     }
-
-    fetch(
-      "https://api.countapi.xyz/update/learn-anything.ca/lp_counter_new/?amount=1"
-    )
-      .then((res) => res.json())
-      .then((res) => {
-        setLpCounter(res.value);
-      });
 
     navigate({
       pathname: "/learningpath",
@@ -188,10 +170,6 @@ export const Recommended = () => {
   );
 
   const onClick = (searchTerm) => {
-    fetch(
-      "https://api.countapi.xyz/update/learn-anything.ca/lp_counter_new/?amount=1"
-    );
-
     navigate({
       pathname: "/learningpath",
       search: `?term=${searchTerm}`,
