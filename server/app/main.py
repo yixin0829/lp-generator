@@ -1,11 +1,13 @@
 import json
-import os
 import string
 
-import openai
-from dotenv import load_dotenv
+from openai import OpenAI
+
+client = OpenAI()
+# from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 from pydantic import BaseModel
 
 PROD = True
@@ -36,8 +38,8 @@ app.add_middleware(
 
 
 # Development code: Retrieve from local .env to os.environ dictionary for os.getenv() to work
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY", default=None)
+# load_dotenv()
+# openai.api_key = os.getenv("OPENAI_API_KEY", default=None)
 
 
 class LearningPath(BaseModel):
@@ -76,14 +78,14 @@ async def get_lp(topic: str):
     topic = topic.translate(str.maketrans("", "", string.punctuation)).title()
 
     # Enforce client input length to prevent prompt injection
-    if len(topic) > 60:
+    if len(topic) > 30:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Input path parameter exceeds maximum length allowed (60 characters).",
+            detail="Input path parameter exceeds maximum length allowed (30 characters).",
         )
 
     # Enforce client content moderation
-    mod_response = openai.Moderation.create(input=topic)
+    mod_response = client.moderations.create(input=topic)
     content_flag = mod_response.get("results")[0].get("flagged")
     if content_flag:
         raise HTTPException(
@@ -92,13 +94,11 @@ async def get_lp(topic: str):
         )
 
     # Call OpenAI's Completion endpoint
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+    response = client.chat.completions.create(
+        model="gpt-4-1106-preview",
+        response_format={"type": "json_object"},
         messages=[
-            {
-                "role": "system",
-                "content": SYSTEM_PROMPT,
-            },
+            {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": f'JSON output for learning "{topic}":'},
         ],
     )
@@ -119,7 +119,5 @@ async def get_lp(topic: str):
         "model": response.model,
     }
 
-    # Code for testing FE (fetching from json)
-    # with open("./mock_response.json", "r") as f:
-    #     response = json.load(f)
-    #     return response
+
+handler = Mangum(app)
