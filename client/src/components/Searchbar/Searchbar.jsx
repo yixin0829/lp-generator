@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 import "./Searchbar.scss";
 
@@ -12,32 +12,34 @@ export default function Searchbar({
   maxLength,
   inputArgs,
 }) {
-  const [value, setValue] = useState(initialValue ? initialValue : "");
+  const [value, setValue] = useState(initialValue ?? "");
 
-  const onKeyPress = (target) => {
-    if (target.charCode === 13) {
+  function onKeyDown(event) {
+    if (event.key === "Enter") {
       setValue("");
-      if (onEnterKey) onEnterKey(value);
+      onEnterKey?.(value);
     }
-  };
+  }
 
-  const onInputChange = (event) => {
-    let value = event.target.value;
+  function onInputChange(event) {
+    let nextValue = event.target.value;
+
     if (maxLength) {
-      if (value !== undefined && maxLength < value.length) {
-        value = value.substring(0, value.length - 1);
+      if (nextValue !== undefined && maxLength < nextValue.length) {
+        nextValue = nextValue.substring(0, nextValue.length - 1);
       }
     }
-    if (onChange) onChange(value);
-    setValue(value);
-  };
+
+    onChange?.(nextValue);
+    setValue(nextValue);
+  }
 
   return (
     <div style={{ width: "100%" }}>
       <input
-        className={`text-input-search ${className}`}
+        className={`text-input-search ${className ?? ""}`}
         style={style}
-        onKeyPress={onKeyPress}
+        onKeyDown={onKeyDown}
         value={value}
         placeholder={placeholder}
         onChange={onInputChange}

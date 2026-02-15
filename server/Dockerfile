@@ -1,21 +1,13 @@
-# Use the official Python image as the base image
-FROM python:3.9
+# Cloud Run - Python 3.12 slim, no hardcoded secrets
+FROM python:3.12-slim
 
-# Set the working directory within the container
-WORKDIR /
+WORKDIR /app
 
-# Copy the requirements file and install dependencies
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy your FastAPI application code into the container
-COPY app/ .
+COPY . .
 
-# Expose the port your FastAPI app will run on
-EXPOSE 8000
-
-# Read environment variable passed when run the Docker container
-ENV OPENAI_API_KEY=open_api_key
-
-# Command to start the FastAPI application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# PORT is set by Cloud Run; default 8080 for local runs
+EXPOSE 8080
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]

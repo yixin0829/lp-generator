@@ -10,15 +10,13 @@ export default function Navbar() {
       <div style={{ width: "15px" }} />
       {pages.main.map((page) => {
         const selected = location.pathname === page.path;
+        const linkClassName = selected
+          ? "navbar-link navbar-link-selected"
+          : "navbar-link";
+
         return (
-          <Link to={page.path}>
-            <div
-              className={`${
-                selected ? "navbar-link-selected" : ""
-              } navbar-link`}
-            >
-              {page.label}
-            </div>
+          <Link key={page.path} to={page.path}>
+            <div className={linkClassName}>{page.label}</div>
           </Link>
         );
       })}
