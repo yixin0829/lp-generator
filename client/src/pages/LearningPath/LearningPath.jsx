@@ -63,7 +63,7 @@ export default function LearningPath() {
   const [badRequest, setBadRequest] = useState();
   const [searchParams] = useSearchParams();
   const topic = searchParams.get("term");
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     const getLp = async () => {
@@ -75,7 +75,7 @@ export default function LearningPath() {
       }
     };
     getLp();
-  }, []);
+  }, [topic]);
 
   return (
     <div className="learning-path-page">

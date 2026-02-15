@@ -9,7 +9,7 @@ import logo from "../../assets/logo.png";
 export default function HomePage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [lpCounter, setLpCounter] = useState(482); // last seen data as valid on 2023-05-18
+  const [lpCounter] = useState(482); // last seen data as valid on 2023-05-18
 
   const onChange = (text) => {
     setSearchTerm(text);
@@ -32,12 +32,18 @@ export default function HomePage() {
         style={{ paddingTop: "100px", textAlign: "center", width: "100%" }}
         className="mobile-only"
       >
-        <img inline src={logo} width={100} height={100}></img>
+        <img inline src={logo} width={100} height={100} alt="LearnAnything logo"></img>
       </div>
       <div style={{ width: "100%", display: "flex", flexDirection: "row" }}>
         <h1>LearnAnything</h1>
         <div style={{ width: "15px" }} className="desktop-only" />
-        <img className="desktop-only" src={logo} width={100} height={100}></img>
+        <img
+          className="desktop-only"
+          src={logo}
+          width={100}
+          height={100}
+          alt="LearnAnything logo"
+        ></img>
       </div>
       <div style={{ height: "4px" }} />
       <h2 className="header-shadow">
@@ -45,7 +51,7 @@ export default function HomePage() {
       </h2>
       <div style={{ height: "4px" }} />
       <h2>
-        <div className="gradient-text">{lpCounter != 0 ? lpCounter : ""}</div>{" "}
+        <div className="gradient-text">{lpCounter !== 0 ? lpCounter : ""}</div>{" "}
         paths have been generated and learnt.
       </h2>
       <div style={{ height: "25px" }} />
@@ -165,7 +171,7 @@ const placeholders = [
 export const Recommended = () => {
   const navigate = useNavigate();
 
-  const [placeholdersState, setPlaceholdersState] = useState(
+  const [placeholdersState] = useState(
     placeholders.sort(() => Math.random() - 0.5).slice(0, 5)
   );
 
