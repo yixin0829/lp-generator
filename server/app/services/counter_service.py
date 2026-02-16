@@ -59,7 +59,9 @@ class FirestoreCounterService(BaseCounterService):
                 merge=True,
             )
         except Exception as e:
-            raise CounterServiceError("Failed to increment learning path counter.") from e
+            raise CounterServiceError(
+                f"Failed to increment learning path counter: {e}"
+            ) from e
 
     def get_learning_paths_generated(self) -> int:
         try:
@@ -73,4 +75,6 @@ class FirestoreCounterService(BaseCounterService):
                 return self._config.fallback_count
             return value
         except Exception as e:
-            raise CounterServiceError("Failed to read learning path counter.") from e
+            raise CounterServiceError(
+                f"Failed to read learning path counter: {e}"
+            ) from e

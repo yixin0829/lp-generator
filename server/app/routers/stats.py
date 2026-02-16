@@ -18,7 +18,7 @@ async def get_stats(
     try:
         count = counter_service.get_learning_paths_generated()
     except CounterServiceError as e:
-        logger.warning("Stats read failed: {}", e)
+        logger.exception("Stats read failed: {}", e)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Stats are temporarily unavailable.",
