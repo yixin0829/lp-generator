@@ -4,10 +4,8 @@ services:
   lp-frontend:
     image: lp-frontend
     build: ./client
-    volumes:
-      - ./client:/app
     ports:
-      - 3000:3000
+      - 3000:80
   lp-backend:
     image: lp-backend
     build: ./server

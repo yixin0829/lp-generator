@@ -1,30 +1,54 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Searchbar from "../../components/Searchbar/Searchbar";
 import Button from "../../components/Button/Button";
+import Searchbar from "../../components/Searchbar/Searchbar";
+import { apiUrl } from "../../config/api";
 
-import "./HomePage.scss";
 import logo from "../../assets/logo.png";
+import "./HomePage.scss";
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [lpCounter, setLpCounter] = useState(482); // last seen data as valid on 2023-05-18
+  const [lpCounter, setLpCounter] = useState(482); // local fallback while stats load
 
-  const onChange = (text) => {
-    setSearchTerm(text);
-  };
+  useEffect(() => {
+    let cancelled = false;
 
-  const goSearch = () => {
-    if (searchTerm === "") {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(apiUrl("/v1/stats"));
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = await response.json();
+        const total = payload?.learning_paths_generated;
+        if (!cancelled && typeof total === "number" && total >= 0) {
+          setLpCounter(total);
+        }
+      } catch {
+        // Keep fallback value when stats service is unavailable.
+      }
+    };
+
+    fetchStats();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function goSearch() {
+    const trimmedTerm = searchTerm.trim();
+    if (!trimmedTerm) {
       return;
     }
 
     navigate({
       pathname: "/learningpath",
-      search: `?term=${searchTerm}`,
+      search: `?term=${encodeURIComponent(trimmedTerm)}`,
     });
-  };
+  }
 
   return (
     <div className="home-page">
@@ -32,12 +56,18 @@ export default function HomePage() {
         style={{ paddingTop: "100px", textAlign: "center", width: "100%" }}
         className="mobile-only"
       >
-        <img inline src={logo} width={100} height={100}></img>
+        <img src={logo} width={100} height={100} alt="LearnAnything logo" />
       </div>
       <div style={{ width: "100%", display: "flex", flexDirection: "row" }}>
         <h1>LearnAnything</h1>
         <div style={{ width: "15px" }} className="desktop-only" />
-        <img className="desktop-only" src={logo} width={100} height={100}></img>
+        <img
+          className="desktop-only"
+          src={logo}
+          width={100}
+          height={100}
+          alt="LearnAnything logo"
+        />
       </div>
       <div style={{ height: "4px" }} />
       <h2 className="header-shadow">
@@ -45,21 +75,21 @@ export default function HomePage() {
       </h2>
       <div style={{ height: "4px" }} />
       <h2>
-        <div className="gradient-text">{lpCounter != 0 ? lpCounter : ""}</div>{" "}
+        <div className="gradient-text">{lpCounter !== 0 ? lpCounter : ""}</div>{" "}
         paths have been generated and learnt.
       </h2>
       <div style={{ height: "25px" }} />
       <div style={{ width: "100%", display: "flex", flexDirection: "row" }}>
-        <SearchbarHome onChange={onChange} onEnter={goSearch} />
+        <SearchbarHome onChange={setSearchTerm} onEnter={goSearch} />
         <div style={{ width: "15px" }} className="desktop-only" />
-        <Button label={"Generate"} className="desktop-only" onClick={goSearch} />
+        <Button label="Generate" className="desktop-only" onClick={goSearch} />
       </div>
       <div style={{ height: "15px" }} />
       <div
         style={{ paddingTop: "10px", textAlign: "center", width: "100%" }}
         className="mobile-only"
       >
-        <Button label={"Generate"} inline onClick={goSearch} />
+        <Button label="Generate" inline onClick={goSearch} />
       </div>
       <Recommended />
     </div>
@@ -162,49 +192,50 @@ const placeholders = [
   "Love",
 ];
 
-export const Recommended = () => {
+export function Recommended() {
   const navigate = useNavigate();
 
-  const [placeholdersState, setPlaceholdersState] = useState(
-    placeholders.sort(() => Math.random() - 0.5).slice(0, 5)
+  const [placeholdersState] = useState(
+    [...placeholders].sort(() => Math.random() - 0.5).slice(0, 5)
   );
 
-  const onClick = (searchTerm) => {
+  function onClick(searchTerm) {
     navigate({
       pathname: "/learningpath",
-      search: `?term=${searchTerm}`,
+      search: `?term=${encodeURIComponent(searchTerm)}`,
     });
-  };
+  }
 
   return (
     <div>
       <h3 className="recommended-header">Recommended</h3>
       <div className="recommended-container">
-        {placeholdersState.map((element) => {
-          return (
-            <div
-              onClick={() => onClick(element)}
-              className="recommended-prompt"
-            >
-              {element}
-            </div>
-          );
-        })}
+        {placeholdersState.map((element) => (
+          <div
+            key={element}
+            onClick={() => onClick(element)}
+            className="recommended-prompt"
+          >
+            {element}
+          </div>
+        ))}
       </div>
     </div>
   );
-};
+}
 
-export const SearchbarHome = ({ onChange, onEnter }) => {
+export function SearchbarHome({ onChange, onEnter }) {
   const [placeholderIndex, setPlaceholderIndex] = useState(
     Math.floor(Math.random() * placeholders.length)
   );
   const [placeholderSwitch, setPlaceholderSwitch] = useState(false);
 
   useEffect(() => {
+    let timeoutId;
+
     const interval = setInterval(() => {
       setPlaceholderSwitch(true);
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         setPlaceholderSwitch(false);
         setPlaceholderIndex(
           (prevPlaceholderIndex) =>
@@ -214,16 +245,21 @@ export const SearchbarHome = ({ onChange, onEnter }) => {
         );
       }, 350);
     }, 3000);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeoutId);
+    };
   }, []);
+
   return (
     <Searchbar
-      placeholder={"e.g. " + placeholders[placeholderIndex] + "..."}
+      placeholder={`e.g. ${placeholders[placeholderIndex]}...`}
       className={
         placeholderSwitch ? "text-input-search-placeholder-transition" : ""
       }
       onChange={onChange}
       onEnterKey={onEnter}
-    ></Searchbar>
+    />
   );
-};
+}
