@@ -30,17 +30,29 @@ import Button from "../../components/Button/Button";
 import { useSnackbar } from "notistack";
 import { apiUrl } from "../../config/api";
 
+const MODERATION_DETAIL_HINTS = ["content policy", "moderation", "flagged"];
+
+function isModerationError(statusCode, detail) {
+  if (statusCode !== 400 || typeof detail !== "string") {
+    return false;
+  }
+  const normalizedDetail = detail.toLowerCase();
+  return MODERATION_DETAIL_HINTS.some((hint) => normalizedDetail.includes(hint));
+}
+
 async function generateLp(topic) {
   if (!topic || typeof topic !== "string") {
-    return [null, 400];
+    return { data: null, statusCode: 400, errorDetail: "Missing topic." };
   }
   try {
     const response = await fetch(apiUrl(`/v1/lp/${encodeURIComponent(topic)}`));
     const data = await response.json();
-    return [data, response.status];
+    const errorDetail =
+      response.status === 200 ? null : typeof data?.detail === "string" ? data.detail : null;
+    return { data, statusCode: response.status, errorDetail };
   } catch (error) {
     console.error("[LearningPath] generateLp error:", error);
-    return [null, 500];
+    return { data: null, statusCode: 500, errorDetail: "Network error." };
   }
 }
 
@@ -63,6 +75,7 @@ function copyToClipboard(lp, showSnackbar) {
 export default function LearningPath() {
   const [lp, setLp] = useState(null);
   const [badRequest, setBadRequest] = useState(false);
+  const [isModeratedTopic, setIsModeratedTopic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const topic = searchParams.get("term")?.trim() ?? "";
@@ -71,6 +84,7 @@ export default function LearningPath() {
   useEffect(() => {
     setLp(null);
     setBadRequest(false);
+    setIsModeratedTopic(false);
 
     if (!topic) {
       setBadRequest(true);
@@ -80,10 +94,10 @@ export default function LearningPath() {
     let cancelled = false;
     const getLp = async () => {
       setIsLoading(true);
-      const [result, statusCode] = await generateLp(topic);
+      const { data, statusCode, errorDetail } = await generateLp(topic);
       if (cancelled) return;
 
-      const completion = result?.completion;
+      const completion = data?.completion;
       const hasValidCompletion =
         completion &&
         typeof completion === "object" &&
@@ -91,6 +105,7 @@ export default function LearningPath() {
         Object.values(completion).every((value) => Array.isArray(value));
 
       if (statusCode !== 200 || !hasValidCompletion) {
+        setIsModeratedTopic(isModerationError(statusCode, errorDetail));
         setBadRequest(true);
       } else {
         setLp(completion);
@@ -135,9 +150,19 @@ export default function LearningPath() {
       {badRequest ? (
         <div>
           <img src={SpaceShip} className="full-img" alt="" />
-          <h2 className="bad-request">
-            Please try again with another response.
-          </h2>
+          {isModeratedTopic ? (
+            <>
+              <h2 className="bad-request">
+                This topic cannot be generated because it was flagged by content moderation.
+              </h2>
+              <p className="bad-request">
+                Please try a safer, educational phrasing (for example, focus on history,
+                prevention, ethics, or legal context).
+              </p>
+            </>
+          ) : (
+            <h2 className="bad-request">Please try again with another response.</h2>
+          )}
         </div>
       ) : lp ? (
         <LPItems key={topic} lp={lp} setLp={setLp} />
