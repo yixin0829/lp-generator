@@ -1,6 +1,6 @@
 /**
  * Central API configuration for the frontend.
- * Uses VITE_API_BASE_URL in Vite; falls back to REACT_APP_API_BASE_URL for CRA compatibility.
+ * Uses BE_API_BASE_URL in Vite; falls back to REACT_APP_API_BASE_URL for CRA compatibility.
  */
 
 const PROD_PLACEHOLDER = "__PROD_API_BASE_URL_PLACEHOLDER__";
@@ -15,12 +15,12 @@ function isDev() {
 
 /**
  * Returns the base URL for API requests.
- * - Dev: VITE_API_BASE_URL or REACT_APP_API_BASE_URL or localhost:8000
- * - Prod: VITE_API_BASE_URL or REACT_APP_API_BASE_URL; placeholder triggers warning
+ * - Dev: BE_API_BASE_URL or REACT_APP_API_BASE_URL or localhost:8000
+ * - Prod: BE_API_BASE_URL or REACT_APP_API_BASE_URL; placeholder triggers warning
  */
 export function getApiBaseUrl() {
   const viteUrl =
-    typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL;
+    typeof import.meta !== "undefined" && import.meta.env?.BE_API_BASE_URL;
   const craUrl =
     typeof process !== "undefined" && process.env?.REACT_APP_API_BASE_URL;
   const url =
@@ -28,7 +28,7 @@ export function getApiBaseUrl() {
 
   if (url === PROD_PLACEHOLDER) {
     console.warn(
-      "[API] Production API base URL is unset. Set VITE_API_BASE_URL in production."
+      "[API] Production API base URL is unset. Set BE_API_BASE_URL in production."
     );
   }
   return url.replace(/\/$/, "");
