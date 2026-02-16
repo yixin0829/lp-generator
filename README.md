@@ -20,14 +20,14 @@ Why did we build LearnAnything? You might ask. Well, we want you to think of Lea
     - `npm run dev`
     - App runs at `http://localhost:3000`
 - API base URL config
-    - `client/.env.development` defaults to `BE_API_BASE_URL=http://localhost:8000`
+    - `client/.env.development` defaults to `VITE_API_BASE_URL=http://localhost:8000`
     - Local FE+BE flow should call `http://localhost:8000/v1/lp/{term}`
 
 ### 3.2 Frontend Production Env (Vercel)
 - The repo keeps `client/.env.production` as:
-    - `BE_API_BASE_URL=__PROD_API_BASE_URL_PLACEHOLDER__`
+    - `VITE_API_BASE_URL=__PROD_API_BASE_URL_PLACEHOLDER__`
 - In Vercel Project Settings, set:
-    - `BE_API_BASE_URL=https://<your-deployed-backend-url>`
+    - `VITE_API_BASE_URL=https://<your-deployed-backend-url>`
 - This variable is required for production API calls.
 
 ### 3.3 With Docker Compose
