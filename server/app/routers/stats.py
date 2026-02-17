@@ -1,17 +1,26 @@
 """Stats API router."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from loguru import logger
 
+from app.core.config import get_config
 from app.core.dependencies import get_counter_service
+from app.core.security import limiter, require_api_key
 from app.schemas.stats import StatsResponse
 from app.services.counter_service import BaseCounterService, CounterServiceError
 
-router = APIRouter(prefix="/stats", tags=["stats"])
+config = get_config()
+router = APIRouter(
+    prefix="/stats",
+    tags=["stats"],
+    dependencies=[Depends(require_api_key)],
+)
 
 
 @router.get("", response_model=StatsResponse)
+@limiter.limit(config.stats_rate_limit)
 async def get_stats(
+    request: Request,
     counter_service: BaseCounterService = Depends(get_counter_service),
 ) -> StatsResponse:
     """Return current counters for frontend display."""

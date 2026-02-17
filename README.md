@@ -44,6 +44,34 @@ Why did we build LearnAnything? You might ask. Well, we want you to think of Lea
 - Health check endpoint:
     - `GET /health`
 
+### 3.5 Deployment and Promotion Flow (Staging -> Prod)
+Use this flow to test online E2E in preview first, then promote safely.
+
+1. Deploy backend to Cloud Run staging
+   - Deploy service in `learn-anything-487522` (region `northamerica-northeast2`).
+   - Ensure required env/secrets exist (`OPENAI_API_KEY`, Firestore counter config, `CORS_ORIGINS`).
+   - Verify:
+     - `GET /health` returns 200
+     - `GET /v1/stats` returns 200
+
+2. Wire frontend preview to staging backend (Vercel)
+   - Vercel project: `lp-generator-agro` (Root Directory: `client`, Framework: `Vite`, Node: `24.x`).
+   - Set Preview env var:
+     - `VITE_API_BASE_URL=https://lp-backend-staging-824190879889.northamerica-northeast2.run.app`
+   - Deploy `dev` branch and validate on preview URL.
+
+3. Run E2E on preview
+   - Generate a learning path from the UI.
+   - Confirm `/v1/lp/{topic}` and `/v1/stats` succeed from browser network logs.
+   - Confirm no CORS errors.
+
+4. Promote to production
+   - Open PR: `dev -> main`.
+   - Merge after checks pass.
+   - Ensure Production env var in Vercel matches intended backend URL:
+     - `VITE_API_BASE_URL=<prod backend URL>`
+   - Validate production UI and backend health after release.
+
 ## 4 Resources
 - [GPT model output comparison tool](https://gpttools.com/comparisontool)
 - [OpenAI Best Practices for Prompt Engineering](https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api)

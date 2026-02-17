@@ -3,8 +3,8 @@
  * Uses VITE_API_BASE_URL in Vite.
  */
 
-const PROD_PLACEHOLDER = "__PROD_API_BASE_URL_PLACEHOLDER__";
 const DEV_FALLBACK = "http://localhost:8000";
+const PROD_FALLBACK = "/api";
 
 function isDev() {
   return import.meta.env.DEV;
@@ -13,17 +13,11 @@ function isDev() {
 /**
  * Returns the base URL for API requests.
  * - Dev: VITE_API_BASE_URL or localhost:8000
- * - Prod: VITE_API_BASE_URL; placeholder triggers warning
+ * - Prod: VITE_API_BASE_URL or /api (Vercel serverless proxy)
  */
 export function getApiBaseUrl() {
   const configuredUrl = import.meta.env.VITE_API_BASE_URL;
-  const url = configuredUrl ?? (isDev() ? DEV_FALLBACK : PROD_PLACEHOLDER);
-
-  if (url === PROD_PLACEHOLDER) {
-    console.warn(
-      "[API] Production API base URL is unset. Set VITE_API_BASE_URL in production."
-    );
-  }
+  const url = configuredUrl ?? (isDev() ? DEV_FALLBACK : PROD_FALLBACK);
   return String(url).trim().replace(/\/$/, "");
 }
 

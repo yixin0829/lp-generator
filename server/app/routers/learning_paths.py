@@ -1,6 +1,6 @@
 """Learning path API router."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from loguru import logger
 from openai import (
     APIConnectionError,
@@ -12,7 +12,9 @@ from openai import (
     RateLimitError,
 )
 
+from app.core.config import get_config
 from app.core.dependencies import get_counter_service, get_learning_path_service
+from app.core.security import limiter, require_api_key
 from app.schemas.learning_path import HTTPError, LearningPathResponse
 from app.services.counter_service import BaseCounterService, CounterServiceError
 from app.services.learning_path_service import (
@@ -21,7 +23,12 @@ from app.services.learning_path_service import (
     MalformedResponseError,
 )
 
-router = APIRouter(prefix="/lp", tags=["learning-paths"])
+config = get_config()
+router = APIRouter(
+    prefix="/lp",
+    tags=["learning-paths"],
+    dependencies=[Depends(require_api_key)],
+)
 
 
 def _http_error(status_code: int, detail: str) -> HTTPException:
@@ -41,7 +48,9 @@ def _http_error(status_code: int, detail: str) -> HTTPException:
         status.HTTP_503_SERVICE_UNAVAILABLE: {"model": HTTPError},
     },
 )
+@limiter.limit(config.lp_rate_limit)
 async def get_lp(
+    request: Request,
     topic: str,
     service: LearningPathService = Depends(get_learning_path_service),
     counter_service: BaseCounterService = Depends(get_counter_service),

@@ -9,6 +9,7 @@ dependencies = [
     "loguru>=0.7.3",
     "openai>=2.21.0",
     "pydantic>=2.12.5",
+    "slowapi>=0.1.9",
     "uvicorn>=0.39.0",
 ]
 

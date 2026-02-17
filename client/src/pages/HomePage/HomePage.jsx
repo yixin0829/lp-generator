@@ -10,7 +10,7 @@ import "./HomePage.scss";
 export default function HomePage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [lpCounter, setLpCounter] = useState(482); // local fallback while stats load
+  const [lpCounter, setLpCounter] = useState("..."); // local fallback while stats load
 
   useEffect(() => {
     let cancelled = false;
