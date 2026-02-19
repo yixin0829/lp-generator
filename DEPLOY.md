@@ -61,25 +61,25 @@ flowchart LR
 ### Step A: Build image
 
 ```bash
-gcloud builds submit --tag gcr.io/learn-anything-487522/lp-backend-staging ./server
+gcloud builds submit --tag gcr.io/<your-gcp-project>/<your-cloud-run-service> ./server
 ```
 
 ### Step B: Deploy service
 
 ```bash
-gcloud run deploy lp-backend-staging \
-  --project=learn-anything-487522 \
-  --region=northamerica-northeast2 \
+gcloud run deploy <your-cloud-run-service> \
+  --project=<your-gcp-project> \
+  --region=<your-region> \
   --platform=managed \
-  --image=gcr.io/learn-anything-487522/lp-backend-staging
+  --image=gcr.io/<your-gcp-project>/<your-cloud-run-service>
 ```
 
 ### Step C: Set/update runtime env
 
 ```bash
-gcloud run services update lp-backend-staging \
-  --project=learn-anything-487522 \
-  --region=northamerica-northeast2 \
+gcloud run services update <your-cloud-run-service> \
+  --project=<your-gcp-project> \
+  --region=<your-region> \
   --update-env-vars "^@^REQUIRE_API_KEY=true@RATE_LIMIT_ENABLED=true@LP_RATE_LIMIT=15/minute@STATS_RATE_LIMIT=30/minute@CORS_ORIGINS=https://<vercel-preview-domain>,https://<vercel-prod-domain>"
 ```
 
