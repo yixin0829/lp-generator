@@ -5,16 +5,16 @@ import string
 from typing import Any
 
 from loguru import logger
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 SYSTEM_PROMPT = """Generate a list of key concepts for learning a new topic and rank them from easiest to most difficult. The generated key concepts should then be grouped as "beginner", "intermediate", or "advanced". Finally, the result is output in JSON format.
 
 Example output for learning "JavaScript":
-{{
+{
   "Beginner": ["Variables", "Data Types", "Operators", "Conditional Statements", "Arrays", "Loops", "Functions", "Scope", "Objects"],
   "Intermediate": ["Events", "DOM Manipulation", "Error Handling", "Regular Expressions", "JSON", "AJAX", "Promises"],
   "Advanced": ["Prototypal Inheritance", "Closures", "Currying", "Async/Await", "ES6 Features", "Webpack", "Babel", "TypeScript"]
-}}"""
+}"""
 
 
 class ContentModerationError(Exception):
@@ -34,7 +34,7 @@ class LearningPathService:
 
     def __init__(
         self,
-        client: OpenAI,
+        client: AsyncOpenAI,
         model: str = "gpt-5-mini",
         max_topic_length: int = 30,
     ) -> None:
@@ -51,10 +51,10 @@ class LearningPathService:
         if len(topic) > self._max_topic_length:
             raise ValueError("Input path parameter exceeds maximum length allowed (30 characters).")
 
-    def check_moderation(self, topic: str) -> None:
+    async def check_moderation(self, topic: str) -> None:
         """Check topic against OpenAI moderation. Raises ContentModerationError if flagged."""
         try:
-            mod_response = self._client.moderations.create(input=topic)
+            mod_response = await self._client.moderations.create(input=topic)
         except Exception as e:
             logger.exception("OpenAI moderation request failed: {}", e)
             raise
@@ -111,7 +111,7 @@ class LearningPathService:
             "total_tokens": total_tokens,
         }
 
-    def generate_learning_path(self, topic: str) -> dict[str, Any]:
+    async def generate_learning_path(self, topic: str) -> dict[str, Any]:
         """
         Generate learning path for the given topic.
         Returns dict with topic, completion, usage, model.
@@ -119,10 +119,10 @@ class LearningPathService:
         """
         topic = self.normalize_topic(topic)
         self.validate_topic_length(topic)
-        self.check_moderation(topic)
+        await self.check_moderation(topic)
 
         try:
-            response = self._client.responses.create(
+            response = await self._client.responses.create(
                 model=self._model,
                 input=[
                     {"role": "system", "content": SYSTEM_PROMPT},

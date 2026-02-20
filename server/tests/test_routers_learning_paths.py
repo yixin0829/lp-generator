@@ -1,6 +1,6 @@
 """Router tests for learning path endpoints."""
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
@@ -22,12 +22,12 @@ class TestGetLpSuccess:
     def test_returns_learning_path(self, client: TestClient):
         mock_svc = MagicMock()
         mock_counter = MagicMock()
-        mock_svc.generate_learning_path.return_value = {
+        mock_svc.generate_learning_path = AsyncMock(return_value={
             "topic": "React",
             "completion": {"Beginner": ["JSX"], "Intermediate": [], "Advanced": []},
             "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
             "model": "gpt-5-mini",
-        }
+        })
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
         app.dependency_overrides[get_counter_service] = lambda: mock_counter
 
@@ -45,8 +45,10 @@ class TestGetLpValidation:
 
     def test_topic_too_long_400(self, client: TestClient):
         mock_svc = MagicMock()
-        mock_svc.generate_learning_path.side_effect = ValueError(
-            "Input path parameter exceeds maximum length allowed (30 characters)."
+        mock_svc.generate_learning_path = AsyncMock(
+            side_effect=ValueError(
+                "Input path parameter exceeds maximum length allowed (30 characters)."
+            )
         )
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
 
@@ -62,8 +64,10 @@ class TestGetLpModerationFlagged:
         from app.services.learning_path_service import ContentModerationError
 
         mock_svc = MagicMock()
-        mock_svc.generate_learning_path.side_effect = ContentModerationError(
-            "User input does not complies with OpenAI's content policy."
+        mock_svc.generate_learning_path = AsyncMock(
+            side_effect=ContentModerationError(
+                "User input does not complies with OpenAI's content policy."
+            )
         )
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
 
@@ -79,8 +83,10 @@ class TestGetLpError:
         from app.services.learning_path_service import MalformedResponseError
 
         mock_svc = MagicMock()
-        mock_svc.generate_learning_path.side_effect = MalformedResponseError(
-            "Error while parsing OpenAI's response for learning path."
+        mock_svc.generate_learning_path = AsyncMock(
+            side_effect=MalformedResponseError(
+                "Error while parsing OpenAI's response for learning path."
+            )
         )
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
 
@@ -94,8 +100,10 @@ class TestGetLpError:
         mock_req = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
         mock_resp = httpx.Response(429, request=mock_req)
         mock_svc = MagicMock()
-        mock_svc.generate_learning_path.side_effect = RateLimitError(
-            "Rate limit exceeded", response=mock_resp, body=None
+        mock_svc.generate_learning_path = AsyncMock(
+            side_effect=RateLimitError(
+                "Rate limit exceeded", response=mock_resp, body=None
+            )
         )
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
 
@@ -108,8 +116,10 @@ class TestGetLpError:
 
         mock_req = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
         mock_svc = MagicMock()
-        mock_svc.generate_learning_path.side_effect = APIConnectionError(
-            message="Connection failed", request=mock_req
+        mock_svc.generate_learning_path = AsyncMock(
+            side_effect=APIConnectionError(
+                message="Connection failed", request=mock_req
+            )
         )
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
 

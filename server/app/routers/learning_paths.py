@@ -57,7 +57,7 @@ async def get_lp(
 ) -> dict:
     """Take any topic and call OpenAI to generate a learning path in JSON format."""
     try:
-        payload = service.generate_learning_path(topic)
+        payload = await service.generate_learning_path(topic)
         try:
             counter_service.increment_learning_paths_generated()
         except CounterServiceError as e:

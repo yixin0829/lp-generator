@@ -1,11 +1,10 @@
 """FastAPI dependencies."""
 
-import os
 from functools import lru_cache
 
 from google.cloud import firestore
 from loguru import logger
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 from app.core.config import Settings, get_config
 from app.services.counter_service import (
@@ -17,18 +16,18 @@ from app.services.counter_service import (
 from app.services.learning_path_service import LearningPathService
 
 
-def get_openai_client(config: Settings) -> OpenAI:
-    """Provide OpenAI client with explicit API key injection."""
-    return OpenAI(api_key=config.openai_api_key)
+def get_openai_client(config: Settings) -> AsyncOpenAI:
+    """Provide async OpenAI client with explicit API key injection."""
+    return AsyncOpenAI(api_key=config.openai_api_key)
 
 
+@lru_cache
 def get_learning_path_service() -> LearningPathService:
     """Provide LearningPathService with injected OpenAI client."""
     config = get_config()
-    model = os.getenv("OPENAI_MODEL", config.openai_model)
     return LearningPathService(
         client=get_openai_client(config),
-        model=model,
+        model=config.openai_model,
         max_topic_length=config.max_topic_length,
     )
 
