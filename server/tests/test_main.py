@@ -1,5 +1,6 @@
 """Tests for main app endpoints."""
 
+
 def test_root(client):
     resp = client.get("/")
     assert resp.status_code == 200

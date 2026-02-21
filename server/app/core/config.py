@@ -26,6 +26,20 @@ def get_config() -> Settings:
     return Settings(_env_file=env_file, _env_file_encoding="utf-8")
 
 
+def _patch_env_source(source):
+    """Prevent pydantic-settings from JSON-decoding cors_origins so our
+    field_validator can split the comma-separated string instead."""
+    original = source.prepare_field_value
+
+    def _prepare(field_name, field, value, value_is_complex):
+        if isinstance(value, str) and field_name == "cors_origins":
+            return value
+        return original(field_name, field, value, value_is_complex)
+
+    source.prepare_field_value = _prepare
+    return source
+
+
 class Settings(BaseSettings):
     """Application settings."""
 
@@ -52,6 +66,12 @@ class Settings(BaseSettings):
     firestore_counter_field: str = Field(
         default="generated_count", validation_alias="FIRESTORE_COUNTER_FIELD"
     )
+
+    @classmethod
+    def settings_customise_sources(cls, settings_cls, init_settings, env_settings,
+                                   dotenv_settings, file_secret_settings):
+        return (init_settings, _patch_env_source(env_settings),
+                _patch_env_source(dotenv_settings), file_secret_settings)
 
     @field_validator("app_env", mode="before")
     @classmethod

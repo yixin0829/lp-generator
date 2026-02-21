@@ -40,18 +40,14 @@ class TestValidateTopicLength:
 
 
 class TestCheckModeration:
-    async def test_passes_when_not_flagged(
-        self, service: LearningPathService, mock_client, mocker
-    ):
+    async def test_passes_when_not_flagged(self, service: LearningPathService, mock_client, mocker):
         mock_client.moderations.create = mocker.AsyncMock(
             return_value=mocker.Mock(results=[mocker.Mock(flagged=False)])
         )
         await service.check_moderation("React")
         mock_client.moderations.create.assert_called_once_with(input="React")
 
-    async def test_raises_when_flagged(
-        self, service: LearningPathService, mock_client, mocker
-    ):
+    async def test_raises_when_flagged(self, service: LearningPathService, mock_client, mocker):
         mock_client.moderations.create = mocker.AsyncMock(
             return_value=mocker.Mock(results=[mocker.Mock(flagged=True)])
         )
@@ -90,9 +86,7 @@ class TestGenerateLearningPath:
         assert result["usage"]["completion_tokens"] == 5
         assert result["model"] == "gpt-5-mini"
 
-    async def test_refusal_raises(
-        self, service: LearningPathService, mock_client, mocker
-    ):
+    async def test_refusal_raises(self, service: LearningPathService, mock_client, mocker):
         mock_client.moderations.create = mocker.AsyncMock(
             return_value=mocker.Mock(results=[mocker.Mock(flagged=False)])
         )

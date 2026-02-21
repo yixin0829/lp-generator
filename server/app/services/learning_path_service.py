@@ -70,7 +70,9 @@ class LearningPathService:
     def _map_upstream_error(self, error: Exception) -> LearningPathError:
         """Map OpenAI SDK errors to service-domain exceptions."""
         if isinstance(error, RateLimitError):
-            return LearningPathError("Rate limit exceeded. Please try again later.", status_code=429)
+            return LearningPathError(
+                "Rate limit exceeded. Please try again later.", status_code=429
+            )
         if isinstance(error, (AuthenticationError, PermissionDeniedError)):
             return LearningPathError(
                 "Service configuration error. Please contact support.", status_code=502

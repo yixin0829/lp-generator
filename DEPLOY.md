@@ -33,8 +33,8 @@ flowchart LR
 
 ### Server (Cloud Run)
 
-- `OPENAI_API_KEY` (secret)
-- `API_KEY` (required when auth enabled)
+- `OPENAI_API_KEY` (Secret Manager secret reference)
+- `API_KEY` (Secret Manager secret reference; required when auth enabled)
 - `REQUIRE_API_KEY=true`
 - `RATE_LIMIT_ENABLED=true`
 - `LP_RATE_LIMIT=15/minute` (or your preferred value)
@@ -83,7 +83,16 @@ gcloud run services update <your-cloud-run-service> \
   --update-env-vars "^@^REQUIRE_API_KEY=true@RATE_LIMIT_ENABLED=true@LP_RATE_LIMIT=15/minute@STATS_RATE_LIMIT=30/minute@CORS_ORIGINS=https://<vercel-preview-domain>,https://<vercel-prod-domain>"
 ```
 
-Set `API_KEY` and `OPENAI_API_KEY` via your preferred secure method (`--set-secrets` recommended).
+### Step D: Set/update secret references (required)
+
+```bash
+gcloud run services update <your-cloud-run-service> \
+  --project=<your-gcp-project> \
+  --region=<your-region> \
+  --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,API_KEY=API_KEY:latest"
+```
+
+Both backend secrets should be consumed through Secret Manager references on Cloud Run (not plaintext env values).
 
 ### Why these steps matter
 
@@ -152,6 +161,14 @@ Expected: `200` (or backend error details), but **not 404**.
 - Confirm `/api/v1/lp/<topic>` and `/api/v1/stats` requests succeed.
 - Confirm no CORS errors.
 
+### 5.4 Learning path error mapping looks correct
+
+The learning path service raises a single request-safe error type, and the route translates it directly by status code. Quick checks:
+
+- Overlong topic (more than 30 chars) should return `400`.
+- Upstream rate-limit scenarios should return `429`.
+- Upstream connectivity/outage scenarios should return `503`.
+
 ---
 
 ## 6) Promotion Flow (dev -> main)
@@ -171,6 +188,12 @@ flowchart TD
 - Preview E2E passing
 - Cloud Run auth/rate-limit validation passing
 - No critical logs/errors in Cloud Run recent logs
+
+### Production deployment best practice
+
+- Keep staging and production as separate Cloud Run services (for example, `lp-backend-staging` and `lp-backend-prod`).
+- After merging `dev -> main`, deploy a fresh production revision/service for production traffic instead of reusing the staging service.
+- Point Vercel Production `BACKEND_BASE_URL` to the production Cloud Run URL only.
 
 ---
 
@@ -229,7 +252,6 @@ Fix:
 
 ## 9) Optional Next Improvements
 
-- Move `API_KEY` to Secret Manager and inject with `--set-secrets`.
 - Add request IDs and alerting on 401/429 spikes.
 - Add bot protection (captcha/challenge) on generation endpoint.
 - Rotate API key periodically.

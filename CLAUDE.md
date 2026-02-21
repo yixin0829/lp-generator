@@ -40,8 +40,8 @@ docker compose up --build   # Run full stack (FE :3000, BE :8000)
 FastAPI app with layered structure:
 - `main.py` — App wiring: CORS, rate limiting (slowapi), router mounting
 - `api/router.py` — Aggregates all routes under `/v1` prefix
-- `routers/` — Endpoint handlers: `learning_paths.py` (POST `/v1/lp/{topic}`), `stats.py` (GET `/v1/stats`)
-- `services/` — Business logic: `learning_path_service.py` (OpenAI calls), `counter_service.py` (generation counter, noop or Firestore)
+- `routers/` — Endpoint handlers: `learning_paths.py` (GET `/v1/lp/{topic}`), `stats.py` (GET `/v1/stats`)
+- `services/` — Business logic: `learning_path_service.py` (OpenAI calls + request-safe `LearningPathError` with status code), `counter_service.py` (generation counter, noop or Firestore)
 - `schemas/` — Pydantic models for request/response validation
 - `core/config.py` — `Settings` class loaded from env vars (cached via `@lru_cache`). Reads `.env` in non-production
 - `core/security.py` — API key auth (`X-API-Key` header) + rate limiter. Auth enforced when `REQUIRE_API_KEY=true`
@@ -80,4 +80,4 @@ In local dev, the frontend calls the backend directly (no proxy needed).
 ## Tech Stack
 - **Backend**: Python 3.12, FastAPI, OpenAI SDK, Pydantic, slowapi, Firestore, uv, ruff
 - **Frontend**: React 19, Vite, React Bootstrap, MUI, notistack, Sass, react-router-dom
-- **Testing**: pytest + pytest-asyncio (backend), vitest + testing-library (frontend)
+- **Testing**: pytest + pytest-asyncio + pytest-mock (backend), vitest + testing-library (frontend)
