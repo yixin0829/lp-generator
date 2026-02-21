@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     version: str = Field(default="v1", validation_alias="API_VERSION")
     cors_origins: list[str] = Field(default_factory=lambda: ["*"], validation_alias="CORS_ORIGINS")
     openai_model: str = Field(default="gpt-5-mini", validation_alias="OPENAI_MODEL")
-    max_topic_length: int = Field(default=30, validation_alias="MAX_TOPIC_LENGTH", gt=0)
+    max_topic_length: int = Field(default=120, validation_alias="MAX_TOPIC_LENGTH", gt=0)
     openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
     counter_backend: str = Field(default="noop", validation_alias="COUNTER_BACKEND")
     api_key: str = Field(default="", validation_alias="API_KEY")
@@ -68,10 +68,15 @@ class Settings(BaseSettings):
     )
 
     @classmethod
-    def settings_customise_sources(cls, settings_cls, init_settings, env_settings,
-                                   dotenv_settings, file_secret_settings):
-        return (init_settings, _patch_env_source(env_settings),
-                _patch_env_source(dotenv_settings), file_secret_settings)
+    def settings_customise_sources(
+        cls, settings_cls, init_settings, env_settings, dotenv_settings, file_secret_settings
+    ):
+        return (
+            init_settings,
+            _patch_env_source(env_settings),
+            _patch_env_source(dotenv_settings),
+            file_secret_settings,
+        )
 
     @field_validator("app_env", mode="before")
     @classmethod

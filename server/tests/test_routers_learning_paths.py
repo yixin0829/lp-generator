@@ -56,13 +56,13 @@ class TestGetLpValidation:
         mock_svc = mocker.Mock()
         mock_svc.generate_learning_path = mocker.AsyncMock(
             side_effect=LearningPathError(
-                "Input path parameter exceeds maximum length allowed (30 characters).",
+                "Input path parameter exceeds maximum length allowed (120 characters).",
                 status_code=400,
             )
         )
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
 
-        resp = client.get("/v1/lp/" + "a" * 31)
+        resp = client.get("/v1/lp/" + "a" * 121)
         assert resp.status_code == 400
         assert "exceeds maximum length" in resp.json()["detail"]
 

@@ -49,7 +49,7 @@ class LearningPathService:
         self,
         client: AsyncOpenAI,
         model: str = "gpt-5-mini",
-        max_topic_length: int = 30,
+        max_topic_length: int = 120,
     ) -> None:
         self._client = client
         self._model = model
@@ -63,7 +63,7 @@ class LearningPathService:
         """Raise LearningPathError(400) if topic exceeds max length."""
         if len(topic) > self._max_topic_length:
             raise LearningPathError(
-                "Input path parameter exceeds maximum length allowed (30 characters).",
+                f"Input path parameter exceeds maximum length allowed ({self._max_topic_length} characters).",
                 status_code=400,
             )
 

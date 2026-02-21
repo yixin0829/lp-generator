@@ -203,7 +203,7 @@ Expected: `200` (or backend error details), but **not 404**.
 
 The learning path service raises a single request-safe error type, and the route translates it directly by status code. Quick checks:
 
-- Overlong topic (more than 30 chars) should return `400`.
+- Overlong topic (more than 120 chars) should return `400`.
 - Upstream rate-limit scenarios should return `429`.
 - Upstream connectivity/outage scenarios should return `503`.
 

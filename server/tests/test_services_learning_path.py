@@ -17,7 +17,7 @@ def mock_client(mocker):
 
 @pytest.fixture
 def service(mock_client) -> LearningPathService:
-    return LearningPathService(client=mock_client, model="gpt-5-mini", max_topic_length=30)
+    return LearningPathService(client=mock_client, model="gpt-5-mini", max_topic_length=120)
 
 
 class TestNormalizeTopic:
@@ -31,11 +31,11 @@ class TestNormalizeTopic:
 
 class TestValidateTopicLength:
     def test_accepts_valid_length(self, service: LearningPathService):
-        service.validate_topic_length("a" * 30)
+        service.validate_topic_length("a" * 120)
 
     def test_rejects_too_long(self, service: LearningPathService):
         with pytest.raises(LearningPathError, match="exceeds maximum length") as exc_info:
-            service.validate_topic_length("a" * 31)
+            service.validate_topic_length("a" * 121)
         assert exc_info.value.status_code == 400
 
 
