@@ -1,17 +1,12 @@
 steps:
   # Lint + test before building the production image
-  - name: "python:3.12-slim"
+  - name: "ghcr.io/astral-sh/uv:python3.12"
     id: check
     dir: server
     entrypoint: sh
     args:
       - "-c"
-      - |
-        pip install uv --quiet --break-system-packages &&
-        uv sync --frozen &&
-        uv run ruff format --check app tests &&
-        uv run ruff check app tests &&
-        uv run pytest
+      - "uv sync --frozen && uv run ruff format --check app tests && uv run ruff check app tests && uv run pytest"
 
   - name: "gcr.io/cloud-builders/docker"
     id: build
