@@ -42,7 +42,7 @@ flowchart LR
 - `CORS_ORIGINS=<comma-separated frontend origins>`
 - Firestore counter vars:
   - `COUNTER_BACKEND=firestore`
-  - `FIRESTORE_COUNTER_COLLECTION=stats`
+  - `FIRESTORE_COUNTER_COLLECTION` — staging uses `stats-staging`, prod uses `stats` (separate data)
   - `FIRESTORE_COUNTER_DOCUMENT=learning_paths`
   - `FIRESTORE_COUNTER_FIELD=generated_count`
 
@@ -72,8 +72,8 @@ Both triggers have `includedFiles: server/**`, so they only fire when files unde
 ### What the triggers do automatically
 
 1. Build a Docker image from `server/`
-2. Push it to `gcr.io/learn-anything-487522/<service-name>`
-3. Deploy a new revision to the Cloud Run service
+2. Push it to Artifact Registry, tagged with both `$SHORT_SHA` (e.g. `:d1068c2`) and `:latest`
+3. Deploy a new revision to the Cloud Run service (using the SHA-pinned image)
 
 Env vars and Secret Manager references on each service **persist across revisions** — the triggers only rebuild the image and deploy.
 
@@ -117,6 +117,20 @@ gcloud iam service-accounts add-iam-policy-binding \
   --member="serviceAccount:<project-number>@cloudbuild.gserviceaccount.com" \
   --role="roles/iam.serviceAccountUser"
 ```
+
+### Artifact Registry cleanup
+
+The `lp-backend` Artifact Registry repo has two policies: `keep-last-10` (retain 10 most recent versions) and `delete-old-untagged` (delete untagged images older than 7 days).
+
+### Rollback
+
+To roll back to a previous revision, deploy a known-good SHA-tagged image:
+
+```bash
+gcloud run deploy <service> --image=<ar-url>:<old-sha> --region=northamerica-northeast2
+```
+
+Example: `gcloud run deploy lp-backend-prod --image=northamerica-northeast2-docker.pkg.dev/learn-anything-487522/lp-backend/lp-backend-prod:d1068c2 --region=northamerica-northeast2`
 
 ### Why these steps matter
 
