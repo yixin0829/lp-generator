@@ -21,6 +21,9 @@ steps:
       - "--region=${_REGION}"
       - "--platform=managed"
 
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 substitutions:
   _SERVICE_NAME: lp-backend-staging
   _REGION: northamerica-northeast2
