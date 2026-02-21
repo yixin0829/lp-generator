@@ -16,7 +16,7 @@ export default function AboutPage() {
       <div className="about-container">
         <Person
           personDescription={
-            "Yixin is a computer engineer located in Toronto, Canada. He is currently interested in human-AI interaction research, knowledge representation, personal knowledge management, drumming and films."
+            "Yixin is a computer engineer located in Toronto, Canada. He is interested in human-AI interaction research, personal knowledge management, drumming and films."
           }
           personImage={YT}
           personName={"Yixin Tian"}

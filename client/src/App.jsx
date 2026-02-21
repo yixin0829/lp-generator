@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";
 import { SnackbarProvider } from "notistack";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 
@@ -12,6 +13,7 @@ export default function App() {
   return (
     <SnackbarProvider>
       <BrowserRouter>
+        <Analytics />
         <TransitionRoutes />
       </BrowserRouter>
     </SnackbarProvider>
