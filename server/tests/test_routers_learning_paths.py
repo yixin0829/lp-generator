@@ -1,7 +1,5 @@
 """Router tests for learning path endpoints."""
 
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -18,15 +16,25 @@ def _reset_overrides():
 class TestGetLpSuccess:
     """Success cases for GET /v1/lp/{topic}."""
 
-    def test_returns_learning_path(self, client: TestClient):
-        mock_svc = MagicMock()
-        mock_counter = MagicMock()
-        mock_svc.generate_learning_path = AsyncMock(return_value={
-            "topic": "React",
-            "completion": {"Beginner": ["JSX"], "Intermediate": [], "Advanced": []},
-            "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
-            "model": "gpt-5-mini",
-        })
+    def test_returns_learning_path(self, client: TestClient, mocker):
+        mock_svc = mocker.Mock()
+        mock_counter = mocker.Mock()
+        mock_svc.generate_learning_path = mocker.AsyncMock(
+            return_value={
+                "topic": "React",
+                "completion": {
+                    "Beginner": ["JSX"],
+                    "Intermediate": [],
+                    "Advanced": [],
+                },
+                "usage": {
+                    "prompt_tokens": 10,
+                    "completion_tokens": 20,
+                    "total_tokens": 30,
+                },
+                "model": "gpt-5-mini",
+            }
+        )
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
         app.dependency_overrides[get_counter_service] = lambda: mock_counter
 
@@ -42,11 +50,11 @@ class TestGetLpSuccess:
 class TestGetLpValidation:
     """Validation error cases."""
 
-    def test_topic_too_long_400(self, client: TestClient):
+    def test_topic_too_long_400(self, client: TestClient, mocker):
         from app.services.learning_path_service import LearningPathError
 
-        mock_svc = MagicMock()
-        mock_svc.generate_learning_path = AsyncMock(
+        mock_svc = mocker.Mock()
+        mock_svc.generate_learning_path = mocker.AsyncMock(
             side_effect=LearningPathError(
                 "Input path parameter exceeds maximum length allowed (30 characters).",
                 status_code=400,
@@ -62,11 +70,11 @@ class TestGetLpValidation:
 class TestGetLpModerationFlagged:
     """Content moderation flagged cases."""
 
-    def test_moderation_flagged_400(self, client: TestClient):
+    def test_moderation_flagged_400(self, client: TestClient, mocker):
         from app.services.learning_path_service import LearningPathError
 
-        mock_svc = MagicMock()
-        mock_svc.generate_learning_path = AsyncMock(
+        mock_svc = mocker.Mock()
+        mock_svc.generate_learning_path = mocker.AsyncMock(
             side_effect=LearningPathError(
                 "User input does not complies with OpenAI's content policy.",
                 status_code=400,
@@ -82,11 +90,11 @@ class TestGetLpModerationFlagged:
 class TestGetLpError:
     """Server error cases."""
 
-    def test_malformed_response_500(self, client: TestClient):
+    def test_malformed_response_500(self, client: TestClient, mocker):
         from app.services.learning_path_service import LearningPathError
 
-        mock_svc = MagicMock()
-        mock_svc.generate_learning_path = AsyncMock(
+        mock_svc = mocker.Mock()
+        mock_svc.generate_learning_path = mocker.AsyncMock(
             side_effect=LearningPathError(
                 "Error while parsing OpenAI's response for learning path.",
                 status_code=500,
@@ -98,11 +106,11 @@ class TestGetLpError:
         assert resp.status_code == 500
         assert "parsing" in resp.json()["detail"]
 
-    def test_openai_rate_limit_429(self, client: TestClient):
+    def test_openai_rate_limit_429(self, client: TestClient, mocker):
         from app.services.learning_path_service import LearningPathError
 
-        mock_svc = MagicMock()
-        mock_svc.generate_learning_path = AsyncMock(
+        mock_svc = mocker.Mock()
+        mock_svc.generate_learning_path = mocker.AsyncMock(
             side_effect=LearningPathError(
                 "Rate limit exceeded. Please try again later.",
                 status_code=429,
@@ -114,11 +122,11 @@ class TestGetLpError:
         assert resp.status_code == 429
         assert "rate limit" in resp.json()["detail"].lower()
 
-    def test_openai_service_unavailable_503(self, client: TestClient):
+    def test_openai_service_unavailable_503(self, client: TestClient, mocker):
         from app.services.learning_path_service import LearningPathError
 
-        mock_svc = MagicMock()
-        mock_svc.generate_learning_path = AsyncMock(
+        mock_svc = mocker.Mock()
+        mock_svc.generate_learning_path = mocker.AsyncMock(
             side_effect=LearningPathError(
                 "AI service temporarily unavailable. Please try again later.",
                 status_code=503,
