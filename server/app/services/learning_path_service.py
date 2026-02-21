@@ -4,7 +4,16 @@ import string
 from typing import Any
 
 from loguru import logger
-from openai import AsyncOpenAI
+from openai import (
+    APIConnectionError,
+    APITimeoutError,
+    AsyncOpenAI,
+    AuthenticationError,
+    BadRequestError,
+    InternalServerError,
+    PermissionDeniedError,
+    RateLimitError,
+)
 from pydantic import BaseModel
 
 SYSTEM_PROMPT = """Generate a list of key concepts for learning a new topic and rank them from easiest to most difficult. The generated key concepts should then be grouped as "Beginner", "Intermediate", or "Advanced".
@@ -25,16 +34,12 @@ class LearningPathOutput(BaseModel):
     Advanced: list[str]
 
 
-class ContentModerationError(Exception):
-    """Raised when OpenAI content moderation flags the input."""
+class LearningPathError(Exception):
+    """Base exception for request-safe learning path failures."""
 
-    pass
-
-
-class MalformedResponseError(Exception):
-    """Raised when OpenAI response cannot be parsed."""
-
-    pass
+    def __init__(self, detail: str, status_code: int = 500) -> None:
+        super().__init__(detail)
+        self.status_code = status_code
 
 
 class LearningPathService:
@@ -55,17 +60,36 @@ class LearningPathService:
         return topic.translate(str.maketrans("", "", string.punctuation)).title()
 
     def validate_topic_length(self, topic: str) -> None:
-        """Raise ValueError if topic exceeds max length."""
+        """Raise LearningPathError(400) if topic exceeds max length."""
         if len(topic) > self._max_topic_length:
-            raise ValueError("Input path parameter exceeds maximum length allowed (30 characters).")
+            raise LearningPathError(
+                "Input path parameter exceeds maximum length allowed (30 characters).",
+                status_code=400,
+            )
+
+    def _map_upstream_error(self, error: Exception) -> LearningPathError:
+        """Map OpenAI SDK errors to service-domain exceptions."""
+        if isinstance(error, RateLimitError):
+            return LearningPathError("Rate limit exceeded. Please try again later.", status_code=429)
+        if isinstance(error, (AuthenticationError, PermissionDeniedError)):
+            return LearningPathError(
+                "Service configuration error. Please contact support.", status_code=502
+            )
+        if isinstance(error, BadRequestError):
+            return LearningPathError("Invalid request to AI service.", status_code=400)
+        if isinstance(error, (APIConnectionError, APITimeoutError, InternalServerError)):
+            return LearningPathError(
+                "AI service temporarily unavailable. Please try again later.",
+                status_code=503,
+            )
+        return LearningPathError("Unexpected upstream AI service error.", status_code=500)
 
     async def check_moderation(self, topic: str) -> None:
-        """Check topic against OpenAI moderation. Raises ContentModerationError if flagged."""
+        """Check topic against OpenAI moderation. Raises LearningPathError(400) if flagged."""
         try:
             mod_response = await self._client.moderations.create(input=topic)
         except Exception as e:
-            logger.exception("OpenAI moderation request failed: {}", e)
-            raise
+            raise self._map_upstream_error(e) from e
         results = (
             mod_response.results
             if hasattr(mod_response, "results")
@@ -78,9 +102,12 @@ class LearningPathService:
         flagged = first.flagged if hasattr(first, "flagged") else first.get("flagged", False)
         if flagged:
             logger.info("Content moderation flagged topic={}", topic)
-            raise ContentModerationError(
-                "User input does not complies with OpenAI's content policy. "
-                "https://beta.openai.com/docs/usage-policies/content-policy"
+            raise LearningPathError(
+                (
+                    "User input does not complies with OpenAI's content policy. "
+                    "https://beta.openai.com/docs/usage-policies/content-policy"
+                ),
+                status_code=400,
             )
 
     def _build_usage_dict(self, usage: Any) -> dict[str, int]:
@@ -108,7 +135,7 @@ class LearningPathService:
         """
         Generate learning path for the given topic.
         Returns dict with topic, completion, usage, model.
-        Raises ContentModerationError, MalformedResponseError, or propagates OpenAI errors.
+        Raises LearningPathError for expected request and upstream failures.
         """
         topic = self.normalize_topic(topic)
         self.validate_topic_length(topic)
@@ -126,21 +153,12 @@ class LearningPathService:
                 store=True,
             )
         except Exception as e:
-            logger.exception("OpenAI responses API call failed: {}", e)
-            raise
+            raise self._map_upstream_error(e) from e
 
         if response.output_parsed is None:
-            refusal = None
-            for item in getattr(response, "output", None) or []:
-                for block in getattr(item, "content", []):
-                    if getattr(block, "type", "") == "refusal":
-                        refusal = getattr(block, "refusal", None)
-                        break
-            msg = f"OpenAI refused the request: {refusal}" if refusal else (
-                "Error while parsing OpenAI's response for learning path."
-            )
-            logger.warning("Structured output parsing failed: {}", msg)
-            raise MalformedResponseError(msg)
+            msg = "Error while reading OpenAI's response.output_parsed for learning path."
+            logger.warning(f"Structured output parsing failed: {msg}")
+            raise LearningPathError(f"Structured output parsing failed: {msg}", status_code=500)
 
         lp = response.output_parsed.model_dump()
         usage_dict = self._build_usage_dict(response.usage)

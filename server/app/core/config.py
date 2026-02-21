@@ -1,105 +1,121 @@
 """Application configuration from environment."""
 
+from __future__ import annotations
+
 import os
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
+
+from pydantic import Field, field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-def _get_bool_env(name: str, default: bool) -> bool:
-    raw = os.getenv(name)
-    if raw is None:
-        return default
-    return raw.strip().lower() in {"1", "true", "yes", "on"}
+def _local_env_file() -> Path:
+    return Path(__file__).resolve().parents[2] / ".env"
 
 
-def get_cors_origins() -> list[str]:
-    """Parse CORS origins from CORS_ORIGINS env (comma-separated). Defaults to * if unset."""
-    raw = os.getenv("CORS_ORIGINS", "").strip()
-    if not raw:
-        return ["*"]
-    return [o.strip() for o in raw.split(",") if o.strip()]
-
-
-def _load_local_env(app_env: str) -> None:
-    """Load local .env only in non-production environments."""
-    if app_env in {"local", "development", "test"}:
-        dotenv_path = Path(__file__).resolve().parents[2] / ".env"
-        _load_env_file_if_present(dotenv_path)
-
-
-def _load_env_file_if_present(dotenv_path: Path) -> None:
-    """Populate os.environ from a local .env file without overriding runtime values."""
-    if not dotenv_path.exists():
-        return
-
-    for raw_line in dotenv_path.read_text().splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-
-        if line.startswith("export "):
-            line = line[len("export ") :].strip()
-
-        if "=" not in line:
-            continue
-
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip("\"'")
-        if key:
-            os.environ.setdefault(key, value)
+def _should_load_local_env() -> bool:
+    app_env = os.getenv("APP_ENV", "development").strip().lower()
+    return app_env in {"local", "development", "test"}
 
 
 @lru_cache
-def get_config() -> "Settings":
-    return Settings()
+def get_config() -> Settings:
+    env_file = _local_env_file() if _should_load_local_env() else None
+    return Settings(_env_file=env_file, _env_file_encoding="utf-8")
 
 
-class Settings:
+class Settings(BaseSettings):
     """Application settings."""
 
-    def __init__(self) -> None:
-        self.app_env = os.getenv("APP_ENV", "development").strip().lower()
-        _load_local_env(self.app_env)
+    model_config = SettingsConfigDict(extra="ignore", case_sensitive=False)
 
-        self.version = os.getenv("API_VERSION", "v1")
-        self.cors_origins = get_cors_origins()
-        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-5-mini")
-        self.max_topic_length = int(os.getenv("MAX_TOPIC_LENGTH", "30"))
-        self.openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        self.counter_backend = os.getenv("COUNTER_BACKEND", "noop").strip().lower()
-        self.counter_seed = int(os.getenv("COUNTER_SEED", "482"))
-        self.api_key = os.getenv("API_KEY", "").strip()
-        self.require_api_key = _get_bool_env(
-            "REQUIRE_API_KEY", default=self.app_env == "production"
-        )
-        self.rate_limit_enabled = _get_bool_env(
-            "RATE_LIMIT_ENABLED", default=self.app_env != "test"
-        )
-        self.lp_rate_limit = os.getenv("LP_RATE_LIMIT", "15/minute").strip()
-        self.stats_rate_limit = os.getenv("STATS_RATE_LIMIT", "30/minute").strip()
-        self.firestore_counter_collection = os.getenv(
-            "FIRESTORE_COUNTER_COLLECTION", "stats"
-        ).strip()
-        self.firestore_counter_document = os.getenv(
-            "FIRESTORE_COUNTER_DOCUMENT", "learning_paths"
-        ).strip()
-        self.firestore_counter_field = os.getenv(
-            "FIRESTORE_COUNTER_FIELD", "generated_count"
-        ).strip()
-        self._validate()
+    app_env: str = Field(default="development", validation_alias="APP_ENV")
+    version: str = Field(default="v1", validation_alias="API_VERSION")
+    cors_origins: list[str] = Field(default_factory=lambda: ["*"], validation_alias="CORS_ORIGINS")
+    openai_model: str = Field(default="gpt-5-mini", validation_alias="OPENAI_MODEL")
+    max_topic_length: int = Field(default=30, validation_alias="MAX_TOPIC_LENGTH", gt=0)
+    openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
+    counter_backend: str = Field(default="noop", validation_alias="COUNTER_BACKEND")
+    api_key: str = Field(default="", validation_alias="API_KEY")
+    require_api_key: bool | None = Field(default=None, validation_alias="REQUIRE_API_KEY")
+    rate_limit_enabled: bool | None = Field(default=None, validation_alias="RATE_LIMIT_ENABLED")
+    lp_rate_limit: str = Field(default="15/minute", validation_alias="LP_RATE_LIMIT")
+    stats_rate_limit: str = Field(default="30/minute", validation_alias="STATS_RATE_LIMIT")
+    firestore_counter_collection: str = Field(
+        default="stats", validation_alias="FIRESTORE_COUNTER_COLLECTION"
+    )
+    firestore_counter_document: str = Field(
+        default="learning_paths", validation_alias="FIRESTORE_COUNTER_DOCUMENT"
+    )
+    firestore_counter_field: str = Field(
+        default="generated_count", validation_alias="FIRESTORE_COUNTER_FIELD"
+    )
 
-    def _validate(self) -> None:
-        if self.max_topic_length <= 0:
-            raise ValueError("MAX_TOPIC_LENGTH must be greater than 0.")
+    @field_validator("app_env", mode="before")
+    @classmethod
+    def _normalize_app_env(cls, value: Any) -> str:
+        if value is None:
+            return "development"
+        return str(value).strip().lower()
+
+    @field_validator("counter_backend", mode="before")
+    @classmethod
+    def _normalize_counter_backend(cls, value: Any) -> str:
+        if value is None:
+            return "noop"
+        return str(value).strip().lower()
+
+    @field_validator(
+        "version",
+        "openai_model",
+        "openai_api_key",
+        "api_key",
+        "lp_rate_limit",
+        "stats_rate_limit",
+        "firestore_counter_collection",
+        "firestore_counter_document",
+        "firestore_counter_field",
+        mode="before",
+    )
+    @classmethod
+    def _normalize_str(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value).strip()
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, value: Any) -> list[str]:
+        if value is None:
+            return ["*"]
+
+        if isinstance(value, str):
+            raw = value.strip()
+            if not raw:
+                return ["*"]
+            return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+        if isinstance(value, list):
+            parsed = [str(origin).strip() for origin in value if str(origin).strip()]
+            return parsed or ["*"]
+
+        raise ValueError("CORS_ORIGINS must be a comma-separated string or list of strings.")
+
+    @model_validator(mode="after")
+    def _validate_settings(self) -> Settings:
         if self.counter_backend not in {"noop", "firestore"}:
             raise ValueError("COUNTER_BACKEND must be either 'noop' or 'firestore'.")
-        if self.counter_seed < 0:
-            raise ValueError("COUNTER_SEED must be zero or greater.")
         if not self.lp_rate_limit:
             raise ValueError("LP_RATE_LIMIT must not be empty.")
         if not self.stats_rate_limit:
             raise ValueError("STATS_RATE_LIMIT must not be empty.")
+
+        if self.require_api_key is None:
+            self.require_api_key = self.app_env == "production"
+        if self.rate_limit_enabled is None:
+            self.rate_limit_enabled = self.app_env != "test"
 
         # Keep tests ergonomic while still enforcing secrets for real environments.
         if self.app_env == "test" and not self.openai_api_key:
@@ -123,3 +139,5 @@ class Settings:
                 "Missing required API_KEY while REQUIRE_API_KEY is enabled. "
                 "Set API_KEY in your runtime environment or disable REQUIRE_API_KEY."
             )
+
+        return self

@@ -9,7 +9,7 @@ class StatsResponse(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "learning_paths_generated": 482,
+                "learning_paths_generated": 6,
             },
         }
     )

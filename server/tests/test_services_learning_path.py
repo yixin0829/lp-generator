@@ -6,10 +6,9 @@ import pytest
 from openai import AsyncOpenAI
 
 from app.services.learning_path_service import (
-    ContentModerationError,
+    LearningPathError,
     LearningPathOutput,
     LearningPathService,
-    MalformedResponseError,
 )
 
 
@@ -37,8 +36,9 @@ class TestValidateTopicLength:
         service.validate_topic_length("a" * 30)
 
     def test_rejects_too_long(self, service: LearningPathService):
-        with pytest.raises(ValueError, match="exceeds maximum length"):
+        with pytest.raises(LearningPathError, match="exceeds maximum length") as exc_info:
             service.validate_topic_length("a" * 31)
+        assert exc_info.value.status_code == 400
 
 
 class TestCheckModeration:
@@ -53,8 +53,9 @@ class TestCheckModeration:
         mock_client.moderations.create = AsyncMock(
             return_value=MagicMock(results=[MagicMock(flagged=True)])
         )
-        with pytest.raises(ContentModerationError, match="content policy"):
+        with pytest.raises(LearningPathError, match="content policy") as exc_info:
             await service.check_moderation("badword")
+        assert exc_info.value.status_code == 400
 
 
 class TestGenerateLearningPath:
@@ -100,8 +101,9 @@ class TestGenerateLearningPath:
             )
         )
 
-        with pytest.raises(MalformedResponseError, match="refused"):
+        with pytest.raises(LearningPathError, match="parsing") as exc_info:
             await service.generate_learning_path("react")
+        assert exc_info.value.status_code == 500
 
     async def test_none_output_parsed_raises(self, service: LearningPathService, mock_client):
         mock_client.moderations.create = AsyncMock(
@@ -116,5 +118,6 @@ class TestGenerateLearningPath:
             )
         )
 
-        with pytest.raises(MalformedResponseError, match="parsing"):
+        with pytest.raises(LearningPathError, match="parsing") as exc_info:
             await service.generate_learning_path("react")
+        assert exc_info.value.status_code == 500

@@ -2,7 +2,6 @@
 
 from unittest.mock import AsyncMock, MagicMock
 
-import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -44,10 +43,13 @@ class TestGetLpValidation:
     """Validation error cases."""
 
     def test_topic_too_long_400(self, client: TestClient):
+        from app.services.learning_path_service import LearningPathError
+
         mock_svc = MagicMock()
         mock_svc.generate_learning_path = AsyncMock(
-            side_effect=ValueError(
-                "Input path parameter exceeds maximum length allowed (30 characters)."
+            side_effect=LearningPathError(
+                "Input path parameter exceeds maximum length allowed (30 characters).",
+                status_code=400,
             )
         )
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
@@ -61,12 +63,13 @@ class TestGetLpModerationFlagged:
     """Content moderation flagged cases."""
 
     def test_moderation_flagged_400(self, client: TestClient):
-        from app.services.learning_path_service import ContentModerationError
+        from app.services.learning_path_service import LearningPathError
 
         mock_svc = MagicMock()
         mock_svc.generate_learning_path = AsyncMock(
-            side_effect=ContentModerationError(
-                "User input does not complies with OpenAI's content policy."
+            side_effect=LearningPathError(
+                "User input does not complies with OpenAI's content policy.",
+                status_code=400,
             )
         )
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
@@ -80,12 +83,13 @@ class TestGetLpError:
     """Server error cases."""
 
     def test_malformed_response_500(self, client: TestClient):
-        from app.services.learning_path_service import MalformedResponseError
+        from app.services.learning_path_service import LearningPathError
 
         mock_svc = MagicMock()
         mock_svc.generate_learning_path = AsyncMock(
-            side_effect=MalformedResponseError(
-                "Error while parsing OpenAI's response for learning path."
+            side_effect=LearningPathError(
+                "Error while parsing OpenAI's response for learning path.",
+                status_code=500,
             )
         )
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
@@ -95,14 +99,13 @@ class TestGetLpError:
         assert "parsing" in resp.json()["detail"]
 
     def test_openai_rate_limit_429(self, client: TestClient):
-        from openai import RateLimitError
+        from app.services.learning_path_service import LearningPathError
 
-        mock_req = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
-        mock_resp = httpx.Response(429, request=mock_req)
         mock_svc = MagicMock()
         mock_svc.generate_learning_path = AsyncMock(
-            side_effect=RateLimitError(
-                "Rate limit exceeded", response=mock_resp, body=None
+            side_effect=LearningPathError(
+                "Rate limit exceeded. Please try again later.",
+                status_code=429,
             )
         )
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
@@ -112,13 +115,13 @@ class TestGetLpError:
         assert "rate limit" in resp.json()["detail"].lower()
 
     def test_openai_service_unavailable_503(self, client: TestClient):
-        from openai import APIConnectionError
+        from app.services.learning_path_service import LearningPathError
 
-        mock_req = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
         mock_svc = MagicMock()
         mock_svc.generate_learning_path = AsyncMock(
-            side_effect=APIConnectionError(
-                message="Connection failed", request=mock_req
+            side_effect=LearningPathError(
+                "AI service temporarily unavailable. Please try again later.",
+                status_code=503,
             )
         )
         app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
