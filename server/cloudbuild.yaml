@@ -3,11 +3,11 @@ steps:
   - name: "python:3.12-slim"
     id: check
     dir: server
-    entrypoint: bash
+    entrypoint: sh
     args:
       - "-c"
       - |
-        pip install uv --quiet &&
+        pip install uv --quiet --break-system-packages &&
         uv sync --frozen &&
         uv run ruff format --check app tests &&
         uv run ruff check app tests &&
