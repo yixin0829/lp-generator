@@ -58,23 +58,30 @@ flowchart LR
 
 ## 3) Server Deployment (Cloud Run)
 
-### Step A: Build image
+Backend deployments are **automated via Cloud Build triggers**. Pushing to `dev` or `main` rebuilds the image and deploys a new Cloud Run revision automatically.
 
-```bash
-gcloud builds submit --tag gcr.io/<your-gcp-project>/<your-cloud-run-service> ./server
-```
+| Trigger | Branch | Cloud Run Service | Config |
+|---|---|---|---|
+| `deploy-staging` | `dev` | `lp-backend-staging` | `server/cloudbuild.yaml` (default substitutions) |
+| `deploy-prod` | `main` | `lp-backend-prod` | `server/cloudbuild.yaml` (`_SERVICE_NAME=lp-backend-prod`) |
 
-### Step B: Deploy service
+Both triggers use the same `server/cloudbuild.yaml` with a `_SERVICE_NAME` substitution variable. The staging trigger uses the default (`lp-backend-staging`); the prod trigger overrides it to `lp-backend-prod`.
 
-```bash
-gcloud run deploy <your-cloud-run-service> \
-  --project=<your-gcp-project> \
-  --region=<your-region> \
-  --platform=managed \
-  --image=gcr.io/<your-gcp-project>/<your-cloud-run-service>
-```
+Both triggers have `includedFiles: server/**`, so they only fire when files under `server/` change. A push that only touches `client/` files will not trigger a backend rebuild.
 
-### Step C: Set/update runtime env
+### What the triggers do automatically
+
+1. Build a Docker image from `server/`
+2. Push it to `gcr.io/learn-anything-487522/<service-name>`
+3. Deploy a new revision to the Cloud Run service
+
+Env vars and Secret Manager references on each service **persist across revisions** — the triggers only rebuild the image and deploy.
+
+### Manual steps (first-time setup or env changes only)
+
+These are only needed when creating a new service or changing its configuration:
+
+#### Set/update runtime env
 
 ```bash
 gcloud run services update <your-cloud-run-service> \
@@ -83,7 +90,7 @@ gcloud run services update <your-cloud-run-service> \
   --update-env-vars "^@^REQUIRE_API_KEY=true@RATE_LIMIT_ENABLED=true@LP_RATE_LIMIT=15/minute@STATS_RATE_LIMIT=30/minute@CORS_ORIGINS=https://<vercel-preview-domain>,https://<vercel-prod-domain>"
 ```
 
-### Step D: Set/update secret references (required)
+#### Set/update secret references
 
 ```bash
 gcloud run services update <your-cloud-run-service> \
@@ -94,10 +101,27 @@ gcloud run services update <your-cloud-run-service> \
 
 Both backend secrets should be consumed through Secret Manager references on Cloud Run (not plaintext env values).
 
+### Cloud Build IAM prerequisites
+
+The Cloud Build service account needs these roles (already granted):
+
+```bash
+# Allow Cloud Build to deploy to Cloud Run
+gcloud projects add-iam-policy-binding <project> \
+  --member="serviceAccount:<project-number>@cloudbuild.gserviceaccount.com" \
+  --role="roles/run.admin"
+
+# Allow Cloud Build to act as the compute service account
+gcloud iam service-accounts add-iam-policy-binding \
+  <project-number>-compute@developer.gserviceaccount.com \
+  --member="serviceAccount:<project-number>@cloudbuild.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountUser"
+```
+
 ### Why these steps matter
 
-- New code does not apply until a new image is built + deployed.
-- Env vars can exist in Cloud Run while old code ignores them (common pitfall).
+- New code does not apply until a new image is built + deployed. Cloud Build triggers handle this automatically on push.
+- Env vars and secrets are set once on the Cloud Run service and persist — you don't re-set them on every deploy.
 
 ---
 
@@ -175,25 +199,34 @@ The learning path service raises a single request-safe error type, and the route
 
 ```mermaid
 flowchart TD
-    D[Push to dev] --> PV[Vercel Preview Deploy]
-    PV --> T[Run E2E checks]
+    D[Push to dev] --> CB_S[Cloud Build: rebuild lp-backend-staging]
+    D --> PV[Vercel Preview Deploy]
+    CB_S --> HEALTH_S[Staging health check]
+    PV --> T[Run E2E checks on Preview]
     T -->|pass| PR[Open PR: dev -> main]
-    PR --> M[Merge]
+    PR --> M[Merge to main]
+    M --> CB_P[Cloud Build: rebuild lp-backend-prod]
     M --> PD[Vercel Production Deploy]
+    CB_P --> HEALTH_P[Prod health check]
     PD --> V[Final smoke tests]
 ```
+
+Both backend and frontend deployments are now automated:
+
+- **Push to `dev`** triggers Cloud Build (`deploy-staging`) + Vercel Preview in parallel
+- **Merge to `main`** triggers Cloud Build (`deploy-prod`) + Vercel Production in parallel
 
 ### Recommended gate before merge
 
 - Preview E2E passing
-- Cloud Run auth/rate-limit validation passing
+- Staging Cloud Run health check passing
 - No critical logs/errors in Cloud Run recent logs
 
 ### Production deployment best practice
 
-- Keep staging and production as separate Cloud Run services (for example, `lp-backend-staging` and `lp-backend-prod`).
-- After merging `dev -> main`, deploy a fresh production revision/service for production traffic instead of reusing the staging service.
-- Point Vercel Production `BACKEND_BASE_URL` to the production Cloud Run URL only.
+- Staging and production are separate Cloud Run services (`lp-backend-staging` and `lp-backend-prod`).
+- Merging `dev -> main` automatically deploys a new revision to `lp-backend-prod` via Cloud Build.
+- Vercel Production `BACKEND_BASE_URL` points to the production Cloud Run URL only.
 
 ---
 
