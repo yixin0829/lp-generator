@@ -1,0 +1,43 @@
+[project]
+name = "lp-generator-backend"
+version = "0.1.0"
+description = "Learning Path Generator backend API"
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi>=0.128.8",
+    "google-cloud-firestore>=2.23.0",
+    "loguru>=0.7.3",
+    "openai>=2.21.0",
+    "pydantic>=2.12.5",
+    "pydantic-settings>=2.11.0",
+    "slowapi>=0.1.9",
+    "uvicorn>=0.39.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.14.1",
+    "ruff>=0.13.2",
+]
+
+[tool.uv]
+package = false
+
+# Quality commands: make format | make lint | make test | make check
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]

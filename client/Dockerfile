@@ -1,11 +1,17 @@
-FROM node:18-alpine
+FROM node:22-alpine AS builder
 
-WORKDIR /client
+WORKDIR /app
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
-COPY package*.json /client
-RUN npm i --force --slient
-# RUN npm install react-scripts@5.0.1 -g
+COPY package*.json ./
+RUN npm ci
 
-COPY . ./
+COPY . .
+RUN npm run build
 
-CMD [ "npm", "start" ]
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

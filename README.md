@@ -7,28 +7,42 @@ Help people learn faster and more efficiently to reach their learning goal. Lear
 Why did we build LearnAnything? You might ask. Well, we want you to think of LearnAnything as more than just a learning path generator, but as an entry point for YOU to begin your learning journey on any topic that you could possibly imagine. Just as Mahatma Gandhi once said, "Live as if you were to die tomorrow. Learn as if you were to live forever."
 
 ## 3 How to Run
-### 3.1 Without Docker
-- BE
-    - Create venv (python 3.8) and install `requirements.txt`
-    - Development mode: `cd/server/app && uvicorn main:app --reload` to start the local server
-        - Comment out main:27-28 and comment main:31 to get env from local `.env`
-        - Comment out main:123-125 if want to get mock response from json for testing FE (optional)
-    - In production
-        - Comment out main:31 and comment main:27-28 to get env from Lambda env configuration
-        - Only include `main.py` and `lib/` in zip file (exclude `.env` for best practice) when upload code to Lambda
-- FE
-    - Install React and Node
-    - `cd/client/ && npm install --force` otherwise dependency error
-    - Comment out LearningPath.jsx:15 to fetch data from local server
-    - `npm start`
+### 3.1 Local (without Docker)
+- Backend
+    - `cd server`
+    - `uv sync`
+    - Set `OPENAI_API_KEY` in your shell or `.env`
+    - Optional: set `CORS_ORIGINS=http://localhost:3000` (comma-separated list supported)
+    - Start API: `uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+- Frontend
+    - `cd client`
+    - `npm install`
+    - `npm run dev`
+    - App runs at `http://localhost:3000`
+- API base URL config
+    - `client/.env.development` defaults to `VITE_API_BASE_URL=http://localhost:8000`
+    - Local FE+BE flow should call `http://localhost:8000/v1/lp/{term}`
 
-### 3.2 With Docker
-- Note: Currently no live-reload so need to rebuild image to reflect code changes
-- Developement config
-    - Comment out main:27-28 and comment main:31 to get env from local `.env`
-    - Comment out main:123-125 if to get mock response from json (optional)
-    - Comment out LearningPath.jsx:15 to fetch data from local server
-- Run `docker compose up --build` in root directory
+### 3.2 Frontend Production Env (Vercel)
+- The repo keeps `client/.env.production` as:
+    - `VITE_API_BASE_URL=__PROD_API_BASE_URL_PLACEHOLDER__`
+- In Vercel Project Settings, set:
+    - `VITE_API_BASE_URL=https://<your-deployed-backend-url>`
+- This variable is required for production API calls.
+
+### 3.3 With Docker Compose
+- Run from repo root: `docker compose up --build`
+- Frontend served on `http://localhost:3000`
+- Backend served on `http://localhost:8000`
+
+### 3.4 Backend Deployment (Cloud Run)
+- Build and deploy (example):
+    - `gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/lp-backend ./server`
+    - `gcloud run deploy lp-backend --image gcr.io/$GOOGLE_CLOUD_PROJECT/lp-backend --region <region> --platform managed --allow-unauthenticated --set-env-vars CORS_ORIGINS=https://<your-frontend-domain> --set-secrets OPENAI_API_KEY=OPENAI_API_KEY:latest`
+- The container serves FastAPI with:
+    - `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Health check endpoint:
+    - `GET /health`
 
 ## 4 Resources
 - [GPT model output comparison tool](https://gpttools.com/comparisontool)

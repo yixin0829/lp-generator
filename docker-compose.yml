@@ -1,17 +1,19 @@
-version: '3.9'
-
 services:
   lp-frontend:
     image: lp-frontend
-    build: ./client
-    volumes:
-      - ./client:/app
+    build:
+      context: ./client
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
     ports:
-      - 3000:3000
+      - 3000:80
   lp-backend:
     image: lp-backend
     build: ./server
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
     ports:
       - 8000:8000
     env_file:
       - ./server/.env
+    environment:
+      PORT: "8000"

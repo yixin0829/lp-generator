@@ -1,0 +1,40 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    id: build
+    dir: server
+    args:
+      - "build"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/lp-backend/${_SERVICE_NAME}:$SHORT_SHA"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/lp-backend/${_SERVICE_NAME}:latest"
+      - "."
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: push
+    args:
+      - "push"
+      - "--all-tags"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/lp-backend/${_SERVICE_NAME}"
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: deploy
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "${_SERVICE_NAME}"
+      - "--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/lp-backend/${_SERVICE_NAME}:$SHORT_SHA"
+      - "--region=${_REGION}"
+      - "--platform=managed"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _SERVICE_NAME: lp-backend-staging
+  _REGION: northamerica-northeast2
+
+images:
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/lp-backend/${_SERVICE_NAME}:$SHORT_SHA"
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/lp-backend/${_SERVICE_NAME}:latest"

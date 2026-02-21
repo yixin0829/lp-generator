@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import {
@@ -28,17 +28,31 @@ import SpaceShip from "../../assets/spaceship.png";
 import { SearchbarHome } from "../HomePage/HomePage";
 import Button from "../../components/Button/Button";
 import { useSnackbar } from "notistack";
+import { apiUrl } from "../../config/api";
+
+const MODERATION_DETAIL_HINTS = ["content policy", "moderation", "flagged"];
+
+function isModerationError(statusCode, detail) {
+  if (statusCode !== 400 || typeof detail !== "string") {
+    return false;
+  }
+  const normalizedDetail = detail.toLowerCase();
+  return MODERATION_DETAIL_HINTS.some((hint) => normalizedDetail.includes(hint));
+}
 
 async function generateLp(topic) {
+  if (!topic || typeof topic !== "string") {
+    return { data: null, statusCode: 400, errorDetail: "Missing topic." };
+  }
   try {
-    // const response = await fetch(`http://127.0.0.1:8000/v2/lp/${topic}`);
-    const response = await fetch(
-      `https://vpax2alohwscr46l4vb23buoii0kkigb.lambda-url.us-east-2.on.aws/v2/lp/${topic}`
-    );
+    const response = await fetch(apiUrl(`/v1/lp/${encodeURIComponent(topic)}`));
     const data = await response.json();
-    return [data, response.status];
+    const errorDetail =
+      response.status === 200 ? null : typeof data?.detail === "string" ? data.detail : null;
+    return { data, statusCode: response.status, errorDetail };
   } catch (error) {
-    console.error(error);
+    console.error("[LearningPath] generateLp error:", error);
+    return { data: null, statusCode: 500, errorDetail: "Network error." };
   }
 }
 
@@ -59,23 +73,60 @@ function copyToClipboard(lp, showSnackbar) {
 }
 
 export default function LearningPath() {
-  const [lp, setLp] = useState();
-  const [badRequest, setBadRequest] = useState();
+  const [lp, setLp] = useState(null);
+  const [badRequest, setBadRequest] = useState(false);
+  const [isModeratedTopic, setIsModeratedTopic] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
-  const topic = searchParams.get("term");
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const topic = searchParams.get("term")?.trim() ?? "";
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
+    setLp(null);
+    setBadRequest(false);
+    setIsModeratedTopic(false);
+
+    if (!topic) {
+      setBadRequest(true);
+      return;
+    }
+
+    let cancelled = false;
     const getLp = async () => {
-      const [result, status_code] = await generateLp(topic);
-      if (status_code !== 200) {
+      setIsLoading(true);
+      const { data, statusCode, errorDetail } = await generateLp(topic);
+      if (cancelled) return;
+
+      const completion = data?.completion;
+      const hasValidCompletion =
+        completion &&
+        typeof completion === "object" &&
+        !Array.isArray(completion) &&
+        Object.values(completion).every((value) => Array.isArray(value));
+
+      if (statusCode !== 200 || !hasValidCompletion) {
+        setIsModeratedTopic(isModerationError(statusCode, errorDetail));
         setBadRequest(true);
       } else {
-        setLp(result.completion);
+        setLp(completion);
       }
+      setIsLoading(false);
     };
+
     getLp();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [topic]);
+
+  if (!topic) {
+    return (
+      <div className="learning-path-page">
+        <h2 className="bad-request">Please provide a topic in the URL (?term=...).</h2>
+        <SearchMore />
+      </div>
+    );
+  }
 
   return (
     <div className="learning-path-page">
@@ -86,11 +137,11 @@ export default function LearningPath() {
         <img
           src={CopyToClip}
           className="copy-button"
-          onClick={(e) => {
+          onClick={() => {
             copyToClipboard(lp, enqueueSnackbar);
           }}
           alt="copy"
-        ></img>
+        />
       </div>
       <p>
         Drag and drop bullets to reorder and copy the result to your own notes!
@@ -99,12 +150,22 @@ export default function LearningPath() {
       {badRequest ? (
         <div>
           <img src={SpaceShip} className="full-img" alt="" />
-          <h2 className="bad-request">
-            Please try again with another response.
-          </h2>
+          {isModeratedTopic ? (
+            <>
+              <h2 className="bad-request">
+                This topic cannot be generated because it was flagged by content moderation.
+              </h2>
+              <p className="bad-request">
+                Please try a safer, educational phrasing (for example, focus on history,
+                prevention, ethics, or legal context).
+              </p>
+            </>
+          ) : (
+            <h2 className="bad-request">Please try again with another response.</h2>
+          )}
         </div>
       ) : lp ? (
-        <LPItems lp={lp} setLp={setLp} />
+        <LPItems key={topic} lp={lp} setLp={setLp} />
       ) : (
         <div
           style={{
@@ -116,7 +177,7 @@ export default function LearningPath() {
             height: "40vh",
           }}
         >
-          <LoadingSpinner />
+          {isLoading ? <LoadingSpinner /> : null}
         </div>
       )}
       <div style={{ height: "30px" }} />
@@ -124,36 +185,35 @@ export default function LearningPath() {
   );
 }
 
-const SearchMore = () => {
+function SearchMore() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const onChange = (text) => {
-    setSearchTerm(text);
-  };
-
-  const goSearch = () => {
-    if (searchTerm === "") {
+  function goSearch() {
+    const trimmedTerm = searchTerm.trim();
+    if (!trimmedTerm) {
       return;
     }
+
     navigate({
       pathname: "/learningpath",
-      search: `?term=${searchTerm}`,
+      search: `?term=${encodeURIComponent(trimmedTerm)}`,
     });
-  };
+  }
+
   return (
     <div style={{ textAlign: "center" }} className="search-more">
       <div style={{ width: "100%", display: "flex", flexDirection: "row" }}>
-        <SearchbarHome onChange={onChange} onEnter={goSearch} />
+        <SearchbarHome onChange={setSearchTerm} onEnter={goSearch} />
         <div style={{ width: "15px" }} className="desktop-only" />
-        <Button label={"Generate"} className="desktop-only" onClick={goSearch} />
+        <Button label="Generate" className="desktop-only" onClick={goSearch} />
       </div>
       <div style={{ height: "15px" }} />
     </div>
   );
-};
+}
 
-const LPItems = ({ lp, setLp }) => {
+function LPItems({ lp, setLp }) {
   const [items, setItems] = useState(lp);
   const [activeId, setActiveId] = useState();
   const sensors = useSensors(
@@ -163,6 +223,10 @@ const LPItems = ({ lp, setLp }) => {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+  useEffect(() => {
+    setItems(lp);
+  }, [lp]);
+
   function findContainer(id) {
     if (id in items) {
       return id;
@@ -180,6 +244,7 @@ const LPItems = ({ lp, setLp }) => {
 
   function handleDragOver(event) {
     const { active, over, draggingRect } = event;
+    if (!over) return;
     const { id } = active;
     const { id: overId } = over;
 
@@ -217,7 +282,7 @@ const LPItems = ({ lp, setLp }) => {
         ],
         [overContainer]: [
           ...prev[overContainer].slice(0, newIndex),
-          items[activeContainer][activeIndex],
+          prev[activeContainer][activeIndex],
           ...prev[overContainer].slice(newIndex, prev[overContainer].length),
         ],
       };
@@ -228,6 +293,10 @@ const LPItems = ({ lp, setLp }) => {
 
   function handleDragEnd(event) {
     const { active, over } = event;
+    if (!over) {
+      setActiveId(null);
+      return;
+    }
     const { id } = active;
     const { id: overId } = over;
     const activeContainer = findContainer(id);
@@ -237,6 +306,7 @@ const LPItems = ({ lp, setLp }) => {
       !overContainer ||
       activeContainer !== overContainer
     ) {
+      setActiveId(null);
       return;
     }
     const activeIndex = items[activeContainer].indexOf(active.id);
@@ -273,20 +343,20 @@ const LPItems = ({ lp, setLp }) => {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        {Object.keys(items).map((itemsKey) => {
-          return <Container id={itemsKey} items={items[itemsKey]} />;
-        })}
+        {Object.keys(items).map((itemsKey) => (
+          <Container key={itemsKey} id={itemsKey} items={items[itemsKey]} />
+        ))}
         <DragOverlay dropAnimation={dropAnimation}>
           {activeId ? <Item id={activeId} /> : null}
         </DragOverlay>
       </DndContext>
     </div>
   );
-};
+}
 
-const Container = (props) => {
-  const { id, items } = props;
+function Container({ id, items }) {
   const { setNodeRef } = useDroppable({ id });
+
   return (
     <SortableContext
       id={id}
@@ -295,15 +365,15 @@ const Container = (props) => {
     >
       <div ref={setNodeRef} className="level-container">
         <h2>{id}</h2>
-        {items.map((id) => (
+        {(Array.isArray(items) ? items : []).map((id) => (
           <SortableItem key={id} id={id} />
         ))}
       </div>
     </SortableContext>
   );
-};
+}
 
-const SortableItem = (props) => {
+function SortableItem({ id }) {
   const {
     attributes,
     listeners,
@@ -311,7 +381,7 @@ const SortableItem = (props) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props.id });
+  } = useSortable({ id });
   const style = {
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : "",
     transition,
@@ -319,15 +389,15 @@ const SortableItem = (props) => {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <Item id={props.id} style={{ opacity: isDragging ? 0.5 : 1 }} />
+      <Item id={id} style={{ opacity: isDragging ? 0.5 : 1 }} />
     </div>
   );
-};
+}
 
-const Item = ({ id, style }) => {
+function Item({ id, style }) {
   return (
-    <div style={{ ...style }}>
+    <div style={style}>
       <li>{id}</li>
     </div>
   );
-};
+}

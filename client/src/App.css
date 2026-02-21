@@ -13,6 +13,24 @@ html {
   position: absolute;
   left: 15px;
   right: 15px;
+  top: 0;
+  bottom: 0;
+}
+
+.route-transition {
+  animation: page-enter-animation 320ms ease both;
+  will-change: opacity, transform;
+}
+
+@keyframes page-enter-animation {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .page-enter {
@@ -35,6 +53,12 @@ html {
   opacity: 0;
   transform: translateY(-100px);
   transition: opacity 500ms, transform 500ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-transition {
+    animation: none;
+  }
 }
 
 ::-webkit-scrollbar {

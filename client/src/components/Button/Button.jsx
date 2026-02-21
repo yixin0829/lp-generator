@@ -12,7 +12,7 @@ export default function Button({
   className,
 }) {
   return (
-    <div
+    <button
       onClick={onClick}
       style={{
         ...style,
@@ -20,7 +20,7 @@ export default function Button({
       }}
       className={`${isSecondary ? "secondary-button" : "primary-button"} ${
         icon ? "icon-button" : ""
-      } ${className}`}
+      } ${className ?? ""}`}
     >
       {label !== undefined ? <>{label}</> : <></>}
       {icon !== undefined ? (
@@ -28,6 +28,6 @@ export default function Button({
       ) : (
         <></>
       )}
-    </div>
+    </button>
   );
 }
