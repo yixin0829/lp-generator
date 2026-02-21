@@ -1,13 +1,13 @@
 """Learning path generation service."""
 
-import json
 import string
 from typing import Any
 
 from loguru import logger
 from openai import AsyncOpenAI
+from pydantic import BaseModel
 
-SYSTEM_PROMPT = """Generate a list of key concepts for learning a new topic and rank them from easiest to most difficult. The generated key concepts should then be grouped as "beginner", "intermediate", or "advanced". Finally, the result is output in JSON format.
+SYSTEM_PROMPT = """Generate a list of key concepts for learning a new topic and rank them from easiest to most difficult. The generated key concepts should then be grouped as "Beginner", "Intermediate", or "Advanced".
 
 Example output for learning "JavaScript":
 {
@@ -15,6 +15,14 @@ Example output for learning "JavaScript":
   "Intermediate": ["Events", "DOM Manipulation", "Error Handling", "Regular Expressions", "JSON", "AJAX", "Promises"],
   "Advanced": ["Prototypal Inheritance", "Closures", "Currying", "Async/Await", "ES6 Features", "Webpack", "Babel", "TypeScript"]
 }"""
+
+
+class LearningPathOutput(BaseModel):
+    """Schema enforced via OpenAI Structured Outputs."""
+
+    Beginner: list[str]
+    Intermediate: list[str]
+    Advanced: list[str]
 
 
 class ContentModerationError(Exception):
@@ -75,21 +83,6 @@ class LearningPathService:
                 "https://beta.openai.com/docs/usage-policies/content-policy"
             )
 
-    def _extract_output_text(self, response: Any) -> str | None:
-        """Extract text content from OpenAI Responses API variants."""
-        content = getattr(response, "output_text", None)
-        if content:
-            return content
-
-        output = getattr(response, "output", None) or []
-        for item in output:
-            for block in getattr(item, "content", []):
-                if getattr(block, "type", "") in {"output_text", "text"}:
-                    block_text = getattr(block, "text", None)
-                    if block_text:
-                        return block_text
-        return None
-
     def _build_usage_dict(self, usage: Any) -> dict[str, int]:
         """Normalize usage payload from SDK object/dict variants."""
         if hasattr(usage, "model_dump"):
@@ -122,16 +115,13 @@ class LearningPathService:
         await self.check_moderation(topic)
 
         try:
-            response = await self._client.responses.create(
+            response = await self._client.responses.parse(
                 model=self._model,
                 input=[
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": f'JSON output for learning "{topic}":'},
+                    {"role": "user", "content": f'Generate a learning path for "{topic}".'},
                 ],
-                text={
-                    "format": {"type": "text"},
-                    "verbosity": "medium",
-                },
+                text_format=LearningPathOutput,
                 reasoning={"effort": "minimal", "summary": "auto"},
                 store=True,
             )
@@ -139,15 +129,20 @@ class LearningPathService:
             logger.exception("OpenAI responses API call failed: {}", e)
             raise
 
-        content = self._extract_output_text(response)
-        try:
-            lp = json.loads(content)
-        except (json.JSONDecodeError, TypeError) as e:
-            logger.exception("Failed to parse OpenAI response as JSON: {}", e)
-            raise MalformedResponseError(
+        if response.output_parsed is None:
+            refusal = None
+            for item in getattr(response, "output", None) or []:
+                for block in getattr(item, "content", []):
+                    if getattr(block, "type", "") == "refusal":
+                        refusal = getattr(block, "refusal", None)
+                        break
+            msg = f"OpenAI refused the request: {refusal}" if refusal else (
                 "Error while parsing OpenAI's response for learning path."
-            ) from e
+            )
+            logger.warning("Structured output parsing failed: {}", msg)
+            raise MalformedResponseError(msg)
 
+        lp = response.output_parsed.model_dump()
         usage_dict = self._build_usage_dict(response.usage)
 
         return {

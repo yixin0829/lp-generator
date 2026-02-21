@@ -1,6 +1,5 @@
 """Service tests for LearningPathService with mocked OpenAI."""
 
-import json
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -8,6 +7,7 @@ from openai import AsyncOpenAI
 
 from app.services.learning_path_service import (
     ContentModerationError,
+    LearningPathOutput,
     LearningPathService,
     MalformedResponseError,
 )
@@ -63,9 +63,9 @@ class TestGenerateLearningPath:
         mock_client.moderations.create = AsyncMock(
             return_value=MagicMock(results=[MagicMock(flagged=False)])
         )
-        mock_client.responses.create = AsyncMock(
+        mock_client.responses.parse = AsyncMock(
             return_value=MagicMock(
-                output_text=json.dumps(lp_data),
+                output_parsed=LearningPathOutput(**lp_data),
                 usage=MagicMock(
                     model_dump=lambda: {
                         "input_tokens": 10,
@@ -85,13 +85,32 @@ class TestGenerateLearningPath:
         assert result["usage"]["completion_tokens"] == 5
         assert result["model"] == "gpt-5-mini"
 
-    async def test_malformed_json_raises(self, service: LearningPathService, mock_client):
+    async def test_refusal_raises(self, service: LearningPathService, mock_client):
         mock_client.moderations.create = AsyncMock(
             return_value=MagicMock(results=[MagicMock(flagged=False)])
         )
-        mock_client.responses.create = AsyncMock(
+        refusal_block = MagicMock(type="refusal", refusal="Content refused")
+        output_item = MagicMock(content=[refusal_block])
+        mock_client.responses.parse = AsyncMock(
             return_value=MagicMock(
-                output_text="not valid json",
+                output_parsed=None,
+                output=[output_item],
+                usage=MagicMock(model_dump=lambda: {}),
+                model="gpt-5-mini",
+            )
+        )
+
+        with pytest.raises(MalformedResponseError, match="refused"):
+            await service.generate_learning_path("react")
+
+    async def test_none_output_parsed_raises(self, service: LearningPathService, mock_client):
+        mock_client.moderations.create = AsyncMock(
+            return_value=MagicMock(results=[MagicMock(flagged=False)])
+        )
+        mock_client.responses.parse = AsyncMock(
+            return_value=MagicMock(
+                output_parsed=None,
+                output=[],
                 usage=MagicMock(model_dump=lambda: {}),
                 model="gpt-5-mini",
             )
