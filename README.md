@@ -44,7 +44,18 @@ Why did we build LearnAnything? You might ask. Well, we want you to think of Lea
 - Health check endpoint:
     - `GET /health`
 
-## 4 Resources
+## 4 SEO & Discoverability
+
+The client includes per-route SEO optimizations so search engines and AI crawlers can discover and cite the site:
+
+- **Per-route `<head>` tags** — each page sets its own `<title>`, `<meta description>`, canonical URL, OpenGraph, and Twitter Card tags via a shared `Seo` component (`client/src/seo/Seo.jsx`). Uses React 19 native `<head>` hoisting (no extra library).
+- **JSON-LD structured data** — Home page emits `WebSite`, `WebApplication`, and `Organization` schemas (with a `SearchAction`). About page emits `AboutPage`, `Person`, `Organization`, and `BreadcrumbList`.
+- **Crawl files** — `robots.txt` (allows search + AI search bots, blocks training-only crawlers), `sitemap.xml`, and `llms.txt` are served from `client/public/`.
+- **Pre-rendered SEO** — `npm run build` runs a post-build script (`client/scripts/prerender-seo.mjs`) that injects `<title>`, meta tags, and JSON-LD into the static HTML for `/` and `/about`, so bots that don't execute JS still see the critical signals.
+- **noindex on generator** — `/learningpath?term=...` is marked `noindex,follow` to prevent infinite indexable URLs.
+- **Site constants** — `SITE_URL`, `SITE_NAME`, etc. are centralized in `client/src/config/site.js` (reads `VITE_SITE_URL` with a prod fallback).
+
+## 5 Resources
 - [GPT model output comparison tool](https://gpttools.com/comparisontool)
 - [OpenAI Best Practices for Prompt Engineering](https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api)
 - [OpenAI documentation - model details](https://beta.openai.com/docs/models)

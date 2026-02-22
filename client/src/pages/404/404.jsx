@@ -1,5 +1,6 @@
 import React from "react";
 import Cat from "../../assets/cat.png";
+import Seo from "../../seo/Seo";
 
 const Page404 = () => {
   return (
@@ -13,6 +14,7 @@ const Page404 = () => {
         minHeight: "500px",
       }}
     >
+      <Seo title="Page Not Found" noindex />
       <img src={Cat} className="full-img" alt="" />
       <h2 className="bad-request">Page not found.</h2>
     </div>

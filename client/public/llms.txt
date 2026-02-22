@@ -1,0 +1,28 @@
+# LearnAnything
+
+> LearnAnything is a free, open-source web application that uses AI (GPT) to generate structured learning paths for any topic. Given a subject, it produces a curated list of key concepts organized into Beginner, Intermediate, and Advanced tiers, giving learners a clear roadmap from novice to expert.
+
+## Key Pages
+
+- [Home](https://www.learn-anything.ca/): Search for any topic and generate a learning path instantly
+- [About](https://www.learn-anything.ca/about): Meet the developers and learn why LearnAnything was built
+
+## How It Works
+
+1. Enter any topic (e.g. "JavaScript", "How to cook", "Machine Learning")
+2. AI generates a structured learning path with concepts ranked by difficulty
+3. Concepts are grouped into Beginner, Intermediate, and Advanced sections
+4. Drag and drop to reorder, then copy the result to your own notes
+
+## Technical Details
+
+- **Frontend**: React 19, Vite, deployed on Vercel
+- **Backend**: Python FastAPI, OpenAI GPT API, deployed on Google Cloud Run
+- **Open Source**: https://github.com/yixin0829/lp-generator
+
+## Contact & Links
+
+- **Website**: https://www.learn-anything.ca/
+- **GitHub**: https://github.com/yixin0829/lp-generator
+- **Developer (Yixin Tian)**: https://www.yixtian.com/
+- **Developer (James Kokoska)**: https://github.com/jameskokoska

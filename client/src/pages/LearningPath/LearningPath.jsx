@@ -29,6 +29,7 @@ import { SearchbarHome } from "../HomePage/HomePage";
 import Button from "../../components/Button/Button";
 import { useSnackbar } from "notistack";
 import { apiUrl } from "../../config/api";
+import Seo from "../../seo/Seo";
 
 const MODERATION_DETAIL_HINTS = ["content policy", "moderation", "flagged"];
 
@@ -46,7 +47,26 @@ async function generateLp(topic) {
   }
   try {
     const response = await fetch(apiUrl(`/v1/lp/${encodeURIComponent(topic)}`));
-    const data = await response.json();
+
+    if (response.status === 504) {
+      return {
+        data: null,
+        statusCode: 504,
+        errorDetail: "The request timed out. Please try again.",
+      };
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      return {
+        data: null,
+        statusCode: response.status,
+        errorDetail: "Received an invalid response from the server.",
+      };
+    }
+
     const errorDetail =
       response.status === 200 ? null : typeof data?.detail === "string" ? data.detail : null;
     return { data, statusCode: response.status, errorDetail };
@@ -122,6 +142,7 @@ export default function LearningPath() {
   if (!topic) {
     return (
       <div className="learning-path-page">
+        <Seo title="Learning Path" noindex />
         <h2 className="bad-request">Please provide a topic in the URL (?term=...).</h2>
         <SearchMore />
       </div>
@@ -130,6 +151,12 @@ export default function LearningPath() {
 
   return (
     <div className="learning-path-page">
+      <Seo
+        title={`Learn ${topic}`}
+        description={`AI-generated learning path for ${topic}: beginner to advanced concepts.`}
+        path="/learningpath"
+        noindex
+      />
       <div className="title-container">
         <h1>
           Learning <div className="gradient-text">{topic}</div> ...
