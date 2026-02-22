@@ -3,9 +3,52 @@ import { useNavigate } from "react-router-dom";
 import Button from "../../components/Button/Button";
 import Searchbar from "../../components/Searchbar/Searchbar";
 import { apiUrl } from "../../config/api";
+import { SITE_URL, SITE_NAME } from "../../config/site";
+import Seo from "../../seo/Seo";
 
 import logo from "../../assets/logo.png";
 import "./HomePage.scss";
+
+const homeJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: SITE_NAME,
+      description:
+        "Generate structured learning paths for any topic with AI. Beginner to advanced concepts, organized and ready to learn.",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${SITE_URL}/learningpath?term={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@type": "WebApplication",
+      "@id": `${SITE_URL}/#app`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      applicationCategory: "EducationalApplication",
+      operatingSystem: "All",
+      description:
+        "AI-powered learning path generator that organizes any topic into beginner, intermediate, and advanced concepts.",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      sameAs: ["https://github.com/yixin0829/lp-generator"],
+    },
+  ],
+};
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -52,6 +95,7 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
+      <Seo jsonLd={homeJsonLd} />
       <div
         style={{ paddingTop: "100px", textAlign: "center", width: "100%" }}
         className="mobile-only"

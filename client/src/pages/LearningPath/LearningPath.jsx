@@ -29,6 +29,8 @@ import { SearchbarHome } from "../HomePage/HomePage";
 import Button from "../../components/Button/Button";
 import { useSnackbar } from "notistack";
 import { apiUrl } from "../../config/api";
+import { toSlug } from "../../util/slug";
+import Seo from "../../seo/Seo";
 
 const MODERATION_DETAIL_HINTS = ["content policy", "moderation", "flagged"];
 
@@ -122,14 +124,23 @@ export default function LearningPath() {
   if (!topic) {
     return (
       <div className="learning-path-page">
+        <Seo title="Learning Path" noindex />
         <h2 className="bad-request">Please provide a topic in the URL (?term=...).</h2>
         <SearchMore />
       </div>
     );
   }
 
+  const topicSlug = toSlug(topic);
+
   return (
     <div className="learning-path-page">
+      <Seo
+        title={`Learn ${topic}`}
+        description={`AI-generated learning path for ${topic}: beginner to advanced concepts.`}
+        path={`/lp/${topicSlug}`}
+        noindex
+      />
       <div className="title-container">
         <h1>
           Learning <div className="gradient-text">{topic}</div> ...

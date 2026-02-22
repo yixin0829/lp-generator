@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     firestore_counter_field: str = Field(
         default="generated_count", validation_alias="FIRESTORE_COUNTER_FIELD"
     )
+    firestore_saved_lp_collection: str = Field(
+        default="saved_learning_paths", validation_alias="FIRESTORE_SAVED_LP_COLLECTION"
+    )
 
     @classmethod
     def settings_customise_sources(
@@ -102,6 +105,7 @@ class Settings(BaseSettings):
         "firestore_counter_collection",
         "firestore_counter_document",
         "firestore_counter_field",
+        "firestore_saved_lp_collection",
         mode="before",
     )
     @classmethod
