@@ -14,7 +14,6 @@ from app.services.counter_service import (
     NoopCounterService,
 )
 from app.services.learning_path_service import LearningPathService
-from app.services.saved_lp_service import NoopSavedLPService, SavedLPService
 
 
 @lru_cache
@@ -29,26 +28,12 @@ def get_learning_path_service() -> LearningPathService:
 
 
 @lru_cache
-def _get_firestore_client() -> firestore.Client | None:
-    """Shared Firestore client (singleton). Returns None if unavailable."""
-    config = get_config()
-    if config.counter_backend != "firestore":
-        return None
-    try:
-        return firestore.Client()
-    except Exception as e:
-        logger.warning("Firestore client unavailable: {}", e)
-        return None
-
-
-@lru_cache
 def get_counter_service() -> BaseCounterService:
     """Provide a counter service implementation from runtime settings."""
     config = get_config()
     fallback_count = 0
 
-    client = _get_firestore_client()
-    if client is None:
+    if config.counter_backend != "firestore":
         return NoopCounterService(fallback_count=fallback_count)
 
     counter_config = CounterConfig(
@@ -59,6 +44,7 @@ def get_counter_service() -> BaseCounterService:
     )
 
     try:
+        client = firestore.Client()
         return FirestoreCounterService(client=client, config=counter_config)
     except Exception as e:
         logger.warning(
@@ -66,22 +52,3 @@ def get_counter_service() -> BaseCounterService:
             e,
         )
         return NoopCounterService(fallback_count=fallback_count)
-
-
-@lru_cache
-def get_saved_lp_service() -> SavedLPService | NoopSavedLPService:
-    """Provide a saved LP service implementation from runtime settings."""
-    config = get_config()
-
-    client = _get_firestore_client()
-    if client is None:
-        return NoopSavedLPService()
-
-    try:
-        return SavedLPService(
-            client=client,
-            collection=config.firestore_saved_lp_collection,
-        )
-    except Exception as e:
-        logger.warning("Saved LP service unavailable, falling back to noop: {}", e)
-        return NoopSavedLPService()

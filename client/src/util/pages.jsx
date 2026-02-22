@@ -2,7 +2,6 @@ import { Page404 } from "../pages/404/404";
 import AboutPage from "../pages/AboutPage/AboutPage";
 import HomePage from "../pages/HomePage/HomePage";
 import LearningPath from "../pages/LearningPath/LearningPath";
-import LearningPathShare from "../pages/LearningPathShare/LearningPathShare";
 
 export const pages = {
   404: {
@@ -15,6 +14,5 @@ export const pages = {
   ],
   hidden: [
     { label: "Learning Path", component: LearningPath, path: "/learningpath" },
-    { label: "Learning Path Share", component: LearningPathShare, path: "/lp/:topicSlug" },
   ],
 };
