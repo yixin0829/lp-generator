@@ -12,9 +12,6 @@ export const SITE_NAME = "LearnAnything";
 export const SITE_DESCRIPTION =
   "Generate structured learning paths for any topic with AI. " +
   "Beginner to advanced concepts, organized and ready to learn.";
-
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-img.png`;
-
 export const AUTHORS = [
   {
     name: "Yixin Tian",

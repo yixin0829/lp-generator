@@ -5,13 +5,12 @@
  * Drop <Seo .../> anywhere in a page component to set head tags.
  */
 
-import { SITE_NAME, SITE_URL, SITE_DESCRIPTION, DEFAULT_OG_IMAGE } from "../config/site";
+import { SITE_NAME, SITE_URL, SITE_DESCRIPTION } from "../config/site";
 
 export default function Seo({
   title,
   description = SITE_DESCRIPTION,
   path = "/",
-  ogImage = DEFAULT_OG_IMAGE,
   ogType = "website",
   robots = "index,follow",
   noindex = false,
@@ -34,13 +33,15 @@ export default function Seo({
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:type" content={ogType} />
-      <meta property="og:image" content={ogImage} />
+      <meta property="og:image" content="https://www.learn-anything.ca/og-img.png" />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
+      <meta property="twitter:domain" content="learn-anything.ca" />
+      <meta property="twitter:url" content={canonicalUrl} />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image" content="https://www.learn-anything.ca/og-img.png" />
 
       {jsonLd && (
         <script
