@@ -50,6 +50,7 @@ flowchart LR
 
 - Browser-visible:
   - `VITE_API_BASE_URL=/api`
+  - `VITE_SITE_URL=https://<canonical-domain>` — used by SEO components for canonical URLs, OpenGraph, and JSON-LD. Falls back to the production URL if unset.
 - Server-only (Vercel functions):
   - `BACKEND_BASE_URL=https://<cloud-run-url>`
   - `BACKEND_API_KEY=<same value as Cloud Run API_KEY>`
@@ -199,7 +200,34 @@ Expected: `200` (or backend error details), but **not 404**.
 - Confirm `/api/v1/lp/<topic>` and `/api/v1/stats` requests succeed.
 - Confirm no CORS errors.
 
-### 5.4 Learning path error mapping looks correct
+### 5.4 SEO signals are present
+
+Static crawl files are accessible at the domain root:
+
+```bash
+curl -s "https://<vercel-url>/robots.txt" | head -5
+curl -s "https://<vercel-url>/sitemap.xml"
+curl -s "https://<vercel-url>/llms.txt" | head -3
+```
+
+Pre-rendered HTML contains SEO tags (visible without JS):
+
+```bash
+# View source — should contain <title>, <meta>, og:*, and JSON-LD in <head>
+curl -s "https://<vercel-url>/" | grep -E '<title>|og:title|application/ld\+json'
+curl -s "https://<vercel-url>/about" | grep -E '<title>|og:title|application/ld\+json'
+```
+
+In-browser checks (with JS running):
+
+- Home (`/`): title is "LearnAnything", JSON-LD contains WebSite + WebApplication + Organization
+- About (`/about`): title is "About | LearnAnything", JSON-LD contains AboutPage + Person + BreadcrumbList
+- Learning path (`/learningpath?term=React`): `<meta name="robots">` is `noindex,follow`
+- 404 page: `<meta name="robots">` is `noindex,follow`
+
+Validate structured data at [Google Rich Results Test](https://search.google.com/test/rich-results) and [Schema.org Validator](https://validator.schema.org/).
+
+### 5.5 Learning path error mapping looks correct
 
 The learning path service raises a single request-safe error type, and the route translates it directly by status code. Quick checks:
 
@@ -244,7 +272,19 @@ Both backend and frontend deployments are now automated:
 
 ---
 
-## 7) Common Failure Modes and Fixes
+## 7) Post-Deploy: SEO Submissions (Production Only)
+
+After the first production deploy with SEO changes:
+
+1. **Google Search Console** — submit `https://www.learn-anything.ca/sitemap.xml`
+2. **Bing Webmaster Tools** — submit the same sitemap
+3. **Google Rich Results Test** — test `/` and `/about` live to confirm structured data is valid
+
+These are one-time steps. Subsequent deploys don't need re-submission unless the sitemap URL changes.
+
+---
+
+## 8) Common Failure Modes and Fixes
 
 ### Issue: Cloud Run returns `200` without API key
 
@@ -287,7 +327,7 @@ Fix:
 
 ---
 
-## 8) Security Knowledge to Keep
+## 9) Security Knowledge to Keep
 
 - **API URL is not secret**; API keys and credentials are.
 - **CORS is not auth**; it only governs browser origin behavior.
@@ -297,7 +337,7 @@ Fix:
 
 ---
 
-## 9) Optional Next Improvements
+## 10) Optional Next Improvements
 
 - Add request IDs and alerting on 401/429 spikes.
 - Add bot protection (captcha/challenge) on generation endpoint.
