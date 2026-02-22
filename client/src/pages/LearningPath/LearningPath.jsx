@@ -47,7 +47,26 @@ async function generateLp(topic) {
   }
   try {
     const response = await fetch(apiUrl(`/v1/lp/${encodeURIComponent(topic)}`));
-    const data = await response.json();
+
+    if (response.status === 504) {
+      return {
+        data: null,
+        statusCode: 504,
+        errorDetail: "The request timed out. Please try again.",
+      };
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      return {
+        data: null,
+        statusCode: response.status,
+        errorDetail: "Received an invalid response from the server.",
+      };
+    }
+
     const errorDetail =
       response.status === 200 ? null : typeof data?.detail === "string" ? data.detail : null;
     return { data, statusCode: response.status, errorDetail };
