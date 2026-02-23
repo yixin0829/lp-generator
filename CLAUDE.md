@@ -6,6 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Learning Path Generator ("LearnAnything") — a full-stack app that uses OpenAI's GPT API to generate structured learning paths for any topic. Monorepo with a React frontend (`client/`) and a FastAPI backend (`server/`).
 
+## CLIs Available to Use
+- `uv` - Python package manager
+- `npm` - Node package manager
+- `gcloud` - Google Cloud CLI
+- `vercel` - Vercel CLI
+- `gh` - GitHub CLI
+- `git` - Git CLI
+- `docker` - Docker CLI
+
 ## Development Commands
 
 ### Backend (`server/`)
@@ -41,7 +50,7 @@ FastAPI app with layered structure:
 - `main.py` — App wiring: CORS, rate limiting (slowapi), router mounting
 - `api/router.py` — Aggregates all routes under `/v1` prefix
 - `routers/` — Endpoint handlers: `learning_paths.py` (GET `/v1/lp/{topic}`), `stats.py` (GET `/v1/stats`)
-- `services/` — Business logic: `learning_path_service.py` (OpenAI calls + request-safe `LearningPathError` with status code), `counter_service.py` (generation counter, noop or Firestore)
+- `services/` — Business logic: `learning_path_service.py` (OpenAI calls + request-safe `LearningPathError` with status code), `counter_service.py` (generation counter, noop or Firestore), `cache_service.py` (learning path cache, noop or Firestore with TTL)
 - `schemas/` — Pydantic models for request/response validation
 - `core/config.py` — `Settings` class loaded from env vars (cached via `@lru_cache`). Reads `.env` in non-production
 - `core/security.py` — API key auth (`X-API-Key` header) + rate limiter. Auth enforced when `REQUIRE_API_KEY=true`
@@ -66,6 +75,8 @@ In local dev, the frontend calls the backend directly (no proxy needed).
 - `API_KEY` / `REQUIRE_API_KEY` — Backend auth (enabled by default in production)
 - `CORS_ORIGINS` — Comma-separated allowed origins (must be explicit in production)
 - `COUNTER_BACKEND` — `noop` (default) or `firestore`
+- `CACHE_BACKEND` — `noop` (default) or `firestore`. Caches generated learning paths to skip repeat OpenAI calls
+- `CACHE_TTL_SECONDS` — Cache entry lifetime (default: `604800` = 7 days)
 - `LP_RATE_LIMIT` / `STATS_RATE_LIMIT` — Rate limit strings (e.g. `15/minute`)
 
 ### Frontend

@@ -1,10 +1,10 @@
 export const config = { runtime: "edge" };
 
 export default async function handler(request) {
-  if (request.method !== "GET") {
+  if (request.method !== "POST") {
     return new Response(JSON.stringify({ detail: "Method not allowed." }), {
       status: 405,
-      headers: { Allow: "GET", "content-type": "application/json" },
+      headers: { Allow: "POST", "content-type": "application/json" },
     });
   }
 
@@ -17,29 +17,20 @@ export default async function handler(request) {
     });
   }
 
-  // Extract topic from URL path: /api/v1/lp/<topic>
-  const url = new URL(request.url);
-  const pathSegment = url.pathname.split("/").pop() ?? "";
-  const topic = decodeURIComponent(pathSegment).trim();
-  if (!topic) {
-    return new Response(JSON.stringify({ detail: "Missing topic." }), {
-      status: 400,
-      headers: { "content-type": "application/json" },
-    });
-  }
-
   try {
-    const upstream = await fetch(
-      `${backendBaseUrl}/v1/lp/${encodeURIComponent(topic)}`,
-      {
-        method: "GET",
-        headers: { "X-API-Key": backendApiKey },
-      }
-    );
+    const body = await request.text();
+    const upstream = await fetch(`${backendBaseUrl}/v1/feedback`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": backendApiKey,
+      },
+      body,
+    });
 
-    const body = await upstream.text();
+    const responseBody = await upstream.text();
     const contentType = upstream.headers.get("content-type") ?? "application/json";
-    return new Response(body, {
+    return new Response(responseBody, {
       status: upstream.status,
       headers: { "content-type": contentType },
     });

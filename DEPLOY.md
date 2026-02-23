@@ -45,6 +45,10 @@ flowchart LR
   - `FIRESTORE_COUNTER_COLLECTION` — staging uses `stats-staging`, prod uses `stats` (separate data)
   - `FIRESTORE_COUNTER_DOCUMENT=learning_paths`
   - `FIRESTORE_COUNTER_FIELD=generated_count`
+- Firestore cache vars (learning path caching — skips OpenAI for repeat topics):
+  - `CACHE_BACKEND=firestore` (set to `noop` to disable)
+  - `FIRESTORE_CACHE_COLLECTION` — staging uses `learning_path_cache_staging`, prod uses `learning_path_cache`
+  - `CACHE_TTL_SECONDS=604800` (7 days; tune as needed)
 
 ### Client (Vercel)
 
@@ -54,6 +58,63 @@ flowchart LR
 - Server-only (Vercel functions):
   - `BACKEND_BASE_URL=https://<cloud-run-url>`
   - `BACKEND_API_KEY=<same value as Cloud Run API_KEY>`
+
+### API key lifecycle (production)
+
+```mermaid
+flowchart TB
+    subgraph Deploy["1. Deploy time"]
+        SM["GCP Secret Manager\n(secret API_KEY)"]
+        CR_env["Cloud Run container env\nAPI_KEY from secret"]
+        V_env["Vercel project env\nBACKEND_API_KEY same value"]
+        SM -->|set-secrets| CR_env
+        SM -.->|manual copy| V_env
+    end
+
+    subgraph Startup["2. Backend startup"]
+        Uvicorn["uvicorn to FastAPI app"]
+        First_call["First get_config call"]
+        PS["BaseSettings reads os.environ"]
+        Settings["Settings.api_key from env\nrequire_api_key true in prod"]
+        Cache["lru_cache get_config"]
+        Uvicorn --> First_call
+        First_call --> PS
+        PS --> Settings
+        Settings --> Cache
+        CR_env -.->|env in container| PS
+    end
+
+    subgraph Request["3. Incoming request"]
+        Browser["Browser no API key"]
+        Vercel["Vercel API route"]
+        Vercel_read["process.env.BACKEND_API_KEY"]
+        Proxy["Proxy to Cloud Run\nwith X-API-Key header"]
+        Browser --> Vercel
+        V_env -.-> Vercel_read
+        Vercel --> Vercel_read
+        Vercel_read --> Proxy
+        Proxy --> Backend
+    end
+
+    subgraph Auth["4. FastAPI auth"]
+        Backend["/v1/lp etc"]
+        Dep["Depends require_api_key"]
+        Header["APIKeyHeader X-API-Key"]
+        Check["compare_digest header vs config.api_key"]
+        OK["200 OK"]
+        Fail["401 Unauthorized"]
+        Backend --> Dep
+        Dep --> Header
+        Header --> Check
+        Check -->|match| OK
+        Check -->|missing or wrong| Fail
+        Cache -.->|current_config| Check
+    end
+
+    Deploy ~~~ Startup
+    Startup ~~~ Request
+    Request ~~~ Auth
+```
 
 ---
 
@@ -88,7 +149,7 @@ These are only needed when creating a new service or changing its configuration:
 gcloud run services update <your-cloud-run-service> \
   --project=<your-gcp-project> \
   --region=<your-region> \
-  --update-env-vars "^@^REQUIRE_API_KEY=true@RATE_LIMIT_ENABLED=true@LP_RATE_LIMIT=15/minute@STATS_RATE_LIMIT=30/minute@CORS_ORIGINS=https://<vercel-preview-domain>,https://<vercel-prod-domain>"
+  --update-env-vars "^@^REQUIRE_API_KEY=true@RATE_LIMIT_ENABLED=true@LP_RATE_LIMIT=15/minute@STATS_RATE_LIMIT=30/minute@CACHE_BACKEND=firestore@CACHE_TTL_SECONDS=604800@CORS_ORIGINS=https://<vercel-preview-domain>,https://<vercel-prod-domain>"
 ```
 
 #### Set/update secret references
@@ -227,7 +288,21 @@ In-browser checks (with JS running):
 
 Validate structured data at [Google Rich Results Test](https://search.google.com/test/rich-results) and [Schema.org Validator](https://validator.schema.org/).
 
-### 5.5 Learning path error mapping looks correct
+### 5.5 Learning path caching works (if `CACHE_BACKEND=firestore`)
+
+```bash
+# First request — should return cached: false
+curl -s -H "X-API-Key: <API_KEY>" "https://<cloud-run-url>/v1/lp/React" | jq '.cached'
+# Expected: false
+
+# Second request (same topic) — should return cached: true
+curl -s -H "X-API-Key: <API_KEY>" "https://<cloud-run-url>/v1/lp/React" | jq '.cached'
+# Expected: true
+```
+
+If `CACHE_BACKEND=noop`, both requests return `cached: false` (caching disabled).
+
+### 5.6 Learning path error mapping looks correct
 
 The learning path service raises a single request-safe error type, and the route translates it directly by status code. Quick checks:
 

@@ -48,7 +48,7 @@ class LearningPathService:
     def __init__(
         self,
         client: AsyncOpenAI,
-        model: str = "gpt-5-mini",
+        model: str = "gpt-4.1-mini",
         max_topic_length: int = 120,
     ) -> None:
         self._client = client
@@ -151,7 +151,6 @@ class LearningPathService:
                     {"role": "user", "content": f'Generate a learning path for "{topic}".'},
                 ],
                 text_format=LearningPathOutput,
-                reasoning={"effort": "minimal", "summary": "auto"},
                 store=True,
             )
         except Exception as e:

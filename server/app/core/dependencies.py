@@ -7,11 +7,23 @@ from loguru import logger
 from openai import AsyncOpenAI
 
 from app.core.config import get_config
+from app.services.cache_service import (
+    BaseCacheService,
+    CacheConfig,
+    FirestoreCacheService,
+    NoopCacheService,
+)
 from app.services.counter_service import (
     BaseCounterService,
     CounterConfig,
     FirestoreCounterService,
     NoopCounterService,
+)
+from app.services.feedback_service import (
+    BaseFeedbackService,
+    FeedbackConfig,
+    FirestoreFeedbackService,
+    NoopFeedbackService,
 )
 from app.services.learning_path_service import LearningPathService
 
@@ -31,7 +43,7 @@ def get_learning_path_service() -> LearningPathService:
 def get_counter_service() -> BaseCounterService:
     """Provide a counter service implementation from runtime settings."""
     config = get_config()
-    fallback_count = 0
+    fallback_count = 666
 
     if config.counter_backend != "firestore":
         return NoopCounterService(fallback_count=fallback_count)
@@ -52,3 +64,50 @@ def get_counter_service() -> BaseCounterService:
             e,
         )
         return NoopCounterService(fallback_count=fallback_count)
+
+
+@lru_cache
+def get_cache_service() -> BaseCacheService:
+    """Provide a cache service implementation from runtime settings."""
+    config = get_config()
+
+    if config.cache_backend != "firestore":
+        return NoopCacheService()
+
+    cache_config = CacheConfig(
+        collection=config.firestore_cache_collection,
+        ttl_seconds=config.cache_ttl_seconds,
+    )
+
+    try:
+        client = firestore.Client()
+        return FirestoreCacheService(client=client, config=cache_config)
+    except Exception as e:
+        logger.warning(
+            "Firestore cache unavailable, falling back to noop cache: {}",
+            e,
+        )
+        return NoopCacheService()
+
+
+@lru_cache
+def get_feedback_service() -> BaseFeedbackService:
+    """Provide a feedback service implementation from runtime settings."""
+    config = get_config()
+
+    if config.feedback_backend != "firestore":
+        return NoopFeedbackService()
+
+    feedback_config = FeedbackConfig(
+        collection=config.firestore_feedback_collection,
+    )
+
+    try:
+        client = firestore.Client()
+        return FirestoreFeedbackService(client=client, config=feedback_config)
+    except Exception as e:
+        logger.warning(
+            "Firestore feedback unavailable, falling back to noop feedback: {}",
+            e,
+        )
+        return NoopFeedbackService()
