@@ -3,12 +3,14 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.core.dependencies import get_counter_service, get_learning_path_service
+from app.core.dependencies import get_cache_service, get_counter_service, get_learning_path_service
 from app.main import app
+from app.services.cache_service import NoopCacheService
 
 
 @pytest.fixture(autouse=True)
 def _reset_overrides():
+    app.dependency_overrides[get_cache_service] = lambda: NoopCacheService()
     yield
     app.dependency_overrides.clear()
 
@@ -137,3 +139,102 @@ class TestGetLpError:
         resp = client.get("/v1/lp/react")
         assert resp.status_code == 503
         assert "unavailable" in resp.json()["detail"].lower()
+
+
+SAMPLE_LP = {
+    "topic": "React",
+    "completion": {"Beginner": ["JSX"], "Intermediate": [], "Advanced": []},
+    "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
+    "model": "gpt-5-mini",
+}
+
+
+class TestGetLpCacheHit:
+    """Cache hit cases — OpenAI should NOT be called."""
+
+    def test_cache_hit_returns_cached_data(self, client: TestClient, mocker):
+        mock_svc = mocker.Mock()
+        mock_svc.normalize_topic.return_value = "React"
+        mock_counter = mocker.Mock()
+        mock_cache = mocker.Mock()
+        mock_cache.get.return_value = {**SAMPLE_LP}
+
+        app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
+        app.dependency_overrides[get_counter_service] = lambda: mock_counter
+        app.dependency_overrides[get_cache_service] = lambda: mock_cache
+
+        resp = client.get("/v1/lp/react")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["cached"] is True
+        assert data["topic"] == "React"
+        mock_svc.generate_learning_path.assert_not_called()
+        mock_counter.increment_learning_paths_generated.assert_called_once()
+
+    def test_cache_read_failure_falls_through_to_generation(self, client: TestClient, mocker):
+        from app.services.cache_service import CacheServiceError
+
+        mock_svc = mocker.Mock()
+        mock_svc.normalize_topic.return_value = "React"
+        mock_svc.generate_learning_path = mocker.AsyncMock(return_value={**SAMPLE_LP})
+        mock_counter = mocker.Mock()
+        mock_cache = mocker.Mock()
+        mock_cache.get.side_effect = CacheServiceError("Firestore down")
+
+        app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
+        app.dependency_overrides[get_counter_service] = lambda: mock_counter
+        app.dependency_overrides[get_cache_service] = lambda: mock_cache
+
+        resp = client.get("/v1/lp/react")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["cached"] is False
+        mock_svc.generate_learning_path.assert_called_once()
+
+
+class TestGetLpCacheMiss:
+    """Cache miss cases — OpenAI is called, result is cached."""
+
+    def test_cache_miss_generates_and_caches(self, client: TestClient, mocker):
+        mock_svc = mocker.Mock()
+        mock_svc.normalize_topic.return_value = "React"
+        mock_svc.generate_learning_path = mocker.AsyncMock(return_value={**SAMPLE_LP})
+        mock_counter = mocker.Mock()
+        mock_cache = mocker.Mock()
+        mock_cache.get.return_value = None
+
+        app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
+        app.dependency_overrides[get_counter_service] = lambda: mock_counter
+        app.dependency_overrides[get_cache_service] = lambda: mock_cache
+
+        resp = client.get("/v1/lp/react")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["cached"] is False
+        mock_svc.generate_learning_path.assert_called_once()
+        mock_cache.set.assert_called_once()
+        cache_key, cache_value = mock_cache.set.call_args[0]
+        assert cache_key == "React"
+        assert cache_value["topic"] == "React"
+        mock_counter.increment_learning_paths_generated.assert_called_once()
+
+    def test_cache_write_failure_still_returns_response(self, client: TestClient, mocker):
+        from app.services.cache_service import CacheServiceError
+
+        mock_svc = mocker.Mock()
+        mock_svc.normalize_topic.return_value = "React"
+        mock_svc.generate_learning_path = mocker.AsyncMock(return_value={**SAMPLE_LP})
+        mock_counter = mocker.Mock()
+        mock_cache = mocker.Mock()
+        mock_cache.get.return_value = None
+        mock_cache.set.side_effect = CacheServiceError("Write failed")
+
+        app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
+        app.dependency_overrides[get_counter_service] = lambda: mock_counter
+        app.dependency_overrides[get_cache_service] = lambda: mock_cache
+
+        resp = client.get("/v1/lp/react")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["topic"] == "React"
+        assert data["cached"] is False

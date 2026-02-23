@@ -7,6 +7,12 @@ from loguru import logger
 from openai import AsyncOpenAI
 
 from app.core.config import get_config
+from app.services.cache_service import (
+    BaseCacheService,
+    CacheConfig,
+    FirestoreCacheService,
+    NoopCacheService,
+)
 from app.services.counter_service import (
     BaseCounterService,
     CounterConfig,
@@ -58,6 +64,30 @@ def get_counter_service() -> BaseCounterService:
             e,
         )
         return NoopCounterService(fallback_count=fallback_count)
+
+
+@lru_cache
+def get_cache_service() -> BaseCacheService:
+    """Provide a cache service implementation from runtime settings."""
+    config = get_config()
+
+    if config.cache_backend != "firestore":
+        return NoopCacheService()
+
+    cache_config = CacheConfig(
+        collection=config.firestore_cache_collection,
+        ttl_seconds=config.cache_ttl_seconds,
+    )
+
+    try:
+        client = firestore.Client()
+        return FirestoreCacheService(client=client, config=cache_config)
+    except Exception as e:
+        logger.warning(
+            "Firestore cache unavailable, falling back to noop cache: {}",
+            e,
+        )
+        return NoopCacheService()
 
 
 @lru_cache

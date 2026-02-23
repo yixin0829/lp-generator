@@ -17,6 +17,7 @@ class LearningPathResponse(BaseModel):
                 },
                 "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
                 "model": "gpt-5-mini",
+                "cached": False,
             },
         }
     )
@@ -25,6 +26,7 @@ class LearningPathResponse(BaseModel):
     completion: dict
     usage: dict
     model: str
+    cached: bool = False
 
 
 class HTTPError(BaseModel):

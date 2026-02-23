@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from loguru import logger
 
 from app.core.config import get_config
-from app.core.dependencies import get_counter_service, get_learning_path_service
+from app.core.dependencies import get_cache_service, get_counter_service, get_learning_path_service
 from app.core.security import limiter, require_api_key
 from app.schemas.learning_path import HTTPError, LearningPathResponse
+from app.services.cache_service import BaseCacheService, CacheServiceError
 from app.services.counter_service import BaseCounterService, CounterServiceError
 from app.services.learning_path_service import (
     LearningPathError,
@@ -39,15 +40,29 @@ async def get_lp(
     topic: str,
     service: LearningPathService = Depends(get_learning_path_service),
     counter_service: BaseCounterService = Depends(get_counter_service),
+    cache_service: BaseCacheService = Depends(get_cache_service),
 ) -> dict:
     """Take any topic and call OpenAI to generate a learning path in JSON format."""
+    normalized = service.normalize_topic(topic)
+
+    # Try cache first
     try:
-        payload = await service.generate_learning_path(topic)
+        cached = cache_service.get(normalized)
+    except CacheServiceError as e:
+        logger.warning("Cache read failed, proceeding without cache: {}", e)
+        cached = None
+
+    if cached is not None:
+        cached["cached"] = True
         try:
             counter_service.increment_learning_paths_generated()
         except CounterServiceError as e:
             logger.warning("Learning path counter increment failed: {}", e)
-        return payload
+        return cached
+
+    # Cache miss — generate from OpenAI
+    try:
+        payload = await service.generate_learning_path(topic)
     except LearningPathError as e:
         if e.status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
             logger.error("Learning path request failed: {}", e)
@@ -60,3 +75,17 @@ async def get_lp(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while generating the learning path.",
         ) from e
+
+    # Write to cache (fire-and-forget on failure)
+    try:
+        cache_service.set(normalized, payload)
+    except CacheServiceError as e:
+        logger.warning("Cache write failed: {}", e)
+
+    try:
+        counter_service.increment_learning_paths_generated()
+    except CounterServiceError as e:
+        logger.warning("Learning path counter increment failed: {}", e)
+
+    payload["cached"] = False
+    return payload
