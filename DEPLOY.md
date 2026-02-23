@@ -59,6 +59,63 @@ flowchart LR
   - `BACKEND_BASE_URL=https://<cloud-run-url>`
   - `BACKEND_API_KEY=<same value as Cloud Run API_KEY>`
 
+### API key lifecycle (production)
+
+```mermaid
+flowchart TB
+    subgraph Deploy["1. Deploy time"]
+        SM["GCP Secret Manager\n(secret API_KEY)"]
+        CR_env["Cloud Run container env\nAPI_KEY from secret"]
+        V_env["Vercel project env\nBACKEND_API_KEY same value"]
+        SM -->|set-secrets| CR_env
+        SM -.->|manual copy| V_env
+    end
+
+    subgraph Startup["2. Backend startup"]
+        Uvicorn["uvicorn to FastAPI app"]
+        First_call["First get_config call"]
+        PS["BaseSettings reads os.environ"]
+        Settings["Settings.api_key from env\nrequire_api_key true in prod"]
+        Cache["lru_cache get_config"]
+        Uvicorn --> First_call
+        First_call --> PS
+        PS --> Settings
+        Settings --> Cache
+        CR_env -.->|env in container| PS
+    end
+
+    subgraph Request["3. Incoming request"]
+        Browser["Browser no API key"]
+        Vercel["Vercel API route"]
+        Vercel_read["process.env.BACKEND_API_KEY"]
+        Proxy["Proxy to Cloud Run\nwith X-API-Key header"]
+        Browser --> Vercel
+        V_env -.-> Vercel_read
+        Vercel --> Vercel_read
+        Vercel_read --> Proxy
+        Proxy --> Backend
+    end
+
+    subgraph Auth["4. FastAPI auth"]
+        Backend["/v1/lp etc"]
+        Dep["Depends require_api_key"]
+        Header["APIKeyHeader X-API-Key"]
+        Check["compare_digest header vs config.api_key"]
+        OK["200 OK"]
+        Fail["401 Unauthorized"]
+        Backend --> Dep
+        Dep --> Header
+        Header --> Check
+        Check -->|match| OK
+        Check -->|missing or wrong| Fail
+        Cache -.->|current_config| Check
+    end
+
+    Deploy ~~~ Startup
+    Startup ~~~ Request
+    Request ~~~ Auth
+```
+
 ---
 
 ## 3) Server Deployment (Cloud Run)
