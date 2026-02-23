@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     app_env: str = Field(default="development", validation_alias="APP_ENV")
     version: str = Field(default="v1", validation_alias="API_VERSION")
     cors_origins: list[str] = Field(default_factory=lambda: ["*"], validation_alias="CORS_ORIGINS")
-    openai_model: str = Field(default="gpt-5-mini", validation_alias="OPENAI_MODEL")
+    openai_model: str = Field(default="gpt-4.1-mini", validation_alias="OPENAI_MODEL")
     max_topic_length: int = Field(default=120, validation_alias="MAX_TOPIC_LENGTH", gt=0)
     openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
     counter_backend: str = Field(default="noop", validation_alias="COUNTER_BACKEND")
@@ -70,6 +70,11 @@ class Settings(BaseSettings):
     firestore_feedback_collection: str = Field(
         default="feedback", validation_alias="FIRESTORE_FEEDBACK_COLLECTION"
     )
+    cache_backend: str = Field(default="noop", validation_alias="CACHE_BACKEND")
+    firestore_cache_collection: str = Field(
+        default="learning_path_cache", validation_alias="FIRESTORE_CACHE_COLLECTION"
+    )
+    cache_ttl_seconds: int = Field(default=604800, validation_alias="CACHE_TTL_SECONDS", gt=0)
 
     @classmethod
     def settings_customise_sources(
@@ -89,9 +94,9 @@ class Settings(BaseSettings):
             return "development"
         return str(value).strip().lower()
 
-    @field_validator("counter_backend", mode="before")
+    @field_validator("counter_backend", "cache_backend", mode="before")
     @classmethod
-    def _normalize_counter_backend(cls, value: Any) -> str:
+    def _normalize_backend_field(cls, value: Any) -> str:
         if value is None:
             return "noop"
         return str(value).strip().lower()
@@ -108,6 +113,7 @@ class Settings(BaseSettings):
         "firestore_counter_field",
         "feedback_rate_limit",
         "firestore_feedback_collection",
+        "firestore_cache_collection",
         mode="before",
     )
     @classmethod
@@ -138,6 +144,8 @@ class Settings(BaseSettings):
     def _validate_settings(self) -> Settings:
         if self.counter_backend not in {"noop", "firestore"}:
             raise ValueError("COUNTER_BACKEND must be either 'noop' or 'firestore'.")
+        if self.cache_backend not in {"noop", "firestore"}:
+            raise ValueError("CACHE_BACKEND must be either 'noop' or 'firestore'.")
         if not self.lp_rate_limit:
             raise ValueError("LP_RATE_LIMIT must not be empty.")
         if not self.stats_rate_limit:

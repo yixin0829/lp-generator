@@ -1,38 +1,38 @@
-function getBackendConfig() {
+export const config = { runtime: "edge" };
+
+export default async function handler(request) {
+  if (request.method !== "GET") {
+    return new Response(JSON.stringify({ detail: "Method not allowed." }), {
+      status: 405,
+      headers: { Allow: "GET", "content-type": "application/json" },
+    });
+  }
+
   const backendBaseUrl = process.env.BACKEND_BASE_URL?.trim().replace(/\/$/, "");
   const backendApiKey = process.env.BACKEND_API_KEY?.trim();
-
   if (!backendBaseUrl || !backendApiKey) {
-    return null;
-  }
-
-  return { backendBaseUrl, backendApiKey };
-}
-
-export default async function handler(req, res) {
-  if (req.method !== "GET") {
-    res.setHeader("Allow", "GET");
-    return res.status(405).json({ detail: "Method not allowed." });
-  }
-
-  const config = getBackendConfig();
-  if (!config) {
-    return res.status(500).json({ detail: "Backend proxy is not configured." });
+    return new Response(JSON.stringify({ detail: "Backend proxy is not configured." }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
   }
 
   try {
-    const upstream = await fetch(`${config.backendBaseUrl}/v1/stats`, {
+    const upstream = await fetch(`${backendBaseUrl}/v1/stats`, {
       method: "GET",
-      headers: {
-        "X-API-Key": config.backendApiKey,
-      },
+      headers: { "X-API-Key": backendApiKey },
     });
 
     const body = await upstream.text();
-    const contentType = upstream.headers.get("content-type") || "application/json";
-    res.setHeader("content-type", contentType);
-    return res.status(upstream.status).send(body);
+    const contentType = upstream.headers.get("content-type") ?? "application/json";
+    return new Response(body, {
+      status: upstream.status,
+      headers: { "content-type": contentType },
+    });
   } catch {
-    return res.status(502).json({ detail: "Failed to reach backend service." });
+    return new Response(JSON.stringify({ detail: "Failed to reach backend service." }), {
+      status: 502,
+      headers: { "content-type": "application/json" },
+    });
   }
 }
