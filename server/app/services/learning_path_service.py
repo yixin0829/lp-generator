@@ -141,6 +141,7 @@ class LearningPathService:
         """
         topic = self.normalize_topic(topic)
         self.validate_topic_length(topic)
+        await self.check_moderation(topic)
 
         try:
             response = await self._client.responses.parse(

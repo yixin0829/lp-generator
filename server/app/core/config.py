@@ -102,27 +102,6 @@ class Settings(BaseSettings):
             return "noop"
         return str(value).strip().lower()
 
-    @field_validator(
-        "version",
-        "openai_model",
-        "openai_api_key",
-        "api_key",
-        "lp_rate_limit",
-        "stats_rate_limit",
-        "firestore_counter_collection",
-        "firestore_counter_document",
-        "firestore_counter_field",
-        "feedback_rate_limit",
-        "firestore_feedback_collection",
-        "firestore_cache_collection",
-        mode="before",
-    )
-    @classmethod
-    def _normalize_str(cls, value: Any) -> str:
-        if value is None:
-            return ""
-        return str(value).strip()
-
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _parse_cors_origins(cls, value: Any) -> list[str]:
