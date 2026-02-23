@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     firestore_counter_field: str = Field(
         default="generated_count", validation_alias="FIRESTORE_COUNTER_FIELD"
     )
+    feedback_backend: str = Field(default="noop", validation_alias="FEEDBACK_BACKEND")
     feedback_rate_limit: str = Field(default="10/minute", validation_alias="FEEDBACK_RATE_LIMIT")
     firestore_feedback_collection: str = Field(
         default="feedback", validation_alias="FIRESTORE_FEEDBACK_COLLECTION"
@@ -94,7 +95,7 @@ class Settings(BaseSettings):
             return "development"
         return str(value).strip().lower()
 
-    @field_validator("counter_backend", "cache_backend", mode="before")
+    @field_validator("counter_backend", "cache_backend", "feedback_backend", mode="before")
     @classmethod
     def _normalize_backend_field(cls, value: Any) -> str:
         if value is None:
@@ -146,6 +147,8 @@ class Settings(BaseSettings):
             raise ValueError("COUNTER_BACKEND must be either 'noop' or 'firestore'.")
         if self.cache_backend not in {"noop", "firestore"}:
             raise ValueError("CACHE_BACKEND must be either 'noop' or 'firestore'.")
+        if self.feedback_backend not in {"noop", "firestore"}:
+            raise ValueError("FEEDBACK_BACKEND must be either 'noop' or 'firestore'.")
         if not self.lp_rate_limit:
             raise ValueError("LP_RATE_LIMIT must not be empty.")
         if not self.stats_rate_limit:

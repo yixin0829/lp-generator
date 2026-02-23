@@ -95,7 +95,7 @@ def get_feedback_service() -> BaseFeedbackService:
     """Provide a feedback service implementation from runtime settings."""
     config = get_config()
 
-    if config.counter_backend != "firestore":
+    if config.feedback_backend != "firestore":
         return NoopFeedbackService()
 
     feedback_config = FeedbackConfig(
