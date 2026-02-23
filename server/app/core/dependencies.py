@@ -13,6 +13,12 @@ from app.services.counter_service import (
     FirestoreCounterService,
     NoopCounterService,
 )
+from app.services.feedback_service import (
+    BaseFeedbackService,
+    FeedbackConfig,
+    FirestoreFeedbackService,
+    NoopFeedbackService,
+)
 from app.services.learning_path_service import LearningPathService
 
 
@@ -52,3 +58,26 @@ def get_counter_service() -> BaseCounterService:
             e,
         )
         return NoopCounterService(fallback_count=fallback_count)
+
+
+@lru_cache
+def get_feedback_service() -> BaseFeedbackService:
+    """Provide a feedback service implementation from runtime settings."""
+    config = get_config()
+
+    if config.counter_backend != "firestore":
+        return NoopFeedbackService()
+
+    feedback_config = FeedbackConfig(
+        collection=config.firestore_feedback_collection,
+    )
+
+    try:
+        client = firestore.Client()
+        return FirestoreFeedbackService(client=client, config=feedback_config)
+    except Exception as e:
+        logger.warning(
+            "Firestore feedback unavailable, falling back to noop feedback: {}",
+            e,
+        )
+        return NoopFeedbackService()

@@ -66,6 +66,10 @@ class Settings(BaseSettings):
     firestore_counter_field: str = Field(
         default="generated_count", validation_alias="FIRESTORE_COUNTER_FIELD"
     )
+    feedback_rate_limit: str = Field(default="10/minute", validation_alias="FEEDBACK_RATE_LIMIT")
+    firestore_feedback_collection: str = Field(
+        default="feedback", validation_alias="FIRESTORE_FEEDBACK_COLLECTION"
+    )
 
     @classmethod
     def settings_customise_sources(
@@ -102,6 +106,8 @@ class Settings(BaseSettings):
         "firestore_counter_collection",
         "firestore_counter_document",
         "firestore_counter_field",
+        "feedback_rate_limit",
+        "firestore_feedback_collection",
         mode="before",
     )
     @classmethod
@@ -136,6 +142,8 @@ class Settings(BaseSettings):
             raise ValueError("LP_RATE_LIMIT must not be empty.")
         if not self.stats_rate_limit:
             raise ValueError("STATS_RATE_LIMIT must not be empty.")
+        if not self.feedback_rate_limit:
+            raise ValueError("FEEDBACK_RATE_LIMIT must not be empty.")
 
         if self.require_api_key is None:
             self.require_api_key = self.app_env == "production"
