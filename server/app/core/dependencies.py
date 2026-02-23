@@ -43,7 +43,7 @@ def get_learning_path_service() -> LearningPathService:
 def get_counter_service() -> BaseCounterService:
     """Provide a counter service implementation from runtime settings."""
     config = get_config()
-    fallback_count = 0
+    fallback_count = 666
 
     if config.counter_backend != "firestore":
         return NoopCounterService(fallback_count=fallback_count)
