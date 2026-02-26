@@ -1,6 +1,7 @@
 """Learning path generation service."""
 
 import string
+from collections import defaultdict, deque
 from typing import Any
 
 from loguru import logger
@@ -16,27 +17,42 @@ from openai import (
 )
 from pydantic import BaseModel
 
-SYSTEM_PROMPT = """Generate a structured learning path for a given topic. For each concept, provide:
-- name: the concept name
-- summary: a 1-2 sentence explanation of what this concept is
-- why: why this concept is important and should be learned at this stage
-- connection: how this concept connects to and enables downstream concepts
+SYSTEM_PROMPT = """Generate a learning path as a directed graph for a given topic.
 
-Group concepts into "Beginner", "Intermediate", and "Advanced" levels, ordered from easiest to most difficult.
+Return 10-15 concepts as nodes, each with:
+- id: a unique short snake_case identifier (e.g. "variables", "dom_manipulation")
+- label: a concise 2-4 word display name (e.g. "Variables", "DOM Manipulation")
+- level: one of "Beginner", "Intermediate", or "Advanced"
+- summary: 1-2 sentence explanation of the concept
+- why: why this concept matters at this stage
 
-Example output for learning "JavaScript":
+Return edges representing prerequisite dependencies:
+- source: id of the prerequisite concept
+- target: id of the concept that depends on it
+- relationship: 1 sentence explaining how the source enables the target
+
+Rules:
+- Every node must appear in at least one edge (as source or target).
+- Edges should flow from foundational to advanced concepts (Beginner → Intermediate → Advanced).
+- Cross-level edges are allowed (e.g., a Beginner concept can connect directly to an Advanced one).
+- Avoid cycles: do not create circular dependency chains.
+- Keep labels concise (2-4 words max).
+- Aim for 12-20 edges total to create a well-connected but readable graph.
+
+Example output for "JavaScript":
 {
-  "Beginner": [
-    {"name": "Variables", "summary": "Named containers that store data values for use in your program.", "why": "The most fundamental building block — every program needs to store and reference data.", "connection": "Required before learning Data Types and Operators, which build on how values are stored and manipulated."},
-    {"name": "Data Types", "summary": "Categories of values like strings, numbers, and booleans that determine how data behaves.", "why": "Understanding types prevents bugs and enables correct use of operators and comparisons.", "connection": "Feeds into Operators and Conditional Statements, where type behavior determines outcomes."}
+  "nodes": [
+    {"id": "variables", "label": "Variables", "level": "Beginner", "summary": "Named containers that store data values.", "why": "The most fundamental building block of any program."},
+    {"id": "data_types", "label": "Data Types", "level": "Beginner", "summary": "Categories like strings, numbers, and booleans.", "why": "Understanding types prevents bugs and enables correct operations."},
+    {"id": "closures", "label": "Closures", "level": "Advanced", "summary": "Functions retaining access to their outer scope.", "why": "Enables data privacy, currying, and factory functions."}
   ],
-  "Intermediate": [
-    {"name": "DOM Manipulation", "summary": "Programmatically reading and changing HTML elements in the browser.", "why": "Bridges JavaScript logic to visible UI changes, making web pages interactive.", "connection": "Foundation for Events and frameworks like React that abstract DOM updates."}
-  ],
-  "Advanced": [
-    {"name": "Closures", "summary": "Functions that retain access to their outer scope even after the outer function returns.", "why": "Enables powerful patterns like data privacy, currying, and factory functions.", "connection": "Key to understanding module patterns, React hooks, and functional programming paradigms."}
+  "edges": [
+    {"source": "variables", "target": "data_types", "relationship": "Understanding variable storage is needed before learning how different data types behave."},
+    {"source": "data_types", "target": "closures", "relationship": "Type knowledge underpins how closed-over values are captured and used."}
   ]
 }"""
+
+LEVEL_ORDER = {"Beginner": 0, "Intermediate": 1, "Advanced": 2}
 
 
 class ConceptDetail(BaseModel):
@@ -48,12 +64,141 @@ class ConceptDetail(BaseModel):
     connection: str
 
 
+class GraphNode(BaseModel):
+    """A concept node in the learning path graph."""
+
+    id: str
+    label: str
+    level: str
+    summary: str
+    why: str
+
+
+class GraphEdge(BaseModel):
+    """A directed dependency edge between two concepts."""
+
+    source: str
+    target: str
+    relationship: str
+
+
+class LearningPathGraphOutput(BaseModel):
+    """Graph-based schema enforced via OpenAI Structured Outputs."""
+
+    nodes: list[GraphNode]
+    edges: list[GraphEdge]
+
+
 class LearningPathOutput(BaseModel):
-    """Schema enforced via OpenAI Structured Outputs."""
+    """Legacy schema kept for backward compatibility in tests."""
 
     Beginner: list[ConceptDetail]
     Intermediate: list[ConceptDetail]
     Advanced: list[ConceptDetail]
+
+
+def break_cycles(nodes: list[dict], edges: list[dict]) -> list[dict]:
+    """Remove edges that form cycles, preferring to drop back-edges
+    (those pointing from a higher difficulty level to a lower one)."""
+    node_level = {n["id"]: LEVEL_ORDER.get(n["level"], 1) for n in nodes}
+    node_ids = {n["id"] for n in nodes}
+
+    valid_edges = [e for e in edges if e["source"] in node_ids and e["target"] in node_ids]
+
+    adj: dict[str, list[str]] = defaultdict(list)
+    edge_map: dict[tuple[str, str], dict] = {}
+    for e in valid_edges:
+        adj[e["source"]].append(e["target"])
+        edge_map[(e["source"], e["target"])] = e
+
+    WHITE, GRAY, BLACK = 0, 1, 2
+    color: dict[str, int] = {nid: WHITE for nid in node_ids}
+    back_edges: list[tuple[str, str]] = []
+
+    def dfs(u: str) -> None:
+        color[u] = GRAY
+        for v in adj.get(u, []):
+            if color.get(v) == GRAY:
+                back_edges.append((u, v))
+            elif color.get(v) == WHITE:
+                dfs(v)
+        color[u] = BLACK
+
+    for nid in node_ids:
+        if color[nid] == WHITE:
+            dfs(nid)
+
+    if not back_edges:
+        return valid_edges
+
+    removed = set()
+    for u, v in back_edges:
+        if (u, v) not in removed:
+            removed.add((u, v))
+            logger.info("Broke cycle by removing edge {} -> {}", u, v)
+
+    return [e for e in valid_edges if (e["source"], e["target"]) not in removed]
+
+
+def topological_sort_within_level(
+    nodes: list[dict], edges: list[dict], level: str
+) -> list[dict]:
+    """Return nodes of a given level in topological order based on edges."""
+    level_nodes = [n for n in nodes if n["level"] == level]
+    level_ids = {n["id"] for n in level_nodes}
+    node_map = {n["id"]: n for n in level_nodes}
+
+    in_degree: dict[str, int] = {nid: 0 for nid in level_ids}
+    adj: dict[str, list[str]] = defaultdict(list)
+    for e in edges:
+        if e["source"] in level_ids and e["target"] in level_ids:
+            adj[e["source"]].append(e["target"])
+            in_degree[e["target"]] = in_degree.get(e["target"], 0) + 1
+
+    queue = deque(nid for nid in level_ids if in_degree[nid] == 0)
+    result = []
+    while queue:
+        nid = queue.popleft()
+        result.append(node_map[nid])
+        for neighbor in adj.get(nid, []):
+            in_degree[neighbor] -= 1
+            if in_degree[neighbor] == 0:
+                queue.append(neighbor)
+
+    seen = {n["id"] for n in result}
+    for n in level_nodes:
+        if n["id"] not in seen:
+            result.append(n)
+
+    return result
+
+
+def graph_to_levels(nodes: list[dict], edges: list[dict]) -> dict[str, list[dict]]:
+    """Convert graph nodes into Beginner/Intermediate/Advanced level buckets
+    with topological ordering, producing the legacy box-view format."""
+    levels: dict[str, list[dict]] = {}
+    for level in ("Beginner", "Intermediate", "Advanced"):
+        sorted_nodes = topological_sort_within_level(nodes, edges, level)
+        levels[level] = [
+            {
+                "name": n["label"],
+                "summary": n["summary"],
+                "why": n["why"],
+                "connection": "",
+            }
+            for n in sorted_nodes
+        ]
+
+    for e in edges:
+        source_label = next((n["label"] for n in nodes if n["id"] == e["source"]), e["source"])
+        target_label = next((n["label"] for n in nodes if n["id"] == e["target"]), e["target"])
+        for level_list in levels.values():
+            for concept in level_list:
+                if concept["name"] == source_label and not concept["connection"]:
+                    concept["connection"] = f"Leads to {target_label}: {e['relationship']}"
+                    break
+
+    return levels
 
 
 class LearningPathError(Exception):
@@ -158,7 +303,7 @@ class LearningPathService:
     async def generate_learning_path(self, topic: str) -> dict[str, Any]:
         """
         Generate learning path for the given topic.
-        Returns dict with topic, completion, usage, model.
+        Returns dict with topic, completion (nodes, edges, + level buckets), usage, model.
         Raises LearningPathError for expected request and upstream failures.
         """
         topic = self.normalize_topic(topic)
@@ -172,7 +317,7 @@ class LearningPathService:
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": f'Generate a learning path for "{topic}".'},
                 ],
-                text_format=LearningPathOutput,
+                text_format=LearningPathGraphOutput,
                 store=True,
             )
         except Exception as e:
@@ -183,12 +328,23 @@ class LearningPathService:
             logger.warning(f"Structured output parsing failed: {msg}")
             raise LearningPathError(f"Structured output parsing failed: {msg}", status_code=500)
 
-        lp = response.output_parsed.model_dump()
+        graph = response.output_parsed.model_dump()
+        nodes = graph["nodes"]
+        edges = break_cycles(nodes, graph["edges"])
+
+        levels = graph_to_levels(nodes, edges)
+
+        completion = {
+            "nodes": nodes,
+            "edges": edges,
+            **levels,
+        }
+
         usage_dict = self._build_usage_dict(response.usage)
 
         return {
             "topic": topic,
-            "completion": lp,
+            "completion": completion,
             "usage": usage_dict,
             "model": response.model or self._model,
         }
