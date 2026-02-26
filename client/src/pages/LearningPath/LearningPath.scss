@@ -92,6 +92,83 @@
       height: 30px;
     }
   }
+
+  .concept-item {
+    position: relative;
+  }
+
+  .concept-tooltip {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 4px);
+    z-index: 1000;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 18px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    min-width: 280px;
+    max-width: 360px;
+    pointer-events: none;
+    animation: fade-in 150ms ease-out;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: -6px;
+      left: 20px;
+      width: 10px;
+      height: 10px;
+      background: #ffffff;
+      border-top: 1px solid #e2e8f0;
+      border-left: 1px solid #e2e8f0;
+      transform: rotate(45deg);
+    }
+
+    h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 10px;
+      color: #1a1a2e;
+    }
+
+    .tooltip-section {
+      margin-bottom: 8px;
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .tooltip-label {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: #7c3aed;
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      p {
+        font-size: 13px;
+        line-height: 1.45;
+        color: #4a5568;
+        margin: 0;
+      }
+    }
+
+    @media (max-width: 767px) {
+      min-width: 220px;
+      max-width: 280px;
+      padding: 10px 14px;
+
+      h4 {
+        font-size: 13px;
+      }
+      .tooltip-section p {
+        font-size: 12px;
+      }
+    }
+  }
 }
 
 @keyframes float-in {

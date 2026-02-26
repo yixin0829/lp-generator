@@ -76,24 +76,45 @@ async function generateLp(topic) {
   }
 }
 
-function copyToClipboard(lp, showSnackbar) {
+function extractConceptData(completion) {
+  const details = {};
+  const flat = {};
+  for (const [level, concepts] of Object.entries(completion)) {
+    flat[level] = concepts.map((c) => {
+      if (typeof c === "string") return c;
+      details[c.name] = { summary: c.summary, why: c.why, connection: c.connection };
+      return c.name;
+    });
+  }
+  return { flat, details };
+}
+
+function copyToClipboard(lp, conceptDetails, showSnackbar) {
   if (!lp) {
     showSnackbar("Please wait until the learning path is generated!");
     return;
   }
+  const hasDetails = conceptDetails && Object.keys(conceptDetails).length > 0;
   let out = "";
   for (const title of Object.keys(lp)) {
-    out = out + title + "\n";
+    out += `## ${title}\n\n`;
     for (const step of lp[title]) {
-      out = out + "\t" + step + "\n";
+      const d = hasDetails ? conceptDetails[step] : null;
+      out += `- **${step}**`;
+      if (d?.summary) out += ` — ${d.summary}`;
+      out += "\n";
+      if (d?.why) out += `  - *Why it matters:* ${d.why}\n`;
+      if (d?.connection) out += `  - *Connects to:* ${d.connection}\n`;
     }
+    out += "\n";
   }
-  navigator.clipboard.writeText(out);
+  navigator.clipboard.writeText(out.trimEnd());
   showSnackbar("Copied to clipboard!");
 }
 
 export default function LearningPath() {
   const [lp, setLp] = useState(null);
+  const [conceptDetails, setConceptDetails] = useState({});
   const [badRequest, setBadRequest] = useState(false);
   const [isModeratedTopic, setIsModeratedTopic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -103,6 +124,7 @@ export default function LearningPath() {
 
   useEffect(() => {
     setLp(null);
+    setConceptDetails({});
     setBadRequest(false);
     setIsModeratedTopic(false);
 
@@ -128,7 +150,9 @@ export default function LearningPath() {
         setIsModeratedTopic(isModerationError(statusCode, errorDetail));
         setBadRequest(true);
       } else {
-        setLp(completion);
+        const { flat, details } = extractConceptData(completion);
+        setConceptDetails(details);
+        setLp(flat);
       }
       setIsLoading(false);
     };
@@ -165,7 +189,7 @@ export default function LearningPath() {
           src={CopyToClip}
           className="copy-button"
           onClick={() => {
-            copyToClipboard(lp, enqueueSnackbar);
+            copyToClipboard(lp, conceptDetails, enqueueSnackbar);
           }}
           alt="copy"
         />
@@ -192,7 +216,7 @@ export default function LearningPath() {
           )}
         </div>
       ) : lp ? (
-        <LPItems key={topic} lp={lp} setLp={setLp} />
+        <LPItems key={topic} lp={lp} setLp={setLp} conceptDetails={conceptDetails} />
       ) : (
         <div
           style={{
@@ -240,7 +264,7 @@ function SearchMore() {
   );
 }
 
-function LPItems({ lp, setLp }) {
+function LPItems({ lp, setLp, conceptDetails }) {
   const [items, setItems] = useState(lp);
   const [activeId, setActiveId] = useState();
   const sensors = useSensors(
@@ -371,7 +395,7 @@ function LPItems({ lp, setLp }) {
         onDragEnd={handleDragEnd}
       >
         {Object.keys(items).map((itemsKey) => (
-          <Container key={itemsKey} id={itemsKey} items={items[itemsKey]} />
+          <Container key={itemsKey} id={itemsKey} items={items[itemsKey]} conceptDetails={conceptDetails} />
         ))}
         <DragOverlay dropAnimation={dropAnimation}>
           {activeId ? <Item id={activeId} /> : null}
@@ -381,7 +405,7 @@ function LPItems({ lp, setLp }) {
   );
 }
 
-function Container({ id, items }) {
+function Container({ id, items, conceptDetails }) {
   const { setNodeRef } = useDroppable({ id });
 
   return (
@@ -392,15 +416,15 @@ function Container({ id, items }) {
     >
       <div ref={setNodeRef} className="level-container">
         <h2>{id}</h2>
-        {(Array.isArray(items) ? items : []).map((id) => (
-          <SortableItem key={id} id={id} />
+        {(Array.isArray(items) ? items : []).map((itemId) => (
+          <SortableItem key={itemId} id={itemId} details={conceptDetails?.[itemId]} />
         ))}
       </div>
     </SortableContext>
   );
 }
 
-function SortableItem({ id }) {
+function SortableItem({ id, details }) {
   const {
     attributes,
     listeners,
@@ -416,15 +440,39 @@ function SortableItem({ id }) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <Item id={id} style={{ opacity: isDragging ? 0.5 : 1 }} />
+      <Item id={id} style={{ opacity: isDragging ? 0.5 : 1 }} details={isDragging ? null : details} />
     </div>
   );
 }
 
-function Item({ id, style }) {
+function Item({ id, style, details }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
-    <div style={style}>
+    <div
+      style={style}
+      className="concept-item"
+      onMouseEnter={() => details && setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <li>{id}</li>
+      {hovered && details && (
+        <div className="concept-tooltip">
+          <h4>{id}</h4>
+          <div className="tooltip-section">
+            <span className="tooltip-label">What it is</span>
+            <p>{details.summary}</p>
+          </div>
+          <div className="tooltip-section">
+            <span className="tooltip-label">Why it matters</span>
+            <p>{details.why}</p>
+          </div>
+          <div className="tooltip-section">
+            <span className="tooltip-label">How it connects</span>
+            <p>{details.connection}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
