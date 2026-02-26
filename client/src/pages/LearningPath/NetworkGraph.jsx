@@ -104,11 +104,21 @@ export default function NetworkGraph({ nodes, edges }) {
       .attr("stroke", "#cbd5e1")
       .attr("stroke-width", 2)
       .attr("marker-end", `url(#${ARROW_ID})`)
+      .attr("pointer-events", "none");
+
+    const linkHitArea = g
+      .append("g")
+      .attr("class", "link-hit-areas")
+      .selectAll("line")
+      .data(simEdges)
+      .join("line")
+      .attr("stroke", "transparent")
+      .attr("stroke-width", 14)
       .attr("cursor", "pointer")
       .on("mouseenter", (event, d) => {
         const sourceNode = simNodes.find((n) => n.id === (typeof d.source === "object" ? d.source.id : d.source));
         const targetNode = simNodes.find((n) => n.id === (typeof d.target === "object" ? d.target.id : d.target));
-        d3.select(event.target).attr("stroke", "#7c3aed").attr("stroke-width", 3);
+        linkGroup.filter((ld) => ld === d).attr("stroke", "#7c3aed").attr("stroke-width", 3);
         setTooltip({
           type: "edge",
           x: event.clientX,
@@ -123,8 +133,8 @@ export default function NetworkGraph({ nodes, edges }) {
       .on("mousemove", (event) => {
         setTooltip((prev) => (prev ? { ...prev, x: event.clientX, y: event.clientY } : null));
       })
-      .on("mouseleave", (event) => {
-        d3.select(event.target).attr("stroke", "#cbd5e1").attr("stroke-width", 2);
+      .on("mouseleave", (event, d) => {
+        linkGroup.filter((ld) => ld === d).attr("stroke", "#cbd5e1").attr("stroke-width", 2);
         setTooltip(null);
       });
 
@@ -216,6 +226,12 @@ export default function NetworkGraph({ nodes, edges }) {
       .force("y", d3.forceY(height / 2).strength(0.05))
       .on("tick", () => {
         linkGroup
+          .attr("x1", (d) => d.source.x)
+          .attr("y1", (d) => d.source.y)
+          .attr("x2", (d) => d.target.x)
+          .attr("y2", (d) => d.target.y);
+
+        linkHitArea
           .attr("x1", (d) => d.source.x)
           .attr("y1", (d) => d.source.y)
           .attr("x2", (d) => d.target.x)
