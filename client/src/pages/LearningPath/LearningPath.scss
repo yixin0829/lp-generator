@@ -52,6 +52,8 @@
   }
 
   .level-container {
+    position: relative;
+    z-index: 0;
     border-radius: 10px;
     border-color: #00000025;
     border-width: 2px;
@@ -64,6 +66,10 @@
       padding: 15px 20px;
     }
     opacity: 0;
+
+    &:hover {
+      z-index: 10;
+    }
   }
   @for $i from 1 to 100 {
     div > .level-container:nth-child(#{$i}) {
@@ -167,6 +173,138 @@
       .tooltip-section p {
         font-size: 12px;
       }
+    }
+  }
+
+  .view-toggle {
+    display: flex;
+    gap: 4px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 4px;
+    width: fit-content;
+    margin-bottom: 18px;
+
+    button {
+      padding: 7px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 200ms;
+      background: transparent;
+      color: #64748b;
+
+      &.active {
+        background: #ffffff;
+        color: #1e293b;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      &:hover:not(.active) {
+        color: #334155;
+      }
+    }
+  }
+}
+
+.network-graph-container {
+  position: relative;
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fafbfc;
+  overflow: hidden;
+  animation: fade-in 600ms ease-out;
+
+  .network-graph-svg {
+    display: block;
+    width: 100%;
+    touch-action: none;
+  }
+
+  .graph-legend {
+    display: flex;
+    gap: 16px;
+    padding: 12px 18px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff;
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+  }
+}
+
+.graph-tooltip {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  min-width: 240px;
+  max-width: 340px;
+  animation: fade-in 100ms ease-out;
+
+  h4 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 10px;
+    color: #1a1a2e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .edge-title {
+    font-size: 14px;
+    color: #7c3aed;
+  }
+
+  .level-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .tooltip-section {
+    margin-bottom: 8px;
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .tooltip-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #7c3aed;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    p {
+      font-size: 13px;
+      line-height: 1.45;
+      color: #4a5568;
+      margin: 0;
     }
   }
 }

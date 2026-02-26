@@ -25,12 +25,18 @@ class TestGetLpSuccess:
             return_value={
                 "topic": "React",
                 "completion": {
+                    "nodes": [
+                        {"id": "jsx", "label": "JSX", "level": "Beginner",
+                         "summary": "A syntax extension for JavaScript.",
+                         "why": "Foundation of React UI."},
+                    ],
+                    "edges": [],
                     "Beginner": [
                         {
                             "name": "JSX",
                             "summary": "A syntax extension for JavaScript.",
                             "why": "Foundation of React UI.",
-                            "connection": "Required before Components.",
+                            "connection": "",
                         }
                     ],
                     "Intermediate": [],
@@ -51,6 +57,8 @@ class TestGetLpSuccess:
         assert resp.status_code == 200
         data = resp.json()
         assert data["topic"] == "React"
+        assert "nodes" in data["completion"]
+        assert "edges" in data["completion"]
         assert "Beginner" in data["completion"]
         assert data["usage"]["total_tokens"] == 30
         mock_counter.increment_learning_paths_generated.assert_called_once()
@@ -151,12 +159,18 @@ class TestGetLpError:
 SAMPLE_LP = {
     "topic": "React",
     "completion": {
+        "nodes": [
+            {"id": "jsx", "label": "JSX", "level": "Beginner",
+             "summary": "A syntax extension for JavaScript.",
+             "why": "Foundation of React UI."},
+        ],
+        "edges": [],
         "Beginner": [
             {
                 "name": "JSX",
                 "summary": "A syntax extension for JavaScript.",
                 "why": "Foundation of React UI.",
-                "connection": "Required before Components.",
+                "connection": "",
             }
         ],
         "Intermediate": [],

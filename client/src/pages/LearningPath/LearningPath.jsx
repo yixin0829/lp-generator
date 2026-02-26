@@ -30,6 +30,7 @@ import Button from "../../components/Button/Button";
 import { useSnackbar } from "notistack";
 import { apiUrl } from "../../config/api";
 import Seo from "../../seo/Seo";
+import NetworkGraph from "./NetworkGraph";
 
 const MODERATION_DETAIL_HINTS = ["content policy", "moderation", "flagged"];
 
@@ -79,14 +80,20 @@ async function generateLp(topic) {
 function extractConceptData(completion) {
   const details = {};
   const flat = {};
+  const graphData = {
+    nodes: completion.nodes || [],
+    edges: completion.edges || [],
+  };
+
   for (const [level, concepts] of Object.entries(completion)) {
+    if (level === "nodes" || level === "edges") continue;
     flat[level] = concepts.map((c) => {
       if (typeof c === "string") return c;
       details[c.name] = { summary: c.summary, why: c.why, connection: c.connection };
       return c.name;
     });
   }
-  return { flat, details };
+  return { flat, details, graphData };
 }
 
 function copyToClipboard(lp, conceptDetails, showSnackbar) {
@@ -115,6 +122,8 @@ function copyToClipboard(lp, conceptDetails, showSnackbar) {
 export default function LearningPath() {
   const [lp, setLp] = useState(null);
   const [conceptDetails, setConceptDetails] = useState({});
+  const [graphData, setGraphData] = useState(null);
+  const [viewMode, setViewMode] = useState("graph");
   const [badRequest, setBadRequest] = useState(false);
   const [isModeratedTopic, setIsModeratedTopic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -125,6 +134,7 @@ export default function LearningPath() {
   useEffect(() => {
     setLp(null);
     setConceptDetails({});
+    setGraphData(null);
     setBadRequest(false);
     setIsModeratedTopic(false);
 
@@ -143,16 +153,16 @@ export default function LearningPath() {
       const hasValidCompletion =
         completion &&
         typeof completion === "object" &&
-        !Array.isArray(completion) &&
-        Object.values(completion).every((value) => Array.isArray(value));
+        !Array.isArray(completion);
 
       if (statusCode !== 200 || !hasValidCompletion) {
         setIsModeratedTopic(isModerationError(statusCode, errorDetail));
         setBadRequest(true);
       } else {
-        const { flat, details } = extractConceptData(completion);
+        const { flat, details, graphData: gd } = extractConceptData(completion);
         setConceptDetails(details);
         setLp(flat);
+        setGraphData(gd);
       }
       setIsLoading(false);
     };
@@ -172,6 +182,8 @@ export default function LearningPath() {
       </div>
     );
   }
+
+  const hasGraph = graphData?.nodes?.length > 0;
 
   return (
     <div className="learning-path-page">
@@ -195,7 +207,9 @@ export default function LearningPath() {
         />
       </div>
       <p>
-        Drag and drop bullets to reorder and copy the result to your own notes!
+        {viewMode === "graph"
+          ? "Explore the concept graph — hover nodes and edges for details."
+          : "Drag and drop bullets to reorder and copy the result to your own notes!"}
       </p>
       {badRequest || lp ? <SearchMore /> : <div></div>}
       {badRequest ? (
@@ -216,7 +230,33 @@ export default function LearningPath() {
           )}
         </div>
       ) : lp ? (
-        <LPItems key={topic} lp={lp} setLp={setLp} conceptDetails={conceptDetails} />
+        <>
+          {hasGraph && (
+            <div className="view-toggle">
+              <button
+                className={viewMode === "graph" ? "active" : ""}
+                onClick={() => setViewMode("graph")}
+              >
+                Graph
+              </button>
+              <button
+                className={viewMode === "list" ? "active" : ""}
+                onClick={() => setViewMode("list")}
+              >
+                List
+              </button>
+            </div>
+          )}
+          {viewMode === "graph" && hasGraph ? (
+            <NetworkGraph
+              key={topic}
+              nodes={graphData.nodes}
+              edges={graphData.edges}
+            />
+          ) : (
+            <LPItems key={topic} lp={lp} setLp={setLp} conceptDetails={conceptDetails} />
+          )}
+        </>
       ) : (
         <div
           style={{
