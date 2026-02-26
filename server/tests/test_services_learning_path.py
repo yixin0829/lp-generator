@@ -60,7 +60,18 @@ class TestGenerateLearningPath:
     async def test_success_returns_expected_structure(
         self, service: LearningPathService, mock_client, mocker
     ):
-        lp_data = {"Beginner": ["A"], "Intermediate": [], "Advanced": []}
+        lp_data = {
+            "Beginner": [
+                {
+                    "name": "A",
+                    "summary": "First concept.",
+                    "why": "Foundational concept.",
+                    "connection": "Leads to everything else.",
+                }
+            ],
+            "Intermediate": [],
+            "Advanced": [],
+        }
         mock_client.moderations.create = mocker.AsyncMock(
             return_value=mocker.Mock(results=[mocker.Mock(flagged=False)])
         )

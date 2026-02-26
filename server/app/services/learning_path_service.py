@@ -16,22 +16,44 @@ from openai import (
 )
 from pydantic import BaseModel
 
-SYSTEM_PROMPT = """Generate a list of key concepts for learning a new topic and rank them from easiest to most difficult. The generated key concepts should then be grouped as "Beginner", "Intermediate", or "Advanced".
+SYSTEM_PROMPT = """Generate a structured learning path for a given topic. For each concept, provide:
+- name: the concept name
+- summary: a 1-2 sentence explanation of what this concept is
+- why: why this concept is important and should be learned at this stage
+- connection: how this concept connects to and enables downstream concepts
+
+Group concepts into "Beginner", "Intermediate", and "Advanced" levels, ordered from easiest to most difficult.
 
 Example output for learning "JavaScript":
 {
-  "Beginner": ["Variables", "Data Types", "Operators", "Conditional Statements", "Arrays", "Loops", "Functions", "Scope", "Objects"],
-  "Intermediate": ["Events", "DOM Manipulation", "Error Handling", "Regular Expressions", "JSON", "AJAX", "Promises"],
-  "Advanced": ["Prototypal Inheritance", "Closures", "Currying", "Async/Await", "ES6 Features", "Webpack", "Babel", "TypeScript"]
+  "Beginner": [
+    {"name": "Variables", "summary": "Named containers that store data values for use in your program.", "why": "The most fundamental building block — every program needs to store and reference data.", "connection": "Required before learning Data Types and Operators, which build on how values are stored and manipulated."},
+    {"name": "Data Types", "summary": "Categories of values like strings, numbers, and booleans that determine how data behaves.", "why": "Understanding types prevents bugs and enables correct use of operators and comparisons.", "connection": "Feeds into Operators and Conditional Statements, where type behavior determines outcomes."}
+  ],
+  "Intermediate": [
+    {"name": "DOM Manipulation", "summary": "Programmatically reading and changing HTML elements in the browser.", "why": "Bridges JavaScript logic to visible UI changes, making web pages interactive.", "connection": "Foundation for Events and frameworks like React that abstract DOM updates."}
+  ],
+  "Advanced": [
+    {"name": "Closures", "summary": "Functions that retain access to their outer scope even after the outer function returns.", "why": "Enables powerful patterns like data privacy, currying, and factory functions.", "connection": "Key to understanding module patterns, React hooks, and functional programming paradigms."}
+  ]
 }"""
+
+
+class ConceptDetail(BaseModel):
+    """A single concept with enriched metadata for the learning path."""
+
+    name: str
+    summary: str
+    why: str
+    connection: str
 
 
 class LearningPathOutput(BaseModel):
     """Schema enforced via OpenAI Structured Outputs."""
 
-    Beginner: list[str]
-    Intermediate: list[str]
-    Advanced: list[str]
+    Beginner: list[ConceptDetail]
+    Intermediate: list[ConceptDetail]
+    Advanced: list[ConceptDetail]
 
 
 class LearningPathError(Exception):
@@ -48,7 +70,7 @@ class LearningPathService:
     def __init__(
         self,
         client: AsyncOpenAI,
-        model: str = "gpt-4.1-mini",
+        model: str = "[REDACTED]",
         max_topic_length: int = 120,
     ) -> None:
         self._client = client
