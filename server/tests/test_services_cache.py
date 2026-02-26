@@ -14,7 +14,18 @@ from app.services.cache_service import (
 
 SAMPLE_PAYLOAD = {
     "topic": "React",
-    "completion": {"Beginner": ["JSX"], "Intermediate": [], "Advanced": []},
+    "completion": {
+        "Beginner": [
+            {
+                "name": "JSX",
+                "summary": "A syntax extension for JavaScript.",
+                "why": "Foundation of React UI.",
+                "connection": "Required before Components.",
+            }
+        ],
+        "Intermediate": [],
+        "Advanced": [],
+    },
     "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
     "model": "gpt-5-mini",
 }
