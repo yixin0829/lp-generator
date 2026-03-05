@@ -32,6 +32,7 @@ import { apiUrl } from "../../config/api";
 import Seo from "../../seo/Seo";
 import NetworkGraph from "./NetworkGraph";
 
+const LEVEL_ORDER = ["Beginner", "Intermediate", "Advanced"];
 const MODERATION_DETAIL_HINTS = ["content policy", "moderation", "flagged"];
 
 function isModerationError(statusCode, detail) {
@@ -85,8 +86,9 @@ function extractConceptData(completion) {
     edges: completion.edges || [],
   };
 
-  for (const [level, concepts] of Object.entries(completion)) {
-    if (level === "nodes" || level === "edges") continue;
+  for (const level of LEVEL_ORDER) {
+    const concepts = completion[level];
+    if (!concepts) continue;
     flat[level] = concepts.map((c) => {
       if (typeof c === "string") return c;
       details[c.name] = { summary: c.summary, why: c.why, connection: c.connection };
