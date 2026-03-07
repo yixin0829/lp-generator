@@ -197,7 +197,7 @@ export default function LearningPath() {
       />
       <div className="title-container">
         <h1>
-          Learning <div className="accent-text">{topic}</div> ...
+          Learning <div className="gradient-text">{topic}</div> ...
         </h1>
         <img
           src={CopyToClip}

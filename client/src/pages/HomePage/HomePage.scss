@@ -47,9 +47,13 @@
     }
   }
 
-  .accent-text {
-    color: var(--accent-color);
+  .gradient-text {
+    background-image: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
     font-weight: 700;
+    color: transparent;
     display: inline;
   }
 
