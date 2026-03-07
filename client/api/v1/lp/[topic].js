@@ -1,31 +1,21 @@
 export const maxDuration = 60;
 
-export default async function handler(request) {
-  if (request.method !== "GET") {
-    return new Response(JSON.stringify({ detail: "Method not allowed." }), {
-      status: 405,
-      headers: { Allow: "GET", "content-type": "application/json" },
-    });
+export default async function handler(req, res) {
+  if (req.method !== "GET") {
+    return res.status(405).setHeader("Allow", "GET").json({ detail: "Method not allowed." });
   }
 
   const backendBaseUrl = process.env.BACKEND_BASE_URL?.trim().replace(/\/$/, "");
   const backendApiKey = process.env.BACKEND_API_KEY?.trim();
   if (!backendBaseUrl || !backendApiKey) {
-    return new Response(JSON.stringify({ detail: "Backend proxy is not configured." }), {
-      status: 500,
-      headers: { "content-type": "application/json" },
-    });
+    return res.status(500).json({ detail: "Backend proxy is not configured." });
   }
 
   // Extract topic from URL path: /api/v1/lp/<topic>
-  const url = new URL(request.url);
-  const pathSegment = url.pathname.split("/").pop() ?? "";
+  const pathSegment = req.url.split("/").pop() ?? "";
   const topic = decodeURIComponent(pathSegment).trim();
   if (!topic) {
-    return new Response(JSON.stringify({ detail: "Missing topic." }), {
-      status: 400,
-      headers: { "content-type": "application/json" },
-    });
+    return res.status(400).json({ detail: "Missing topic." });
   }
 
   try {
@@ -39,14 +29,8 @@ export default async function handler(request) {
 
     const body = await upstream.text();
     const contentType = upstream.headers.get("content-type") ?? "application/json";
-    return new Response(body, {
-      status: upstream.status,
-      headers: { "content-type": contentType },
-    });
+    return res.status(upstream.status).setHeader("content-type", contentType).send(body);
   } catch {
-    return new Response(JSON.stringify({ detail: "Failed to reach backend service." }), {
-      status: 502,
-      headers: { "content-type": "application/json" },
-    });
+    return res.status(502).json({ detail: "Failed to reach backend service." });
   }
 }
