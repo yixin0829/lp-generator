@@ -119,7 +119,7 @@ export default function HomePage() {
       </h2>
       <div style={{ height: "4px" }} />
       <h2>
-        <div className="gradient-text">{lpCounter !== 0 ? lpCounter : ""}</div>{" "}
+        <div className="accent-text">{lpCounter !== 0 ? lpCounter : ""}</div>{" "}
         paths have been generated and learnt.
       </h2>
       <div style={{ height: "25px" }} />

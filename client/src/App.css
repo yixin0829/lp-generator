@@ -36,8 +36,7 @@
   --input-text: inherit;
   --input-placeholder: #757575;
 
-  --gradient-start: #9123d1ee;
-  --gradient-end: #5e5ec2cb;
+  --accent-color: #c2410c;
 
   --heading-shadow: 0px 4px 4px #00000040;
   --header-text-shadow: 1px 1px 10px #ffffff, 1px 1px 10px #cccccc,
@@ -122,8 +121,7 @@
   --input-text: #eeeeee;
   --input-placeholder: #707070;
 
-  --gradient-start: #b366e0;
-  --gradient-end: #8888e8;
+  --accent-color: #fb923c;
 
   --heading-shadow: 0px 4px 8px rgba(0, 0, 0, 0.6);
   --header-text-shadow: none;
