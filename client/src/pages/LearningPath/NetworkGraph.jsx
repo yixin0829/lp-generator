@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as d3 from "d3";
+import { useTheme } from "../../context/ThemeContext";
 
 const LEVEL_COLORS = {
   Beginner: "#22c55e",
@@ -8,9 +9,16 @@ const LEVEL_COLORS = {
 };
 
 const LEVEL_COLORS_LIGHT = {
-  Beginner: "#dcfce7",
-  Intermediate: "#fef3c7",
-  Advanced: "#fee2e2",
+  light: {
+    Beginner: "#dcfce7",
+    Intermediate: "#fef3c7",
+    Advanced: "#fee2e2",
+  },
+  dark: {
+    Beginner: "#14532d",
+    Intermediate: "#713f12",
+    Advanced: "#7f1d1d",
+  },
 };
 
 const NODE_RADIUS = 28;
@@ -38,12 +46,24 @@ function wrapText(text, maxWidth) {
   return lines;
 }
 
+function getThemeColors(theme) {
+  const isDark = theme === "dark";
+  return {
+    nodeFills: LEVEL_COLORS_LIGHT[isDark ? "dark" : "light"],
+    nodeText: isDark ? "#eeeeee" : "#1e293b",
+    edge: isDark ? "#3e3e3e" : "#cbd5e1",
+    arrow: isDark ? "#585858" : "#94a3b8",
+    edgeHighlight: "#7c3aed",
+  };
+}
+
 export default function NetworkGraph({ nodes, edges }) {
   const svgRef = useRef(null);
   const containerRef = useRef(null);
   const simulationRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
   const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
+  const { theme } = useTheme();
 
   const handleResize = useCallback(() => {
     if (containerRef.current) {
@@ -64,6 +84,7 @@ export default function NetworkGraph({ nodes, edges }) {
   useEffect(() => {
     if (!nodes?.length || !svgRef.current) return;
 
+    const colors = getThemeColors(theme);
     const { width, height } = dimensions;
     const nodeMap = new Map(nodes.map((n) => [n.id, { ...n }]));
     const validEdges = edges.filter((e) => nodeMap.has(e.source) && nodeMap.has(e.target));
@@ -86,7 +107,7 @@ export default function NetworkGraph({ nodes, edges }) {
       .attr("orient", "auto")
       .append("path")
       .attr("d", "M0,0 L10,3 L0,6 Z")
-      .attr("fill", "#94a3b8");
+      .attr("fill", colors.arrow);
 
     const g = svg.append("g");
 
@@ -101,7 +122,7 @@ export default function NetworkGraph({ nodes, edges }) {
       .selectAll("line")
       .data(simEdges)
       .join("line")
-      .attr("stroke", "#cbd5e1")
+      .attr("stroke", colors.edge)
       .attr("stroke-width", 2)
       .attr("marker-end", `url(#${ARROW_ID})`)
       .attr("pointer-events", "none");
@@ -118,7 +139,7 @@ export default function NetworkGraph({ nodes, edges }) {
       .on("mouseenter", (event, d) => {
         const sourceNode = simNodes.find((n) => n.id === (typeof d.source === "object" ? d.source.id : d.source));
         const targetNode = simNodes.find((n) => n.id === (typeof d.target === "object" ? d.target.id : d.target));
-        linkGroup.filter((ld) => ld === d).attr("stroke", "#7c3aed").attr("stroke-width", 3);
+        linkGroup.filter((ld) => ld === d).attr("stroke", colors.edgeHighlight).attr("stroke-width", 3);
         setTooltip({
           type: "edge",
           x: event.clientX,
@@ -134,7 +155,7 @@ export default function NetworkGraph({ nodes, edges }) {
         setTooltip((prev) => (prev ? { ...prev, x: event.clientX, y: event.clientY } : null));
       })
       .on("mouseleave", (event, d) => {
-        linkGroup.filter((ld) => ld === d).attr("stroke", "#cbd5e1").attr("stroke-width", 2);
+        linkGroup.filter((ld) => ld === d).attr("stroke", colors.edge).attr("stroke-width", 2);
         setTooltip(null);
       });
 
@@ -167,7 +188,7 @@ export default function NetworkGraph({ nodes, edges }) {
     nodeGroup
       .append("circle")
       .attr("r", NODE_RADIUS)
-      .attr("fill", (d) => LEVEL_COLORS_LIGHT[d.level] || "#f1f5f9")
+      .attr("fill", (d) => colors.nodeFills[d.level] || "#f1f5f9")
       .attr("stroke", (d) => LEVEL_COLORS[d.level] || "#64748b")
       .attr("stroke-width", 2.5);
 
@@ -182,7 +203,7 @@ export default function NetworkGraph({ nodes, edges }) {
           .attr("dy", `${(i - (lines.length - 1) / 2) * 1.15 + 0.35}em`)
           .attr("font-size", lines.length > 2 ? "8px" : "9px")
           .attr("font-weight", 600)
-          .attr("fill", "#1e293b")
+          .attr("fill", colors.nodeText)
           .attr("pointer-events", "none");
       });
     });
@@ -245,7 +266,7 @@ export default function NetworkGraph({ nodes, edges }) {
     return () => {
       simulation.stop();
     };
-  }, [nodes, edges, dimensions]);
+  }, [nodes, edges, dimensions, theme]);
 
   return (
     <div ref={containerRef} className="network-graph-container">
@@ -270,8 +291,11 @@ export default function NetworkGraph({ nodes, edges }) {
 
 function GraphTooltip({ tooltip }) {
   const { type, x, y, data } = tooltip;
+  const { theme } = useTheme();
   const offsetX = 15;
   const offsetY = 10;
+
+  const fillColors = LEVEL_COLORS_LIGHT[theme === "dark" ? "dark" : "light"];
 
   const style = {
     position: "fixed",
@@ -288,7 +312,7 @@ function GraphTooltip({ tooltip }) {
           <span
             className="level-badge"
             style={{
-              background: LEVEL_COLORS_LIGHT[data.level],
+              background: fillColors[data.level],
               color: LEVEL_COLORS[data.level],
               borderColor: LEVEL_COLORS[data.level],
             }}

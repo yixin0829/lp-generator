@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { pages } from "../../util/pages";
+import ThemeToggle from "../ThemeToggle/ThemeToggle";
 import "./NavBar.scss";
 
 export default function Navbar() {
@@ -20,6 +21,7 @@ export default function Navbar() {
           </Link>
         );
       })}
+      <ThemeToggle />
     </div>
   );
 }

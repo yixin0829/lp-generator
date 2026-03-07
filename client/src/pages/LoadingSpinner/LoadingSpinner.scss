@@ -8,12 +8,13 @@
     width: 45px;
     height: 45px;
     border-radius: 15px;
-    border: #1c3e6f solid 5px;
+    border: var(--spinner-color) solid 5px;
     animation: spin ease 700ms infinite forwards;
   }
   p {
     text-align: center;
     font-size: 16px;
+    color: var(--text-secondary);
   }
 }
 
