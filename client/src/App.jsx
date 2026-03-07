@@ -2,6 +2,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SnackbarProvider } from "notistack";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 
+import { ThemeProvider } from "./context/ThemeContext";
 import NavBar from "./components/NavBar/NavBar";
 import ScrollToTop from "./components/misc/ScrollToTop/ScrollToTop";
 import "./App.css";
@@ -11,12 +12,14 @@ const appRoutes = [...pages.main, ...pages.hidden];
 
 export default function App() {
   return (
-    <SnackbarProvider>
-      <BrowserRouter>
-        <Analytics />
-        <TransitionRoutes />
-      </BrowserRouter>
-    </SnackbarProvider>
+    <ThemeProvider>
+      <SnackbarProvider>
+        <BrowserRouter>
+          <Analytics />
+          <TransitionRoutes />
+        </BrowserRouter>
+      </SnackbarProvider>
+    </ThemeProvider>
   );
 }
 

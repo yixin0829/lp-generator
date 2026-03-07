@@ -1,17 +1,19 @@
 .text-input-search {
   font-size: 17px;
-  background-color: white;
+  background-color: var(--input-bg);
+  color: var(--input-text);
   border-radius: 10px;
   margin: 4px 0px;
   padding: 12px 25px;
   width: 100%;
-  box-shadow: 0px 2px 6px 3px #c5c5c56a;
+  box-shadow: var(--shadow-sm);
   outline: none;
   border: none;
-  transition: box-shadow 300ms, padding 300ms;
+  transition: box-shadow 300ms, padding 300ms, background-color 300ms;
 
   &::placeholder {
     transition: opacity 300ms, transform 700ms;
+    color: var(--input-placeholder);
   }
 
   &:focus::placeholder {
@@ -19,13 +21,13 @@
   }
 
   &:hover {
-    box-shadow: 0px 1px 4px 2px #5757576a;
+    box-shadow: var(--shadow-md);
     padding: 12px 30px;
     transition: box-shadow 500ms, padding 500ms;
   }
 
   &:focus {
-    box-shadow: 0px 0px 6px 4px #65656547;
+    box-shadow: var(--shadow-focus);
     padding: 12px 25px;
     transition: box-shadow 500ms, padding 500ms;
   }

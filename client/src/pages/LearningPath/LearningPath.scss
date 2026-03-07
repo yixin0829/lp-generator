@@ -7,19 +7,26 @@
     font-weight: 700;
     text-transform: capitalize;
     margin-bottom: 20px;
+    color: var(--text-primary);
   }
 
   h2 {
     font-size: 27px;
     font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  p {
+    color: var(--text-secondary);
   }
 
   li {
     font-size: 20px;
     padding: 0 5px;
+    color: var(--text-primary);
     transition: background-color 500ms;
     &:hover {
-      background-color: #80808028;
+      background-color: var(--li-hover-bg);
       cursor: move;
       border-radius: 5px;
     }
@@ -55,7 +62,7 @@
     position: relative;
     z-index: 0;
     border-radius: 10px;
-    border-color: #00000025;
+    border-color: var(--border-color);
     border-width: 2px;
     padding: 20px 30px;
     border-style: solid;
@@ -89,6 +96,7 @@
     width: 40px;
     height: 40px;
     transition: opacity 500ms;
+    filter: var(--copy-btn-filter);
     &:hover {
       opacity: 0.4;
       cursor: pointer;
@@ -108,11 +116,11 @@
     left: 0;
     top: calc(100% + 4px);
     z-index: 1000;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: var(--tooltip-bg);
+    border: 1px solid var(--tooltip-border);
     border-radius: 10px;
     padding: 14px 18px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow-lg);
     min-width: 280px;
     max-width: 360px;
     pointer-events: none;
@@ -125,9 +133,9 @@
       left: 20px;
       width: 10px;
       height: 10px;
-      background: #ffffff;
-      border-top: 1px solid #e2e8f0;
-      border-left: 1px solid #e2e8f0;
+      background: var(--tooltip-bg);
+      border-top: 1px solid var(--tooltip-border);
+      border-left: 1px solid var(--tooltip-border);
       transform: rotate(45deg);
     }
 
@@ -135,7 +143,7 @@
       font-size: 15px;
       font-weight: 700;
       margin: 0 0 10px;
-      color: #1a1a2e;
+      color: var(--tooltip-heading);
     }
 
     .tooltip-section {
@@ -149,7 +157,7 @@
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.6px;
-        color: #7c3aed;
+        color: var(--tooltip-label);
         display: block;
         margin-bottom: 2px;
       }
@@ -157,7 +165,7 @@
       p {
         font-size: 13px;
         line-height: 1.45;
-        color: #4a5568;
+        color: var(--tooltip-text);
         margin: 0;
       }
     }
@@ -179,7 +187,7 @@
   .view-toggle {
     display: flex;
     gap: 4px;
-    background: #f1f5f9;
+    background: var(--view-toggle-bg);
     border-radius: 10px;
     padding: 4px;
     width: fit-content;
@@ -194,16 +202,16 @@
       cursor: pointer;
       transition: all 200ms;
       background: transparent;
-      color: #64748b;
+      color: var(--view-toggle-text);
 
       &.active {
-        background: #ffffff;
-        color: #1e293b;
+        background: var(--view-toggle-active-bg);
+        color: var(--view-toggle-active-text);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
 
       &:hover:not(.active) {
-        color: #334155;
+        color: var(--view-toggle-hover-text);
       }
     }
   }
@@ -212,9 +220,9 @@
 .network-graph-container {
   position: relative;
   width: 100%;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--graph-border);
   border-radius: 12px;
-  background: #fafbfc;
+  background: var(--graph-bg);
   overflow: hidden;
   animation: fade-in 600ms ease-out;
 
@@ -228,8 +236,8 @@
     display: flex;
     gap: 16px;
     padding: 12px 18px;
-    border-bottom: 1px solid #e2e8f0;
-    background: #ffffff;
+    border-bottom: 1px solid var(--graph-border);
+    background: var(--graph-legend-bg);
 
     .legend-item {
       display: flex;
@@ -237,7 +245,7 @@
       gap: 6px;
       font-size: 13px;
       font-weight: 600;
-      color: #475569;
+      color: var(--graph-legend-text);
     }
 
     .legend-dot {
@@ -249,11 +257,11 @@
 }
 
 .graph-tooltip {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
   border-radius: 10px;
   padding: 14px 18px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-lg);
   min-width: 240px;
   max-width: 340px;
   animation: fade-in 100ms ease-out;
@@ -262,7 +270,7 @@
     font-size: 15px;
     font-weight: 700;
     margin: 0 0 10px;
-    color: #1a1a2e;
+    color: var(--tooltip-heading);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -270,7 +278,7 @@
 
   .edge-title {
     font-size: 14px;
-    color: #7c3aed;
+    color: var(--tooltip-label);
   }
 
   .level-badge {
@@ -295,7 +303,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.6px;
-      color: #7c3aed;
+      color: var(--tooltip-label);
       display: block;
       margin-bottom: 2px;
     }
@@ -303,7 +311,7 @@
     p {
       font-size: 13px;
       line-height: 1.45;
-      color: #4a5568;
+      color: var(--tooltip-text);
       margin: 0;
     }
   }
@@ -339,6 +347,7 @@
 .bad-request {
   text-align: center;
   margin: 5px 0px;
+  color: var(--text-secondary);
 }
 
 .search-more {
@@ -346,7 +355,7 @@
 }
 
 .gradient-text {
-  background-image: linear-gradient(to right, #9123d1ee, #5e5ec2cb);
+  background-image: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;

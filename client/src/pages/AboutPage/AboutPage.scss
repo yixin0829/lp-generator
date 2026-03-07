@@ -8,8 +8,9 @@
   h1 {
     font-size: 50px;
     font-weight: 700;
-    text-shadow: 0px 4px 4px #00000040;
+    text-shadow: var(--heading-shadow);
     text-align: center;
+    color: var(--text-primary);
   }
 
   p {
@@ -17,6 +18,7 @@
     font-weight: 400;
     margin-bottom: 5px;
     text-align: center;
+    color: var(--text-secondary);
   }
 
   @media (max-width: 767px) {
