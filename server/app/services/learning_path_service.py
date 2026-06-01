@@ -1,5 +1,7 @@
 """Learning path generation service."""
 
+import asyncio
+import contextlib
 import string
 from collections import defaultdict, deque
 from typing import Any
@@ -140,9 +142,7 @@ def break_cycles(nodes: list[dict], edges: list[dict]) -> list[dict]:
     return [e for e in valid_edges if (e["source"], e["target"]) not in removed]
 
 
-def topological_sort_within_level(
-    nodes: list[dict], edges: list[dict], level: str
-) -> list[dict]:
+def topological_sort_within_level(nodes: list[dict], edges: list[dict], level: str) -> list[dict]:
     """Return nodes of a given level in topological order based on edges."""
     level_nodes = [n for n in nodes if n["level"] == level]
     level_ids = {n["id"] for n in level_nodes}
@@ -300,18 +300,10 @@ class LearningPathService:
             "total_tokens": total_tokens,
         }
 
-    async def generate_learning_path(self, topic: str) -> dict[str, Any]:
-        """
-        Generate learning path for the given topic.
-        Returns dict with topic, completion (nodes, edges, + level buckets), usage, model.
-        Raises LearningPathError for expected request and upstream failures.
-        """
-        topic = self.normalize_topic(topic)
-        self.validate_topic_length(topic)
-        await self.check_moderation(topic)
-
+    async def _request_completion(self, topic: str) -> Any:
+        """Call OpenAI structured-output generation, mapping SDK errors."""
         try:
-            response = await self._client.responses.parse(
+            return await self._client.responses.parse(
                 model=self._model,
                 input=[
                     {"role": "system", "content": SYSTEM_PROMPT},
@@ -322,6 +314,32 @@ class LearningPathService:
             )
         except Exception as e:
             raise self._map_upstream_error(e) from e
+
+    async def generate_learning_path(self, topic: str) -> dict[str, Any]:
+        """
+        Generate learning path for the given topic.
+        Returns dict with topic, completion (nodes, edges, + level buckets), usage, model.
+        Raises LearningPathError for expected request and upstream failures.
+        """
+        topic = self.normalize_topic(topic)
+        self.validate_topic_length(topic)
+
+        # Run content moderation and generation concurrently so the moderation
+        # round-trip is removed from the critical path. Moderation still gates
+        # the response: if it flags the topic we cancel the in-flight generation
+        # and surface the moderation error instead.
+        moderation_task = asyncio.ensure_future(self.check_moderation(topic))
+        generation_task = asyncio.ensure_future(self._request_completion(topic))
+
+        try:
+            await moderation_task
+        except BaseException:
+            generation_task.cancel()
+            with contextlib.suppress(BaseException):
+                await generation_task
+            raise
+
+        response = await generation_task
 
         if response.output_parsed is None:
             msg = "Error while reading OpenAI's response.output_parsed for learning path."
