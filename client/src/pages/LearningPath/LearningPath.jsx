@@ -29,8 +29,10 @@ import { SearchbarHome } from "../HomePage/HomePage";
 import Button from "../../components/Button/Button";
 import { useSnackbar } from "notistack";
 import { apiUrl } from "../../config/api";
+import { findPublicTopicByAlias } from "../../data/publicTopics";
 import Seo from "../../seo/Seo";
 import NetworkGraph from "./NetworkGraph";
+import { createShareSnapshot } from "../../util/shareSnapshot";
 
 const LEVEL_ORDER = ["Beginner", "Intermediate", "Advanced"];
 const MODERATION_DETAIL_HINTS = ["content policy", "moderation", "flagged"];
@@ -129,14 +131,49 @@ export default function LearningPath() {
   const [badRequest, setBadRequest] = useState(false);
   const [isModeratedTopic, setIsModeratedTopic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
   const [searchParams] = useSearchParams();
   const topic = searchParams.get("term")?.trim() ?? "";
   const { enqueueSnackbar } = useSnackbar();
+
+  async function shareLearningPath() {
+    if (!lp || !graphData) return;
+    try {
+      const response = await fetch(apiUrl("/v1/shares"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createShareSnapshot({
+          topic,
+          levels: lp,
+          conceptDetails,
+          graph: graphData,
+          defaultView: viewMode,
+        })),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok || !body.share_id) throw new Error(body.detail || "Unable to create share.");
+      const createdUrl = `${window.location.origin}/share/${body.share_id}`;
+      setShareUrl(createdUrl);
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(createdUrl);
+          enqueueSnackbar("Share link copied! Anyone with the link can view this snapshot.");
+        } catch {
+          enqueueSnackbar("Share created. Copy the link shown below.");
+        }
+      } else {
+        enqueueSnackbar("Share created. Copy the link shown below.");
+      }
+    } catch (error) {
+      enqueueSnackbar(error.message || "Unable to create share.");
+    }
+  }
 
   useEffect(() => {
     setLp(null);
     setConceptDetails({});
     setGraphData(null);
+    setShareUrl("");
     setBadRequest(false);
     setIsModeratedTopic(false);
 
@@ -213,6 +250,8 @@ export default function LearningPath() {
           ? "Explore the concept graph — hover nodes and edges for details."
           : "Drag and drop bullets to reorder and copy the result to your own notes!"}
       </p>
+      {lp && <Button label="Share snapshot" onClick={shareLearningPath} />}
+      {shareUrl && <p className="share-result">Immutable share: <a href={shareUrl}>{shareUrl}</a></p>}
       {badRequest || lp ? <SearchMore /> : <div></div>}
       {badRequest ? (
         <div>
@@ -285,6 +324,12 @@ function SearchMore() {
   function goSearch() {
     const trimmedTerm = searchTerm.trim();
     if (!trimmedTerm) {
+      return;
+    }
+
+    const publicTopic = findPublicTopicByAlias(trimmedTerm);
+    if (publicTopic) {
+      navigate(`/learn/${publicTopic.slug}`);
       return;
     }
 
@@ -405,14 +450,14 @@ function LPItems({ lp, setLp, conceptDetails }) {
     const activeIndex = items[activeContainer].indexOf(active.id);
     const overIndex = items[overContainer].indexOf(overId);
     if (activeIndex !== overIndex) {
-      setItems((items) => ({
-        ...items,
-        [overContainer]: arrayMove(
-          items[overContainer],
-          activeIndex,
-          overIndex
-        ),
-      }));
+      setItems((currentItems) => {
+        const nextItems = {
+          ...currentItems,
+          [overContainer]: arrayMove(currentItems[overContainer], activeIndex, overIndex),
+        };
+        setLp(nextItems);
+        return nextItems;
+      });
     }
     setActiveId(null);
   }

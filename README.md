@@ -14,6 +14,7 @@ Why did we build LearnAnything? You might ask. Well, we want you to think of Lea
     - Set `OPENAI_API_KEY` in your shell or `.env`
     - Optional: set `CORS_ORIGINS=http://localhost:3000` (comma-separated list supported)
     - Optional: set `CACHE_BACKEND=firestore` to enable learning path caching (default: `noop` — no caching)
+    - Optional: set `SHARE_BACKEND=firestore` to enable immutable unlisted share links (default: `noop` — sharing disabled)
     - Start API: `uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
 - Frontend
     - `cd client`

@@ -100,7 +100,6 @@ class LearningPathOutput(BaseModel):
 def break_cycles(nodes: list[dict], edges: list[dict]) -> list[dict]:
     """Remove edges that form cycles, preferring to drop back-edges
     (those pointing from a higher difficulty level to a lower one)."""
-    node_level = {n["id"]: LEVEL_ORDER.get(n["level"], 1) for n in nodes}
     node_ids = {n["id"] for n in nodes}
 
     valid_edges = [e for e in edges if e["source"] in node_ids and e["target"] in node_ids]
@@ -253,8 +252,8 @@ class LearningPathService:
             )
         return LearningPathError("Unexpected upstream AI service error.", status_code=500)
 
-    async def check_moderation(self, topic: str) -> None:
-        """Check topic against OpenAI moderation. Raises LearningPathError(400) if flagged."""
+    async def check_moderation(self, topic: str | list[str]) -> None:
+        """Check one or more text chunks. Raise LearningPathError(400) if any are flagged."""
         try:
             mod_response = await self._client.moderations.create(input=topic)
         except Exception as e:
@@ -265,12 +264,14 @@ class LearningPathService:
             else mod_response.get("results", [])
         )
         if not results:
-            logger.warning("Moderation returned no results for topic={}", topic)
+            logger.warning("Moderation returned no results.")
             return
-        first = results[0]
-        flagged = first.flagged if hasattr(first, "flagged") else first.get("flagged", False)
+        flagged = any(
+            result.flagged if hasattr(result, "flagged") else result.get("flagged", False)
+            for result in results
+        )
         if flagged:
-            logger.info("Content moderation flagged topic={}", topic)
+            logger.info("Content moderation flagged submitted learning-path text.")
             raise LearningPathError(
                 (
                     "User input does not complies with OpenAI's content policy. "

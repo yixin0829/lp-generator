@@ -26,6 +26,12 @@ from app.services.feedback_service import (
     NoopFeedbackService,
 )
 from app.services.learning_path_service import LearningPathService
+from app.services.share_service import (
+    BaseShareService,
+    FirestoreShareService,
+    NoopShareService,
+    ShareConfig,
+)
 
 
 @lru_cache
@@ -111,3 +117,21 @@ def get_feedback_service() -> BaseFeedbackService:
             e,
         )
         return NoopFeedbackService()
+
+
+@lru_cache
+def get_share_service() -> BaseShareService:
+    """Provide immutable share storage without falling back to cache storage."""
+    config = get_config()
+    if config.share_backend != "firestore":
+        return NoopShareService()
+
+    try:
+        client = firestore.Client()
+        return FirestoreShareService(
+            client=client,
+            config=ShareConfig(collection=config.firestore_share_collection),
+        )
+    except Exception as e:
+        logger.warning("Firestore share storage unavailable: {}", e)
+        return NoopShareService()

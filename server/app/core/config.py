@@ -76,6 +76,11 @@ class Settings(BaseSettings):
         default="learning_path_cache", validation_alias="FIRESTORE_CACHE_COLLECTION"
     )
     cache_ttl_seconds: int = Field(default=604800, validation_alias="CACHE_TTL_SECONDS", gt=0)
+    share_backend: str = Field(default="noop", validation_alias="SHARE_BACKEND")
+    share_rate_limit: str = Field(default="5/minute", validation_alias="SHARE_RATE_LIMIT")
+    firestore_share_collection: str = Field(
+        default="learning_path_shares", validation_alias="FIRESTORE_SHARE_COLLECTION"
+    )
 
     @classmethod
     def settings_customise_sources(
@@ -95,7 +100,9 @@ class Settings(BaseSettings):
             return "development"
         return str(value).strip().lower()
 
-    @field_validator("counter_backend", "cache_backend", "feedback_backend", mode="before")
+    @field_validator(
+        "counter_backend", "cache_backend", "feedback_backend", "share_backend", mode="before"
+    )
     @classmethod
     def _normalize_backend_field(cls, value: Any) -> str:
         if value is None:
@@ -128,12 +135,16 @@ class Settings(BaseSettings):
             raise ValueError("CACHE_BACKEND must be either 'noop' or 'firestore'.")
         if self.feedback_backend not in {"noop", "firestore"}:
             raise ValueError("FEEDBACK_BACKEND must be either 'noop' or 'firestore'.")
+        if self.share_backend not in {"noop", "firestore"}:
+            raise ValueError("SHARE_BACKEND must be either 'noop' or 'firestore'.")
         if not self.lp_rate_limit:
             raise ValueError("LP_RATE_LIMIT must not be empty.")
         if not self.stats_rate_limit:
             raise ValueError("STATS_RATE_LIMIT must not be empty.")
         if not self.feedback_rate_limit:
             raise ValueError("FEEDBACK_RATE_LIMIT must not be empty.")
+        if not self.share_rate_limit:
+            raise ValueError("SHARE_RATE_LIMIT must not be empty.")
 
         if self.require_api_key is None:
             self.require_api_key = self.app_env == "production"

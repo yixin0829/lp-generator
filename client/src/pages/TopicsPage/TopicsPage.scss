@@ -1,0 +1,8 @@
+.topics-page { margin: 100px max(18px, 7%) 60px; color: var(--text-primary); }
+.topics-page > p, .topic-grid p { color: var(--text-secondary); }
+.topics-page section { margin-top: 38px; }
+.topic-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.topic-grid article { border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; }
+.topic-grid h3 { font-size: 1.15rem; }
+.breadcrumbs { margin-bottom: 22px; }
+@media (max-width: 800px) { .topic-grid { grid-template-columns: 1fr; } }

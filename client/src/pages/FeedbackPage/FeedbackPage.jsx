@@ -59,6 +59,7 @@ export default function FeedbackPage() {
         title="Feedback"
         description={`Share your feedback about ${SITE_NAME} — tell us what you love or what we can improve.`}
         path="/feedback"
+        noindex
         jsonLd={feedbackJsonLd}
       />
       <div style={{ height: "100px" }} />
