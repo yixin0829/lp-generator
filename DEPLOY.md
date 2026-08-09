@@ -53,6 +53,7 @@ flowchart LR
 - Firestore immutable share vars:
   - `SHARE_BACKEND=firestore` (set to `noop` to disable sharing with `503` responses)
   - `FIRESTORE_SHARE_COLLECTION` — use separate staging and production collections, such as `learning_path_shares_staging` and `learning_path_shares`
+  - Exact snapshot retries reuse the same content-addressed share ID; any change to the path data or default view creates a different immutable URL.
 
 ### Client (Vercel)
 

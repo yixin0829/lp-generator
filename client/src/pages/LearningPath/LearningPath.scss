@@ -215,6 +215,18 @@
       }
     }
   }
+
+  .learning-path-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+
+    .view-toggle {
+      margin-bottom: 0;
+    }
+  }
 }
 
 .network-graph-container {

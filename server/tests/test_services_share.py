@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from google.api_core.exceptions import Conflict
 
 from app.schemas.share import ShareSnapshot
 from app.services.share_service import (
@@ -45,16 +46,35 @@ def test_noop_storage_is_explicitly_disabled():
         service.get("x" * 22)
 
 
-def test_firestore_create_uses_random_url_safe_id_and_immutable_create():
+def test_firestore_create_uses_stable_url_safe_id_and_immutable_create():
     client = MagicMock()
     service = FirestoreShareService(client, ShareConfig(collection="shares"))
     first = service.create(sample_snapshot())
     second = service.create(sample_snapshot())
-    assert first != second
+    assert first == second
     assert len(first) == len(second) == 22
     assert first.replace("-", "").replace("_", "").isalnum()
     assert client.collection.return_value.document.return_value.create.call_count == 2
     client.collection.return_value.document.return_value.set.assert_not_called()
+
+
+def test_firestore_create_changes_id_when_snapshot_changes():
+    client = MagicMock()
+    service = FirestoreShareService(client, ShareConfig(collection="shares"))
+    first = service.create(sample_snapshot())
+    changed = sample_snapshot().model_copy(update={"default_view": "graph"})
+    second = service.create(changed)
+    assert first != second
+
+
+def test_firestore_create_reuses_existing_identical_snapshot():
+    client = MagicMock()
+    document = client.collection.return_value.document.return_value
+    document.create.side_effect = Conflict("already shared")
+    document.get.return_value.exists = True
+    document.get.return_value.to_dict.return_value = {"snapshot": sample_snapshot().model_dump()}
+    service = FirestoreShareService(client, ShareConfig(collection="shares"))
+    assert service.create(sample_snapshot()) == service._snapshot_id(sample_snapshot())
 
 
 def test_firestore_get_returns_exact_validated_snapshot():

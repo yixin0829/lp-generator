@@ -250,8 +250,6 @@ export default function LearningPath() {
           ? "Explore the concept graph — hover nodes and edges for details."
           : "Drag and drop bullets to reorder and copy the result to your own notes!"}
       </p>
-      {lp && <Button label="Share snapshot" onClick={shareLearningPath} />}
-      {shareUrl && <p className="share-result">Immutable share: <a href={shareUrl}>{shareUrl}</a></p>}
       {badRequest || lp ? <SearchMore /> : <div></div>}
       {badRequest ? (
         <div>
@@ -272,22 +270,26 @@ export default function LearningPath() {
         </div>
       ) : lp ? (
         <>
-          {hasGraph && (
-            <div className="view-toggle">
-              <button
-                className={viewMode === "graph" ? "active" : ""}
-                onClick={() => setViewMode("graph")}
-              >
-                Graph
-              </button>
-              <button
-                className={viewMode === "list" ? "active" : ""}
-                onClick={() => setViewMode("list")}
-              >
-                List
-              </button>
-            </div>
-          )}
+          <div className="learning-path-controls">
+            {hasGraph && (
+              <div className="view-toggle">
+                <button
+                  className={viewMode === "graph" ? "active" : ""}
+                  onClick={() => setViewMode("graph")}
+                >
+                  Graph
+                </button>
+                <button
+                  className={viewMode === "list" ? "active" : ""}
+                  onClick={() => setViewMode("list")}
+                >
+                  List
+                </button>
+              </div>
+            )}
+            <Button label="Share snapshot" onClick={shareLearningPath} />
+          </div>
+          {shareUrl && <p className="share-result">Immutable share: <a href={shareUrl}>{shareUrl}</a></p>}
           {viewMode === "graph" && hasGraph ? (
             <NetworkGraph
               key={topic}
