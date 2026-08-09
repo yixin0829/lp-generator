@@ -1,0 +1,16 @@
+{
+  "headers": [
+    {
+      "source": "/share/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/learningpath",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, follow" }]
+    }
+  ],
+  "rewrites": [
+    { "source": "/learningpath", "destination": "/learningpath/index.html" },
+    { "source": "/share/:shareId", "destination": "/api/share/:shareId" }
+  ]
+}

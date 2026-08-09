@@ -15,7 +15,7 @@ It is intentionally educational: each section includes both **steps** and **why*
 ```mermaid
 flowchart LR
     U[Browser User] --> V[Client App on Vercel]
-    V --> VP[/Vercel API Proxy<br/>/api/v1/lp/:topic<br/>/api/v1/stats/]
+    V --> VP[/Vercel API Proxy<br/>/api/v1/lp/:topic<br/>/api/v1/stats<br/>/api/v1/shares/]
     VP -->|X-API-Key| CR[Cloud Run Backend]
     CR --> OAI[OpenAI API]
     CR --> FS[Firestore]
@@ -39,6 +39,7 @@ flowchart LR
 - `RATE_LIMIT_ENABLED=true`
 - `LP_RATE_LIMIT=15/minute` (or your preferred value)
 - `STATS_RATE_LIMIT=30/minute` (or your preferred value)
+- `SHARE_RATE_LIMIT=5/minute` (creation limit; reads are not rate limited in v1)
 - `CORS_ORIGINS=<comma-separated frontend origins>`
 - Firestore counter vars:
   - `COUNTER_BACKEND=firestore`
@@ -49,6 +50,10 @@ flowchart LR
   - `CACHE_BACKEND=firestore` (set to `noop` to disable)
   - `FIRESTORE_CACHE_COLLECTION` — staging uses `learning_path_cache_staging`, prod uses `learning_path_cache`
   - `CACHE_TTL_SECONDS=604800` (7 days; tune as needed)
+- Firestore immutable share vars:
+  - `SHARE_BACKEND=firestore` (set to `noop` to disable sharing with `503` responses)
+  - `FIRESTORE_SHARE_COLLECTION` — use separate staging and production collections, such as `learning_path_shares_staging` and `learning_path_shares`
+  - Exact snapshot retries reuse the same content-addressed share ID; any change to the path data or default view creates a different immutable URL.
 
 ### Client (Vercel)
 
@@ -149,7 +154,7 @@ These are only needed when creating a new service or changing its configuration:
 gcloud run services update <your-cloud-run-service> \
   --project=<your-gcp-project> \
   --region=<your-region> \
-  --update-env-vars "^@^REQUIRE_API_KEY=true@RATE_LIMIT_ENABLED=true@LP_RATE_LIMIT=15/minute@STATS_RATE_LIMIT=30/minute@CACHE_BACKEND=firestore@CACHE_TTL_SECONDS=604800@CORS_ORIGINS=https://<vercel-preview-domain>,https://<vercel-prod-domain>"
+  --update-env-vars "^@^REQUIRE_API_KEY=true@RATE_LIMIT_ENABLED=true@LP_RATE_LIMIT=15/minute@STATS_RATE_LIMIT=30/minute@SHARE_RATE_LIMIT=5/minute@CACHE_BACKEND=firestore@CACHE_TTL_SECONDS=604800@SHARE_BACKEND=firestore@FIRESTORE_SHARE_COLLECTION=learning_path_shares@CORS_ORIGINS=https://<vercel-preview-domain>,https://<vercel-prod-domain>"
 ```
 
 #### Set/update secret references
@@ -274,19 +279,28 @@ curl -s "https://<vercel-url>/llms.txt" | head -3
 Pre-rendered HTML contains SEO tags (visible without JS):
 
 ```bash
-# View source — should contain <title>, <meta>, og:*, and JSON-LD in <head>
+# View source — should contain complete visible content plus unique metadata and JSON-LD
 curl -s "https://<vercel-url>/" | grep -E '<title>|og:title|application/ld\+json'
 curl -s "https://<vercel-url>/about" | grep -E '<title>|og:title|application/ld\+json'
+curl -s "https://<vercel-url>/topics" | grep -E '<h1>|/learn/javascript'
+curl -s "https://<vercel-url>/learn/javascript" | grep -E '<h1>|LearningResource|BreadcrumbList'
 ```
 
 In-browser checks (with JS running):
 
-- Home (`/`): title is "LearnAnything", JSON-LD contains WebSite + WebApplication + Organization
-- About (`/about`): title is "About | LearnAnything", JSON-LD contains AboutPage + Person + BreadcrumbList
+- Home (`/`): title is "LearnAnything" and featured paths are ordinary links
+- Topics (`/topics`): all 24 reviewed paths are visible as ordinary links
 - Learning path (`/learningpath?term=React`): `<meta name="robots">` is `noindex,follow`
+- Shared path (`/share/<id>`): both the HTML metadata and `X-Robots-Tag` are `noindex,nofollow`
+- Unknown `/learn/*` slug: response status is `404`
 - 404 page: `<meta name="robots">` is `noindex,follow`
 
 Validate structured data at [Google Rich Results Test](https://search.google.com/test/rich-results) and [Schema.org Validator](https://validator.schema.org/).
+
+Before production release, record Search Console baselines for manual actions, indexed pages,
+crawl errors, impressions, clicks, and affected queries. Submit the regenerated sitemap after
+deployment, then compare indexing at 2, 4, and 8 weeks. Ranking recovery is a monitored outcome,
+not a release acceptance guarantee.
 
 ### 5.5 Learning path caching works (if `CACHE_BACKEND=firestore`)
 

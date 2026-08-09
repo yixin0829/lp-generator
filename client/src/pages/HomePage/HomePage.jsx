@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "../../components/Button/Button";
 import Searchbar from "../../components/Searchbar/Searchbar";
 import { apiUrl } from "../../config/api";
 import { SITE_URL, SITE_NAME } from "../../config/site";
 import Seo from "../../seo/Seo";
+import { findPublicTopicByAlias, publicTopicBySlug } from "../../data/publicTopics";
 
 import logo from "../../assets/logo.png";
 import "./HomePage.scss";
@@ -84,6 +85,12 @@ export default function HomePage() {
   function goSearch() {
     const trimmedTerm = searchTerm.trim();
     if (!trimmedTerm) {
+      return;
+    }
+
+    const publicTopic = findPublicTopicByAlias(trimmedTerm);
+    if (publicTopic) {
+      navigate(`/learn/${publicTopic.slug}`);
       return;
     }
 
@@ -237,32 +244,16 @@ const placeholders = [
 ];
 
 export function Recommended() {
-  const navigate = useNavigate();
-
-  const [placeholdersState] = useState(
-    [...placeholders].sort(() => Math.random() - 0.5).slice(0, 5)
-  );
-
-  function onClick(searchTerm) {
-    navigate({
-      pathname: "/learningpath",
-      search: `?term=${encodeURIComponent(searchTerm)}`,
-    });
-  }
+  const featuredSlugs = ["javascript", "negotiation", "creative-writing", "cooking", "meditation"];
 
   return (
     <div>
       <h3 className="recommended-header">Recommended</h3>
       <div className="recommended-container">
-        {placeholdersState.map((element) => (
-          <div
-            key={element}
-            onClick={() => onClick(element)}
-            className="recommended-prompt"
-          >
-            {element}
-          </div>
-        ))}
+        {featuredSlugs.map((slug) => {
+          const topic = publicTopicBySlug.get(slug);
+          return <Link key={slug} to={`/learn/${slug}`} className="recommended-prompt">{topic.topic}</Link>;
+        })}
       </div>
     </div>
   );

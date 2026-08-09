@@ -1,0 +1,12 @@
+.readonly-learning-path {
+  .view-toggle { display: flex; gap: 4px; margin: 18px 0; }
+  .view-toggle button { border: 1px solid var(--border-color); border-radius: 8px; padding: 7px 18px; background: transparent; color: var(--text-primary); }
+  .view-toggle button.active { background: var(--view-toggle-active-bg); color: var(--view-toggle-active-text); }
+}
+.readonly-levels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.readonly-level { border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+.readonly-level ol { padding-left: 22px; }
+.readonly-level li { margin: 0 0 22px; }
+.readonly-level h3 { font-size: 1.05rem; }
+.readonly-level p { font-size: .92rem; color: var(--text-secondary); }
+@media (max-width: 767px) { .readonly-levels { grid-template-columns: 1fr; } }

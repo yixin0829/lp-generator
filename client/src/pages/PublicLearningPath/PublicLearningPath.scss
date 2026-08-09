@@ -1,0 +1,11 @@
+.public-learning-path { margin: 100px max(18px, 7%) 60px; color: var(--text-primary); }
+.public-learning-path h1 { font-size: clamp(2.2rem, 5vw, 4rem); }
+.topic-category { color: var(--gradient-end); font-weight: 700; }
+.introduction { max-width: 850px; font-size: 1.1rem; color: var(--text-secondary); }
+.breadcrumbs { margin-bottom: 22px; }
+.learning-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 30px 0; }
+.learning-meta section, .resources, .related-paths { border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+.resources, .related-paths { margin-top: 24px; }
+.related-paths div { display: flex; flex-wrap: wrap; gap: 12px; }
+.related-paths a { border: 1px solid var(--border-color); border-radius: 999px; padding: 8px 14px; }
+@media (max-width: 700px) { .learning-meta { grid-template-columns: 1fr; } }
