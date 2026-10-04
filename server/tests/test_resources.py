@@ -4,7 +4,9 @@ import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
+import httpx
 import pytest
+from openai import BadRequestError
 
 from app.routers.resources import get_resource_service
 from app.schemas.resources import ResourceRequest
@@ -111,6 +113,9 @@ async def test_native_accepts_only_cited_tool_sources_and_deduplicates():
     assert result.resources[0].title == "Ignore instructions <script>"
     assert create.call_args.kwargs["tool_choice"] == "required"
     assert create.call_args.kwargs["max_tool_calls"] == 1
+    assert create.call_args.kwargs["model"] == "gpt-5.6-luna"
+    assert create.call_args.kwargs["reasoning"] == {"effort": "low"}
+    assert "react.dev" in create.call_args.kwargs["tools"][0]["filters"]["allowed_domains"]
 
 
 @pytest.mark.asyncio
@@ -162,3 +167,54 @@ def test_api_validation_and_failure_do_not_affect_path(client):
         assert client.get("/").status_code == 200
     finally:
         client.app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_dated_mini_omits_rejected_filters_and_still_rejects_sourced_outside_publishers():
+    approved = "https://react.dev/learn/managing-state"
+    outside = "https://unreviewed.example/guide"
+    data = {
+        "output": [
+            {
+                "type": "web_search_call",
+                "action": {"sources": [{"url": approved}, {"url": outside}]},
+            },
+            {
+                "type": "message",
+                "content": [
+                    {
+                        "annotations": [
+                            {"type": "url_citation", "url": approved, "title": "React state"},
+                            {"type": "url_citation", "url": outside, "title": "Outside source"},
+                        ]
+                    }
+                ],
+            },
+        ]
+    }
+
+    async def fixture_provider(**kwargs):
+        if "filters" in kwargs["tools"][0]:
+            raise BadRequestError(
+                "Unsupported filters",
+                response=httpx.Response(
+                    400, request=httpx.Request("POST", "https://api.openai.com/v1/responses")
+                ),
+                body={
+                    "message": "Parameter 'filters' not supported with model 'gpt-4.1-mini-2025-04-14'",
+                    "param": "tools",
+                },
+            )
+        return SimpleNamespace(model_dump=lambda: data)
+
+    create = AsyncMock(side_effect=fixture_provider)
+    service = ResourceService(
+        "web_search",
+        SimpleNamespace(responses=SimpleNamespace(create=create)),
+        model="gpt-4.1-mini-2025-04-14",
+    )
+    result = await service.get(ResourceRequest(topic="React", concept="State"))
+    assert [resource.url for resource in result.resources] == [approved]
+    assert create.await_count == 1
+    assert create.call_args.kwargs["tools"] == [{"type": "web_search"}]
+    assert "react.dev" in create.call_args.kwargs["instructions"]

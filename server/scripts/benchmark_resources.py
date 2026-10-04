@@ -18,7 +18,12 @@ from types import SimpleNamespace
 from openai import AsyncOpenAI
 
 from app.schemas.resources import ResourceRequest
-from app.services.resource_service import CATALOGUE_VERSION, ResourceService, catalogue_resources
+from app.services.resource_service import (
+    CATALOGUE_VERSION,
+    MODEL,
+    ResourceService,
+    catalogue_resources,
+)
 
 MANIFEST = [
     ("Python", "Loops"),
@@ -133,10 +138,29 @@ class Meter:
         input_tokens = usage.get("input_tokens", 0)
         output_tokens = usage.get("output_tokens", 0)
         searches = sum(item.get("type") == "web_search_call" for item in data.get("output", []))
-        upper = input_tokens * 0.40 / 1e6 + output_tokens * 1.60 / 1e6 + searches * 0.0132
+        model = kwargs.get("model", MODEL)
+        details = usage.get("input_tokens_details") or {}
+        cached = details.get("cached_tokens", 0)
+        writes = details.get("cache_write_tokens")
+        search_tokens = usage.get("search_content_tokens", details.get("search_content_tokens"))
+        if model == "gpt-4.1-mini-2025-04-14":
+            upper = input_tokens * 0.40 / 1e6 + output_tokens * 1.60 / 1e6 + searches * 0.0132
+            metered = bool(usage and searches)
+        else:
+            # Cache writes are a subset of input, never add them to total input.
+            if isinstance(writes, int) and 0 <= cached + writes <= input_tokens:
+                input_cost = (
+                    (input_tokens - cached - writes) * 0.20 + cached * 0.02 + writes * 0.25
+                ) / 1e6
+            else:
+                input_cost = input_tokens * 0.25 / 1e6  # worst-case cache-write input rate
+            upper = input_cost + output_tokens * 1.20 / 1e6 + searches * 0.01
+            if isinstance(search_tokens, int) and search_tokens >= 0:
+                upper += search_tokens * 0.20 / 1e6
+            metered = bool(usage and searches and isinstance(search_tokens, int))
         # Keep reservation if metering is absent. Search content may already be
         # included in usage: adding its fixed fee here intentionally overcounts.
-        charged = upper if usage and searches else reservation
+        charged = upper if metered else max(reservation, upper)
         self.spent += charged - reservation
         self.persist()
         self.calls.append(
@@ -145,6 +169,14 @@ class Meter:
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
                 "search_calls": searches,
+                "model": model,
+                "input_tokens_details": {
+                    k: details[k]
+                    for k in ("cached_tokens", "cache_write_tokens", "search_content_tokens")
+                    if k in details
+                },
+                "search_content_tokens": search_tokens,
+                "metering_complete": metered,
                 "calculated_upper_bound_usd": charged,
                 "latency_ms": (time.perf_counter() - started) * 1000,
             }
@@ -171,7 +203,7 @@ async def run(args):
         (provider, topic, concept, repetition)
         for provider in ["catalogue", "web_search", "hybrid"]
         for topic, concept in MANIFEST
-        for repetition in range(3)
+        for repetition in range(2)
     ]
     random.Random(20261004).shuffle(jobs)
     if args.smoke:
@@ -250,14 +282,16 @@ async def run(args):
             )
     report = {
         "catalogue_version": CATALOGUE_VERSION,
+        "model": MODEL,
         "seed": 20261004,
+        "repetitions": 2,
         "manifest": MANIFEST,
         "live": bool(client),
         "cap_usd": args.cap,
         "spend_upper_bound_usd": meter.spent if meter else 0,
         "prior_spend_upper_bound_usd": meter.prior_spend if meter else 0,
         "smoke": args.smoke,
-        "billing_caveat": "Calculated conservative upper bound, not invoice. Fixed search content may be included in usage and counted twice. Failed calls reserve $0.10. No hidden retry.",
+        "billing_caveat": "Calculated conservative bound/reservation, not invoice. Luna uses actual search-content tokens, not the mini-only fixed 8000 block. Unknown search usage retains at least $0.10 per call. Search tokens may already be included in input usage; separate addition conservatively overcounts. Failed calls reserve $0.10. No hidden retry.",
         "summary": summaries,
         "calls": meter.calls if meter else [],
         "observations": rows,
