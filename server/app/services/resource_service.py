@@ -136,6 +136,11 @@ def resource_identity(url: str) -> str:
     )
 
 
+def response_objects(value):
+    """Optional provider arrays can be null; malformed items never become sources."""
+    return [item for item in value if isinstance(item, dict)] if isinstance(value, list) else []
+
+
 def catalogue_resources(request: ResourceRequest) -> list[LearningResource]:
     topic = request.topic.casefold()
     concept = request.concept.casefold()
@@ -248,19 +253,27 @@ class ResourceService:
         data = response.model_dump()
         sources = set()
         citations = []
-        for item in data.get("output", []):
+        for item in response_objects(data.get("output")):
             if item.get("type") == "web_search_call":
+                action = item.get("action")
+                action = action if isinstance(action, dict) else {}
                 sources.update(
-                    s["url"] for s in item.get("action", {}).get("sources", []) if s.get("url")
+                    s["url"]
+                    for s in response_objects(action.get("sources"))
+                    if isinstance(s.get("url"), str)
                 )
-            for content in item.get("content", []):
+            for content in response_objects(item.get("content")):
                 citations.extend(
-                    a for a in content.get("annotations", []) if a.get("type") == "url_citation"
+                    a
+                    for a in response_objects(content.get("annotations"))
+                    if a.get("type") == "url_citation"
                 )
         result = []
         seen = set()
         for citation in citations:
             original = citation.get("url", "")
+            if not isinstance(original, str):
+                continue
             url = safe_url(original)
             identity = resource_identity(url) if url else None
             if not url or original not in sources or identity in seen:

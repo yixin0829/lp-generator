@@ -218,3 +218,30 @@ async def test_dated_mini_omits_rejected_filters_and_still_rejects_sourced_outsi
     assert create.await_count == 1
     assert create.call_args.kwargs["tools"] == [{"type": "web_search"}]
     assert "react.dev" in create.call_args.kwargs["instructions"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "output",
+    [
+        None,
+        [None],
+        [
+            {"type": "web_search_call", "action": None, "content": None},
+            {"type": "web_search_call", "action": {"sources": None}},
+            {"type": "message", "content": [{"annotations": None}]},
+            {
+                "type": "message",
+                "content": [None, {"annotations": [{"type": "url_citation", "url": []}]}],
+            },
+        ],
+    ],
+)
+async def test_nullable_response_fields_are_empty_without_inventing_resources(output):
+    create = AsyncMock(return_value=SimpleNamespace(model_dump=lambda: {"output": output}))
+    service = ResourceService(
+        "web_search", SimpleNamespace(responses=SimpleNamespace(create=create))
+    )
+    result = await service.get(ResourceRequest(topic="Guitar", concept="Chords"))
+    assert result.resources == []
+    assert "No reviewed" in result.message

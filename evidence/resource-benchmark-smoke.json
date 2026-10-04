@@ -1,0 +1,165 @@
+{
+  "catalogue_version": "2026-10-04-v1",
+  "model": "gpt-5.6-luna",
+  "seed": 20261004,
+  "repetitions": 2,
+  "manifest": [
+    [
+      "Python",
+      "Loops"
+    ],
+    [
+      "JavaScript",
+      "Closures"
+    ],
+    [
+      "React",
+      "State"
+    ],
+    [
+      "SQL",
+      "Joins"
+    ],
+    [
+      "Guitar",
+      "Chords"
+    ],
+    [
+      "Photography",
+      "Exposure"
+    ],
+    [
+      "Pottery",
+      "Glazing"
+    ],
+    [
+      "Beekeeping",
+      "Hive inspection"
+    ],
+    [
+      "Question asking",
+      "Clarifying assumptions"
+    ],
+    [
+      "Turkish",
+      "Vowel harmony"
+    ],
+    [
+      "Hydrogeology",
+      "Aquifer tests"
+    ],
+    [
+      "Cooking",
+      "Emulsification"
+    ]
+  ],
+  "live": true,
+  "cap_usd": 5.0,
+  "spend_upper_bound_usd": 0.30000000000000004,
+  "prior_spend_upper_bound_usd": 0.2,
+  "smoke": true,
+  "billing_caveat": "Calculated conservative bound/reservation, not invoice. Luna uses actual search-content tokens, not the mini-only fixed 8000 block. Unknown search usage retains at least $0.10 per call. Search tokens may already be included in input usage; separate addition conservatively overcounts. Failed calls reserve $0.10. No hidden retry.",
+  "summary": [
+    {
+      "provider": "catalogue",
+      "temperature": "cold",
+      "measured_n": 0,
+      "coverage": 0,
+      "median_ms": null,
+      "p95_ms": null
+    },
+    {
+      "provider": "catalogue",
+      "temperature": "warm",
+      "measured_n": 0,
+      "coverage": 0,
+      "median_ms": null,
+      "p95_ms": null
+    },
+    {
+      "provider": "web_search",
+      "temperature": "cold",
+      "measured_n": 1,
+      "coverage": 1,
+      "median_ms": 5044.484399957582,
+      "p95_ms": 5044.484399957582
+    },
+    {
+      "provider": "web_search",
+      "temperature": "warm",
+      "measured_n": 1,
+      "coverage": 1,
+      "median_ms": 0.013199867680668831,
+      "p95_ms": 0.013199867680668831
+    },
+    {
+      "provider": "hybrid",
+      "temperature": "cold",
+      "measured_n": 0,
+      "coverage": 0,
+      "median_ms": null,
+      "p95_ms": null
+    },
+    {
+      "provider": "hybrid",
+      "temperature": "warm",
+      "measured_n": 0,
+      "coverage": 0,
+      "median_ms": null,
+      "p95_ms": null
+    }
+  ],
+  "calls": [
+    {
+      "status": "success",
+      "input_tokens": 12700,
+      "output_tokens": 295,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 4440
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 5043.186499970034
+    }
+  ],
+  "observations": [
+    {
+      "provider": "web_search",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 5044.484399957582,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/state-a-components-memory?utm_source=openai",
+        "https://react.dev/learn/state-as-a-snapshot?utm_source=openai",
+        "https://react.dev/learn/sharing-state-between-components?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000003
+    },
+    {
+      "provider": "web_search",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.013199867680668831,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/state-a-components-memory?utm_source=openai",
+        "https://react.dev/learn/state-as-a-snapshot?utm_source=openai",
+        "https://react.dev/learn/sharing-state-between-components?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    }
+  ]
+}

@@ -1,0 +1,2540 @@
+{
+  "catalogue_version": "2026-10-04-v1",
+  "model": "gpt-5.6-luna",
+  "seed": 20261004,
+  "repetitions": 2,
+  "manifest": [
+    [
+      "Python",
+      "Loops"
+    ],
+    [
+      "JavaScript",
+      "Closures"
+    ],
+    [
+      "React",
+      "State"
+    ],
+    [
+      "SQL",
+      "Joins"
+    ],
+    [
+      "Guitar",
+      "Chords"
+    ],
+    [
+      "Photography",
+      "Exposure"
+    ],
+    [
+      "Pottery",
+      "Glazing"
+    ],
+    [
+      "Beekeeping",
+      "Hive inspection"
+    ],
+    [
+      "Question asking",
+      "Clarifying assumptions"
+    ],
+    [
+      "Turkish",
+      "Vowel harmony"
+    ],
+    [
+      "Hydrogeology",
+      "Aquifer tests"
+    ],
+    [
+      "Cooking",
+      "Emulsification"
+    ]
+  ],
+  "live": true,
+  "cap_usd": 5.0,
+  "spend_upper_bound_usd": 3.900000000000002,
+  "prior_spend_upper_bound_usd": 0.30000000000000004,
+  "smoke": false,
+  "billing_caveat": "Calculated conservative bound/reservation, not invoice. Luna uses actual search-content tokens, not the mini-only fixed 8000 block. Unknown search usage retains at least $0.10 per call. Search tokens may already be included in input usage; separate addition conservatively overcounts. Failed calls reserve $0.10. No hidden retry.",
+  "summary": [
+    {
+      "provider": "catalogue",
+      "temperature": "cold",
+      "measured_n": 24,
+      "coverage": 12,
+      "median_ms": 0.053999945521354675,
+      "p95_ms": 0.12290012091398239
+    },
+    {
+      "provider": "catalogue",
+      "temperature": "warm",
+      "measured_n": 24,
+      "coverage": 12,
+      "median_ms": 0.006150105036795139,
+      "p95_ms": 0.012699980288743973
+    },
+    {
+      "provider": "web_search",
+      "temperature": "cold",
+      "measured_n": 15,
+      "coverage": 15,
+      "median_ms": 6390.876299934462,
+      "p95_ms": 9356.112300185487
+    },
+    {
+      "provider": "web_search",
+      "temperature": "warm",
+      "measured_n": 15,
+      "coverage": 15,
+      "median_ms": 0.011299969628453255,
+      "p95_ms": 0.015799887478351593
+    },
+    {
+      "provider": "hybrid",
+      "temperature": "cold",
+      "measured_n": 16,
+      "coverage": 16,
+      "median_ms": 0.08615001570433378,
+      "p95_ms": 8397.60800008662
+    },
+    {
+      "provider": "hybrid",
+      "temperature": "warm",
+      "measured_n": 16,
+      "coverage": 16,
+      "median_ms": 0.010750023648142815,
+      "p95_ms": 0.017799902707338333
+    }
+  ],
+  "calls": [
+    {
+      "status": "success",
+      "input_tokens": 12844,
+      "output_tokens": 476,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4411,
+        "cache_write_tokens": 30
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 8366.83850013651
+    },
+    {
+      "status": "success",
+      "input_tokens": 12581,
+      "output_tokens": 586,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4411,
+        "cache_write_tokens": 32
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 6813.5617999359965
+    },
+    {
+      "status": "success",
+      "input_tokens": 4850,
+      "output_tokens": 98,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4443,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 3488.9103998430073
+    },
+    {
+      "status": "success",
+      "input_tokens": 4868,
+      "output_tokens": 209,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4411,
+        "cache_write_tokens": 31
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 5381.95150019601
+    },
+    {
+      "status": "success",
+      "input_tokens": 4859,
+      "output_tokens": 164,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4442,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4273.727300111204
+    },
+    {
+      "status": "success",
+      "input_tokens": 8779,
+      "output_tokens": 292,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4440,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4646.473800064996
+    },
+    {
+      "status": "success",
+      "input_tokens": 4864,
+      "output_tokens": 184,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4411,
+        "cache_write_tokens": 31
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 3901.1256999801844
+    },
+    {
+      "status": "success",
+      "input_tokens": 4864,
+      "output_tokens": 164,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4411,
+        "cache_write_tokens": 29
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4794.092199997976
+    },
+    {
+      "status": "success",
+      "input_tokens": 4886,
+      "output_tokens": 179,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4443,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 3956.5479999873787
+    },
+    {
+      "status": "success",
+      "input_tokens": 4878,
+      "output_tokens": 197,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4411,
+        "cache_write_tokens": 31
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4366.58599996008
+    },
+    {
+      "status": "success",
+      "input_tokens": 9021,
+      "output_tokens": 257,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4411,
+        "cache_write_tokens": 32
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 7145.100000081584
+    },
+    {
+      "status": "success",
+      "input_tokens": 12740,
+      "output_tokens": 392,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4441,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 5307.867900002748
+    },
+    {
+      "status": "success",
+      "input_tokens": 4830,
+      "output_tokens": 97,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4442,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 3529.825299978256
+    },
+    {
+      "status": "success",
+      "input_tokens": 12749,
+      "output_tokens": 522,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4411,
+        "cache_write_tokens": 34
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 6762.049800017849
+    },
+    {
+      "status": "success",
+      "input_tokens": 8781,
+      "output_tokens": 575,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4445,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 9355.014799861237
+    },
+    {
+      "status": "success",
+      "input_tokens": 12808,
+      "output_tokens": 333,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4440,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 6389.80340003036
+    },
+    {
+      "status": "success",
+      "input_tokens": 8518,
+      "output_tokens": 330,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4442,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 6049.816400045529
+    },
+    {
+      "status": "success",
+      "input_tokens": 12749,
+      "output_tokens": 557,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4445,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 6820.593799930066
+    },
+    {
+      "status": "success",
+      "input_tokens": 8817,
+      "output_tokens": 614,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4411,
+        "cache_write_tokens": 32
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 6719.2178000696
+    },
+    {
+      "status": "success",
+      "input_tokens": 4878,
+      "output_tokens": 235,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4443,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4873.200899921358
+    },
+    {
+      "status": "success",
+      "input_tokens": 4860,
+      "output_tokens": 174,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4442,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 5879.644999979064
+    },
+    {
+      "status": "success",
+      "input_tokens": 8623,
+      "output_tokens": 276,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4411,
+        "cache_write_tokens": 31
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4460.4090000502765
+    },
+    {
+      "status": "success",
+      "input_tokens": 8740,
+      "output_tokens": 318,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4442,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4845.341300126165
+    },
+    {
+      "status": "success",
+      "input_tokens": 8775,
+      "output_tokens": 616,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4443,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 7588.108500000089
+    },
+    {
+      "status": "success",
+      "input_tokens": 4874,
+      "output_tokens": 165,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4443,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4871.9399000983685
+    },
+    {
+      "status": "success",
+      "input_tokens": 4893,
+      "output_tokens": 250,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4443,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 5111.135500017554
+    },
+    {
+      "status": "success",
+      "input_tokens": 4865,
+      "output_tokens": 158,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4442,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4407.581999897957
+    },
+    {
+      "status": "success",
+      "input_tokens": 4855,
+      "output_tokens": 170,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4442,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4506.161600118503
+    },
+    {
+      "status": "success",
+      "input_tokens": 12138,
+      "output_tokens": 571,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4445,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 6923.849599901587
+    },
+    {
+      "status": "success",
+      "input_tokens": 8660,
+      "output_tokens": 341,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4411,
+        "cache_write_tokens": 29
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4457.062300061807
+    },
+    {
+      "status": "success",
+      "input_tokens": 9002,
+      "output_tokens": 240,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4443,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 6518.490799935535
+    },
+    {
+      "status": "success",
+      "input_tokens": 8939,
+      "output_tokens": 404,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4442,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 8396.590399788693
+    },
+    {
+      "status": "success",
+      "input_tokens": 8456,
+      "output_tokens": 365,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4440,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 5095.111800124869
+    },
+    {
+      "status": "success",
+      "input_tokens": 4876,
+      "output_tokens": 188,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4443,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4098.416399909183
+    },
+    {
+      "status": "success",
+      "input_tokens": 4868,
+      "output_tokens": 199,
+      "search_calls": 2,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4440,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 4500.587000045925
+    },
+    {
+      "status": "success",
+      "input_tokens": 4746,
+      "output_tokens": 145,
+      "search_calls": 1,
+      "model": "gpt-5.6-luna",
+      "input_tokens_details": {
+        "cached_tokens": 4443,
+        "cache_write_tokens": 0
+      },
+      "search_content_tokens": null,
+      "metering_complete": false,
+      "calculated_upper_bound_usd": 0.1,
+      "latency_ms": 3072.4428999237716
+    }
+  ],
+  "observations": [
+    {
+      "provider": "hybrid",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.20599993877112865,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.017799902707338333,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 8368.269299855456,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/1-204-computer-algorithms-in-systems-engineering-spring-2010/resources/mit1_204s10_lec03/?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-264j-database-internet-and-systems-integration-technologies-fall-2013/resources/mit1_264jf13_lect_13/?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-264j-database-internet-and-systems-integration-technologies-fall-2013/pages/lecture-notes-exercises/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.09999999999999998
+    },
+    {
+      "provider": "web_search",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.011399853974580765,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/1-204-computer-algorithms-in-systems-engineering-spring-2010/resources/mit1_204s10_lec03/?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-264j-database-internet-and-systems-integration-technologies-fall-2013/resources/mit1_264jf13_lect_13/?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-264j-database-internet-and-systems-integration-technologies-fall-2013/pages/lecture-notes-exercises/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.06760004907846451,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.006500165909528732,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.06850017234683037,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005399808287620544,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 6814.644499914721,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/24-900-introduction-to-linguistics-fall-2012/f305bb4cff88d8643ef77a3c2ab6b92a_MIT24_900F12_Phonologysum.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/24-961-introduction-to-phonology-fall-2014/e0c699e60ea493e61293fcd2c4fa8596_MIT24_961F14_Lecture17.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/24-961-introduction-to-phonology-fall-2014/f1c444fd28b681ab688292ab7b806881_MIT24_961F14_Lecture3.pdf?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.09999999999999998
+    },
+    {
+      "provider": "web_search",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.013499986380338669,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/24-900-introduction-to-linguistics-fall-2012/f305bb4cff88d8643ef77a3c2ab6b92a_MIT24_900F12_Phonologysum.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/24-961-introduction-to-phonology-fall-2014/e0c699e60ea493e61293fcd2c4fa8596_MIT24_961F14_Lecture17.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/24-961-introduction-to-phonology-fall-2014/f1c444fd28b681ab688292ab7b806881_MIT24_961F14_Lecture3.pdf?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.09999999999999998
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.09999999999999998
+    },
+    {
+      "provider": "web_search",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.09999999999999998
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.05429983139038086,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.012599863111972809,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 4647.576499963179,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/state-a-components-memory?utm_source=openai",
+        "https://react.dev/learn/state-as-a-snapshot?utm_source=openai",
+        "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Frameworks_libraries/React_interactivity_events_state?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.09999999999999998
+    },
+    {
+      "provider": "web_search",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.01109996810555458,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/state-a-components-memory?utm_source=openai",
+        "https://react.dev/learn/state-as-a-snapshot?utm_source=openai",
+        "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Frameworks_libraries/React_interactivity_events_state?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.1129999291151762,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.009400071576237679,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.09999999999999998
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.11869985610246658,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010599847882986069,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.09999999999999998
+    },
+    {
+      "provider": "catalogue",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.12290012091398239,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010999850928783417,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "hybrid",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.07369997911155224,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010699965059757233,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "hybrid",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.07159984670579433,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010299962013959885,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 7146.136899944395,
+      "resource_count": 1,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/9-00-introduction-to-psychology-fall-2004/02898f64b3b6a0cea30a7f984e25b055_10498.pdf?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.013899989426136017,
+      "resource_count": 1,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/9-00-introduction-to-psychology-fall-2004/02898f64b3b6a0cea30a7f984e25b055_10498.pdf?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.1004999503493309,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00800006091594696,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 5309.147699968889,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/1-204-computer-algorithms-in-systems-engineering-spring-2010/ca8f491f5f7f57335b87a52700e54849_MIT1_204S10_lec03.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-264j-database-internet-and-systems-integration-technologies-fall-2013/pages/lecture-notes-exercises/?utm_source=openai",
+        "https://ocw.mit.edu/courses/6-830-database-systems-fall-2010/pages/lecture-notes/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.011899974197149277,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/1-204-computer-algorithms-in-systems-engineering-spring-2010/ca8f491f5f7f57335b87a52700e54849_MIT1_204S10_lec03.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-264j-database-internet-and-systems-integration-technologies-fall-2013/pages/lecture-notes-exercises/?utm_source=openai",
+        "https://ocw.mit.edu/courses/6-830-database-systems-fall-2010/pages/lecture-notes/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 6763.099400093779,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/3a4d39e1684e6664827549fa7f08b47c_1_72_lecture_8.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/lecture-notes/?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/syllabus/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010999850928783417,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/3a4d39e1684e6664827549fa7f08b47c_1_72_lecture_8.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/lecture-notes/?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/syllabus/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 9356.112300185487,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/3a4d39e1684e6664827549fa7f08b47c_1_72_lecture_8.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/lecture-notes/?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/syllabus/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.012200092896819115,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/3a4d39e1684e6664827549fa7f08b47c_1_72_lecture_8.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/lecture-notes/?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/syllabus/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.07409998215734959,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.006100162863731384,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.02610008232295513,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00500003807246685,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.057900091633200645,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005400041118264198,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.02259993925690651,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00409991480410099,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.09280000813305378,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.006299931555986404,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 6390.876299934462,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity?utm_source=openai",
+        "https://react.dev/learn/state-as-a-snapshot?utm_source=openai",
+        "https://react.dev/reference/react/useState?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010899966582655907,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity?utm_source=openai",
+        "https://react.dev/learn/state-as-a-snapshot?utm_source=openai",
+        "https://react.dev/reference/react/useState?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.07230020128190517,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00609993003308773,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.026799971237778664,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004800036549568176,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 6050.887699937448,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/3-094-materials-in-human-experience-spring-2004/pages/syllabus/?utm_source=openai",
+        "https://ocw.mit.edu/courses/4-401-introduction-to-building-technology-spring-2006/9c7d44f9bc50b46fa5760472fcc4e98c_baker_lighting.pdf?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.09999999999999987
+    },
+    {
+      "provider": "web_search",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.012899981811642647,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/3-094-materials-in-human-experience-spring-2004/pages/syllabus/?utm_source=openai",
+        "https://ocw.mit.edu/courses/4-401-introduction-to-building-technology-spring-2006/9c7d44f9bc50b46fa5760472fcc4e98c_baker_lighting.pdf?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 6821.841299999505,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/3a4d39e1684e6664827549fa7f08b47c_1_72_lecture_8.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/lecture-notes/?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/syllabus/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.012800097465515137,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/3a4d39e1684e6664827549fa7f08b47c_1_72_lecture_8.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/lecture-notes/?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/syllabus/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 6720.304500078782,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/res-7-009-7-int-inclusive-teaching-module-fall-2022/mitres_7_009_f22_facilitation_guide_incl_teach.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/15-371-innovation-teams-fall-2024/pages/discussion-questions-whats-expected-at-the-start/?utm_source=openai",
+        "https://ocw.mit.edu/courses/15-301-managerial-psychology-laboratory-fall-2004/fde985c1e908e1e200199822a3ec133f_r_04_survey_d.pdf?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.01109996810555458,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/res-7-009-7-int-inclusive-teaching-module-fall-2022/mitres_7_009_f22_facilitation_guide_incl_teach.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/15-371-innovation-teams-fall-2024/pages/discussion-questions-whats-expected-at-the-start/?utm_source=openai",
+        "https://ocw.mit.edu/courses/15-301-managerial-psychology-laboratory-fall-2004/fde985c1e908e1e200199822a3ec133f_r_04_survey_d.pdf?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "hybrid",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.07209996692836285,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010800082236528397,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "catalogue",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.09929994121193886,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010600080713629723,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.05539995618164539,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.006100162863731384,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.024300068616867065,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004899920895695686,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 4461.479100165889,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures?utm_source=openai",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions.?utm_source=openai",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Language_overview?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010600080713629723,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures?utm_source=openai",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions.?utm_source=openai",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Language_overview?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 4846.383800031617,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures?utm_source=openai",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions.?utm_source=openai",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Language_overview?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.011200085282325745,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures?utm_source=openai",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions.?utm_source=openai",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Language_overview?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.062400009483098984,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00609993003308773,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.05370005965232849,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005500158295035362,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.08950009942054749,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.0074999406933784485,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 7589.362799888477,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/22-s902-do-it-yourself-diy-geiger-counters-january-iap-2015/pages/instructor-insights/learning-to-ask-the-questions/?utm_source=openai",
+        "https://ocw.mit.edu/courses/15-310-managerial-psychology-laboratory-spring-2003/d7daef8a048464e990f25f74fd4d00af_recitation3feb2103takingmeasurements.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/21h-102-american-history-since-1865-spring-2018/pages/assignments/choosing-a-topic-and-asking-a-question/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.011299969628453255,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/22-s902-do-it-yourself-diy-geiger-counters-january-iap-2015/pages/instructor-insights/learning-to-ask-the-questions/?utm_source=openai",
+        "https://ocw.mit.edu/courses/15-310-managerial-psychology-laboratory-spring-2003/d7daef8a048464e990f25f74fd4d00af_recitation3feb2103takingmeasurements.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/21h-102-american-history-since-1865-spring-2018/pages/assignments/choosing-a-topic-and-asking-a-question/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.043700216338038445,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010300194844603539,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.049999915063381195,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.012699980288743973,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.0996000599116087,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00790017656981945,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.031100120395421982,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005899928510189056,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.08279993198812008,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.011299969628453255,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.031400006264448166,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.006800051778554916,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.027900096029043198,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005800044164061546,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 6924.977899994701,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/3a4d39e1684e6664827549fa7f08b47c_1_72_lecture_8.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/lecture-notes/?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/06823bef5f8a6540df23b7a830edb85f_1_72_lecture_2.pdf?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.011499971151351929,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/3a4d39e1684e6664827549fa7f08b47c_1_72_lecture_8.pdf?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/pages/lecture-notes/?utm_source=openai",
+        "https://ocw.mit.edu/courses/1-72-groundwater-hydrology-fall-2005/06823bef5f8a6540df23b7a830edb85f_1_72_lecture_2.pdf?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 4458.127199904993,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html?trk=public_post_comment-text&utm_source=openai",
+        "https://docs.python.org/3.12/tutorial/introduction.html?utm_source=openai",
+        "https://docs.python.org/3/tutorial/index.html?lang=en&utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010600080713629723,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html?trk=public_post_comment-text&utm_source=openai",
+        "https://docs.python.org/3.12/tutorial/introduction.html?utm_source=openai",
+        "https://docs.python.org/3/tutorial/index.html?lang=en&utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 6519.573100144044,
+      "resource_count": 1,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/9-00-introduction-to-psychology-fall-2004/02898f64b3b6a0cea30a7f984e25b055_10498.pdf?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.011999858543276787,
+      "resource_count": 1,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/9-00-introduction-to-psychology-fall-2004/02898f64b3b6a0cea30a7f984e25b055_10498.pdf?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.07450021803379059,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.006200047209858894,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 8397.60800008662,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/16-982-bio-inspired-structures-spring-2009/resources/mit16_982s09_lec07/?utm_source=openai",
+        "https://ocw.mit.edu/courses/3-091sc-introduction-to-solid-state-chemistry-fall-2010/pages/amorphous-materials/22--engineering-glass-properties-introduction-to-kinetics/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.011499971151351929,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://ocw.mit.edu/courses/16-982-bio-inspired-structures-spring-2009/resources/mit16_982s09_lec07/?utm_source=openai",
+        "https://ocw.mit.edu/courses/3-091sc-introduction-to-solid-state-chemistry-fall-2010/pages/amorphous-materials/22--engineering-glass-properties-introduction-to-kinetics/?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.03909994848072529,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005699926987290382,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 5096.189700067043,
+      "resource_count": 3,
+      "cached": false,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html?trk=public_post_comment-text&utm_source=openai",
+        "https://docs.python.org/3.12/tutorial/introduction.html?utm_source=openai",
+        "https://docs.python.org/3/reference/compound_stmts.html?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.015799887478351593,
+      "resource_count": 3,
+      "cached": true,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html?trk=public_post_comment-text&utm_source=openai",
+        "https://docs.python.org/3.12/tutorial/introduction.html?utm_source=openai",
+        "https://docs.python.org/3/reference/compound_stmts.html?utm_source=openai"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "web_search",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "hybrid",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.07379986345767975,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010899966582655907,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "TypeError",
+      "calculated_upper_bound_usd": 0.10000000000000009
+    },
+    {
+      "provider": "catalogue",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.1354999840259552,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.015300000086426735,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.041800085455179214,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.006200047209858894,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0.0
+    }
+  ]
+}
