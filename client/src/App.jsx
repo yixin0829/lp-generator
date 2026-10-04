@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 
 import { ThemeProvider } from "./context/ThemeContext";
 import NavBar from "./components/NavBar/NavBar";
+import { OnboardingProvider } from "./components/Onboarding/Onboarding";
 import ScrollToTop from "./components/misc/ScrollToTop/ScrollToTop";
 import "./App.css";
 import { pages } from "./util/pages";
@@ -16,7 +17,7 @@ export default function App() {
       <SnackbarProvider>
         <BrowserRouter>
           <Analytics />
-          <TransitionRoutes />
+          <OnboardingProvider><TransitionRoutes /></OnboardingProvider>
         </BrowserRouter>
       </SnackbarProvider>
     </ThemeProvider>

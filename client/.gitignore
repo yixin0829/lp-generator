@@ -25,3 +25,5 @@ yarn-error.log*
 package-lock.json
 .vercel
 .env*.local
+test-results/
+playwright-report/
