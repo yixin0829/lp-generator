@@ -3,8 +3,12 @@ import { createContext, useContext, useEffect, useState } from "react";
 const ThemeContext = createContext();
 
 function getInitialTheme() {
-  const stored = localStorage.getItem("theme");
-  if (stored === "dark" || stored === "light") return stored;
+  try {
+    const stored = localStorage.getItem("theme");
+    if (stored === "dark" || stored === "light") return stored;
+  } catch {
+    // Restricted storage should not prevent the app or guide from opening.
+  }
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
@@ -15,7 +19,7 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
+    try { localStorage.setItem("theme", theme); } catch { /* Keep the active theme for this visit. */ }
   }, [theme]);
 
   const toggleTheme = () =>

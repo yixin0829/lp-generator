@@ -1,10 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
 import { pages } from "../../util/pages";
 import ThemeToggle from "../ThemeToggle/ThemeToggle";
+import { useOnboarding } from "../Onboarding/Onboarding";
 import "./NavBar.scss";
 
 export default function Navbar() {
   const location = useLocation();
+  const { replay } = useOnboarding();
 
   return (
     <div className="navbar-container">
@@ -21,6 +23,7 @@ export default function Navbar() {
           </Link>
         );
       })}
+      <button type="button" className="navbar-link navbar-help" onClick={replay}>How to use</button>
       <ThemeToggle />
     </div>
   );
