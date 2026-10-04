@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import Button from "../../components/Button/Button";
 import { apiUrl } from "../../config/api";
@@ -65,8 +66,9 @@ export default function FeedbackPage() {
       <div style={{ height: "100px" }} />
       <h1>Feedback</h1>
       <p className="feedback-subtitle">
-        We'd love to hear from you! Share your thoughts, suggestions, or anything on your mind.
+        Help improve LearnAnything: report a problem, suggest a feature, or tell us what worked well.
       </p>
+      <p>Want to learn a topic? <Link to="/">Generate a learning path on Home</Link> instead.</p>
       <div style={{ height: "20px" }} />
 
       {phase === "submitted" ? (
@@ -78,7 +80,7 @@ export default function FeedbackPage() {
         <div className="feedback-form">
           <textarea
             className="feedback-textarea"
-            placeholder="What's on your mind?"
+            placeholder="What could we improve? For a problem, tell us what you tried and what happened."
             maxLength={MAX_LENGTH}
             value={text}
             onChange={(e) => setText(e.target.value)}
