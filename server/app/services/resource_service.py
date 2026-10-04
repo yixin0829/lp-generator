@@ -5,7 +5,7 @@ import ipaddress
 import json
 import time
 from datetime import UTC, datetime
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from openai import AsyncOpenAI
 
@@ -111,9 +111,23 @@ def safe_url(value: str) -> str | None:
             return None
         except ValueError:
             pass
-        return urlunsplit(("https", parts.hostname, parts.path or "/", "", ""))
+        return urlunsplit(("https", parts.hostname, parts.path or "/", parts.query, parts.fragment))
     except (ValueError, TypeError):
         return None
+
+
+def resource_identity(url: str) -> str:
+    """Remove known tracking only; course IDs and concept anchors remain distinct."""
+    parts = urlsplit(url)
+    tracking = {"gclid", "fbclid", "msclkid", "dclid"}
+    query = [
+        (key, value)
+        for key, value in parse_qsl(parts.query, keep_blank_values=True)
+        if not key.casefold().startswith("utm_") and key.casefold() not in tracking
+    ]
+    return urlunsplit(
+        (parts.scheme, parts.netloc, parts.path, urlencode(sorted(query)), parts.fragment)
+    )
 
 
 def catalogue_resources(request: ResourceRequest) -> list[LearningResource]:
@@ -230,9 +244,10 @@ class ResourceService:
         for citation in citations:
             original = citation.get("url", "")
             url = safe_url(original)
-            if not url or original not in sources or url in seen:
+            identity = resource_identity(url) if url else None
+            if not url or original not in sources or identity in seen:
                 continue
-            seen.add(url)
+            seen.add(identity)
             result.append(
                 LearningResource(
                     title=str(citation.get("title") or "Learning guide")[:180],

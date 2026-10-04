@@ -36,11 +36,47 @@ MANIFEST = [
 
 
 class Meter:
-    def __init__(self, client, cap):
+    def __init__(self, client, cap, ledger=None):
         self.client, self.cap = client, min(cap, 5.0)
         self.spent = 0.0
         self.calls = []
+        self.ledger = ledger
+        self.lock = None
+        if ledger:
+            ledger.parent.mkdir(parents=True, exist_ok=True)
+            self.lock = ledger.with_suffix(ledger.suffix + ".lock")
+            # Fail closed for concurrent runs or a stale lock after interruption.
+            fd = os.open(self.lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            os.close(fd)
+            try:
+                if ledger.exists():
+                    previous = json.loads(ledger.read_text(encoding="utf-8"))
+                    self.spent = float(previous["spent_upper_bound_usd"])
+                    self.cap = min(self.cap, float(previous["cap_usd"]))
+                    if not 0 <= self.spent or not 0 < self.cap <= 5:
+                        raise ValueError("Invalid budget ledger")
+            except BaseException:
+                self.close()
+                raise
+        self.prior_spend = self.spent
         self.responses = SimpleNamespace(create=self.create)
+
+    def persist(self):
+        if self.ledger:
+            temporary = self.ledger.with_suffix(self.ledger.suffix + ".tmp")
+            temporary.write_text(
+                json.dumps(
+                    {"version": 1, "cap_usd": self.cap, "spent_upper_bound_usd": self.spent},
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            os.replace(temporary, self.ledger)
+
+    def close(self):
+        if self.lock:
+            self.lock.unlink(missing_ok=True)
+            self.lock = None
 
     async def create(self, **kwargs):
         reservation = 0.10
@@ -48,6 +84,7 @@ class Meter:
         if self.spent + reservation > self.cap - 0.20:
             raise RuntimeError("Budget reservation limit reached")
         self.spent += reservation
+        self.persist()
         started = time.perf_counter()
         try:
             response = await self.client.responses.create(**kwargs)
@@ -71,6 +108,7 @@ class Meter:
         # included in usage: adding its fixed fee here intentionally overcounts.
         charged = upper if usage and searches else reservation
         self.spent += charged - reservation
+        self.persist()
         self.calls.append(
             {
                 "status": "success",
@@ -91,7 +129,14 @@ async def run(args):
             "Live benchmark blocked: securely set OPENAI_API_KEY for this process. No API calls made."
         )
     client = AsyncOpenAI(api_key=key, max_retries=0, timeout=18) if key else None
-    meter = Meter(client, args.cap) if client else None
+    try:
+        meter = Meter(client, args.cap, args.ledger.resolve()) if client else None
+    except Exception:
+        if client:
+            await client.close()
+        raise SystemExit(
+            "Budget ledger unavailable or locked; no API calls made. Preserve the ledger and resolve the lock before retrying."
+        ) from None
     jobs = [
         (provider, topic, concept, repetition)
         for provider in ["catalogue", "web_search", "hybrid"]
@@ -99,6 +144,8 @@ async def run(args):
         for repetition in range(3)
     ]
     random.Random(20261004).shuffle(jobs)
+    if args.smoke:
+        jobs = [("web_search", "React", "State", 0)]
     rows = []
     for provider, topic, concept, repetition in jobs:
         request = ResourceRequest(topic=topic, concept=concept)
@@ -178,6 +225,8 @@ async def run(args):
         "live": bool(client),
         "cap_usd": args.cap,
         "spend_upper_bound_usd": meter.spent if meter else 0,
+        "prior_spend_upper_bound_usd": meter.prior_spend if meter else 0,
+        "smoke": args.smoke,
         "billing_caveat": "Calculated conservative upper bound, not invoice. Fixed search content may be included in usage and counted twice. Failed calls reserve $0.10. No hidden retry.",
         "summary": summaries,
         "calls": meter.calls if meter else [],
@@ -190,11 +239,20 @@ async def run(args):
     )
     if client:
         await client.close()
+        meter.close()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--cap", type=float, default=5.0)
+    parser.add_argument(
+        "--smoke",
+        action="store_true",
+        help="One native-search preflight, using the shared budget ledger",
+    )
+    parser.add_argument(
+        "--ledger", type=Path, default=Path("../evidence/resource-benchmark-ledger.json")
+    )
     parser.add_argument("--output", type=Path, default=Path("../evidence/resource-benchmark.json"))
     asyncio.run(run(parser.parse_args()))

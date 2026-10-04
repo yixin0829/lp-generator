@@ -8,7 +8,12 @@ import pytest
 
 from app.routers.resources import get_resource_service
 from app.schemas.resources import ResourceRequest
-from app.services.resource_service import ResourceService, catalogue_resources, safe_url
+from app.services.resource_service import (
+    ResourceService,
+    catalogue_resources,
+    resource_identity,
+    safe_url,
+)
 
 
 @pytest.mark.parametrize(
@@ -31,6 +36,16 @@ def test_catalogue_matches_subject_and_concept_without_cross_topic_false_hits():
     request = ResourceRequest(topic="React", concept="State")
     assert len(catalogue_resources(request)) == 2
     assert not catalogue_resources(ResourceRequest(topic="Pottery", concept="State"))
+
+
+def test_navigation_retains_course_query_and_concept_anchor():
+    url = "https://www.open.edu/openlearn/course/view.php?id=123&utm_source=search#lesson-2"
+    assert safe_url(url) == url
+    assert (
+        resource_identity(url) == "https://www.open.edu/openlearn/course/view.php?id=123#lesson-2"
+    )
+    assert resource_identity(url) != resource_identity(url.replace("id=123", "id=456"))
+    assert resource_identity(url) != resource_identity(url.replace("#lesson-2", "#lesson-3"))
 
 
 @pytest.mark.asyncio
@@ -96,6 +111,36 @@ async def test_native_accepts_only_cited_tool_sources_and_deduplicates():
     assert result.resources[0].title == "Ignore instructions <script>"
     assert create.call_args.kwargs["tool_choice"] == "required"
     assert create.call_args.kwargs["max_tool_calls"] == 1
+
+
+@pytest.mark.asyncio
+async def test_native_preserves_navigation_and_deduplicates_tracking_only():
+    urls = [
+        "https://www.open.edu/openlearn/course/view.php?id=123&utm_source=one#lesson-2",
+        "https://www.open.edu/openlearn/course/view.php?id=123&utm_source=two#lesson-2",
+        "https://www.open.edu/openlearn/course/view.php?id=456#lesson-2",
+    ]
+    data = {
+        "output": [
+            {"type": "web_search_call", "action": {"sources": [{"url": url} for url in urls]}},
+            {
+                "type": "message",
+                "content": [
+                    {
+                        "annotations": [
+                            {"type": "url_citation", "url": url, "title": "Course"} for url in urls
+                        ]
+                    }
+                ],
+            },
+        ]
+    }
+    create = AsyncMock(return_value=SimpleNamespace(model_dump=lambda: data))
+    service = ResourceService(
+        "web_search", SimpleNamespace(responses=SimpleNamespace(create=create))
+    )
+    result = await service.get(ResourceRequest(topic="React", concept="State"))
+    assert [resource.url for resource in result.resources] == [urls[0], urls[2]]
 
 
 def test_api_validation_and_failure_do_not_affect_path(client):

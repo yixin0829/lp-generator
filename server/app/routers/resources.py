@@ -25,6 +25,8 @@ def get_resource_service() -> ResourceService:
 
 
 @router.post("", response_model=ResourceResponse)
+# This is a coarse upstream-IP guard. Vercel callers may share a bucket;
+# never treat unverified forwarded headers as per-user identity.
 @limiter.limit("5/minute")
 async def get_resources(
     request: Request,
