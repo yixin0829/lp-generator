@@ -9,7 +9,7 @@ function readPreference() {
   try {
     return localStorage.getItem(PREFERENCE_KEY) === "true";
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -36,7 +36,8 @@ export function OnboardingProvider({ children }) {
   const [open, setOpen] = useState(false);
   const [autoShown, setAutoShown] = useState(false);
   const [step, setStep] = useState(0);
-  const [hideAgain, setHideAgain] = useState(readPreference);
+  const [hideAgain, setHideAgain] = useState(() => readPreference() === true);
+  const lastSavedPreference = useRef(hideAgain);
   const [storageError, setStorageError] = useState(false);
   const dialogRef = useRef(null);
   const previousFocus = useRef(null);
@@ -64,18 +65,23 @@ export function OnboardingProvider({ children }) {
   function replay() {
     previousFocus.current = document.activeElement;
     setStep(0);
-    setHideAgain(readPreference());
+    const saved = readPreference();
+    if (saved !== null) lastSavedPreference.current = saved;
+    setHideAgain(lastSavedPreference.current);
     setStorageError(false);
     setAutoShown(true);
     setOpen(true);
   }
 
   function finish() {
+    const saved = readPreference();
+    if (saved !== null) lastSavedPreference.current = saved;
     try {
       if (hideAgain) localStorage.setItem(PREFERENCE_KEY, "true");
       else localStorage.removeItem(PREFERENCE_KEY);
+      lastSavedPreference.current = hideAgain;
     } catch {
-      if (hideAgain) {
+      if (hideAgain || lastSavedPreference.current) {
         setStorageError(true);
         return;
       }
@@ -118,7 +124,12 @@ export function OnboardingProvider({ children }) {
           Don’t show this again
         </label>
         <p className="onboarding-note">Leave this unchecked to see the guide on your next visit. You can always reopen it from “How to use”.</p>
-        {storageError && <p className="onboarding-error" role="alert">Your browser could not save this choice. Allow site storage, or uncheck the box to continue.</p>}
+        {storageError && <div className="onboarding-error" role="alert">
+          <p>Your browser could not save this choice. Allow site storage to change your preference, or keep your previous setting.</p>
+          <button type="button" className="onboarding-secondary" onClick={() => {
+            setHideAgain(lastSavedPreference.current); setStorageError(false); setOpen(false);
+          }}>Keep previous setting and close</button>
+        </div>}
         <div className="onboarding-actions">
           <button type="button" className="onboarding-secondary" onClick={finish}>Skip for now</button>
           <div>

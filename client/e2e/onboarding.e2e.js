@@ -96,6 +96,31 @@ test("blocked storage cannot silently claim opt-out was saved", async ({ page })
   await expect(guide).not.toBeVisible();
 });
 
+test("failed opt-out removal reports an unsaved re-enable and can retry", async ({ page }) => {
+  await page.addInitScript((preferenceKey) => {
+    localStorage.setItem(preferenceKey, "true");
+    const remove = Storage.prototype.removeItem;
+    Storage.prototype.removeItem = function (name) {
+      if (name === preferenceKey) throw new Error("Removal blocked");
+      return remove.call(this, name);
+    };
+    window.restorePreferenceRemoval = () => { Storage.prototype.removeItem = remove; };
+  }, key);
+  await page.goto("/");
+  const guide = page.getByRole("dialog");
+  await expect(guide).not.toBeVisible();
+  await page.getByRole("button", { name: "How to use", exact: true }).click();
+  await guide.getByRole("checkbox").uncheck();
+  await guide.getByRole("button", { name: "Skip for now" }).click();
+  await expect(guide.getByRole("alert")).toContainText("could not save");
+  await expect(guide).toBeVisible();
+  expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBe("true");
+  await page.evaluate(() => window.restorePreferenceRemoval());
+  await guide.getByRole("button", { name: "Skip for now" }).click();
+  await expect(guide).not.toBeVisible();
+  expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBeNull();
+});
+
 for (const [name, viewport, theme] of [
   ["desktop", { width: 1440, height: 1000 }, "light"],
   ["mobile", { width: 390, height: 844 }, "light"],
