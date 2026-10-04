@@ -71,7 +71,13 @@ try {
     $smoke = Get-Content -LiteralPath $smokePath -Raw | ConvertFrom-Json
     $hasResources = @($smoke.observations | Where-Object { $_.temperature -eq 'cold' -and $_.status -eq 'measured' -and $_.resource_count -gt 0 }).Count -gt 0
     $hasSearch = @($smoke.calls | Where-Object { $_.status -eq 'success' -and $_.search_calls -gt 0 }).Count -gt 0
-    if (-not $hasResources -or -not $hasSearch) { throw 'Native preflight did not return sourced resources. Full run stopped. Share only the nonsecret smoke report; preserve the ledger.' }
+    if (-not $hasResources -or -not $hasSearch) {
+        $failure = @($smoke.calls | Where-Object { $_.status -ne 'success' }) | Select-Object -First 1
+        if ($failure) {
+            $failure | Select-Object error_type, http_status, api_code, api_param, api_message | ConvertTo-Json -Compress | Write-Output
+        }
+        throw 'Native preflight did not return sourced resources. Full run stopped. Share only the nonsecret smoke report; preserve the ledger.'
+    }
     $fullExit = Invoke-KeyChild -benchmarkArguments @($scriptPath, '--live', '--cap', '5', '--ledger', $ledgerPath, '--output', $livePath)
     if ($fullExit -ne 0) { throw 'Benchmark could not complete. Preserve the budget ledger and nonsecret reports.' }
     Write-Output "Nonsecret reports: $smokePath and $livePath"

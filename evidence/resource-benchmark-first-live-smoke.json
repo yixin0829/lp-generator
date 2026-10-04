@@ -1,0 +1,130 @@
+{
+  "catalogue_version": "2026-10-04-v1",
+  "seed": 20261004,
+  "manifest": [
+    [
+      "Python",
+      "Loops"
+    ],
+    [
+      "JavaScript",
+      "Closures"
+    ],
+    [
+      "React",
+      "State"
+    ],
+    [
+      "SQL",
+      "Joins"
+    ],
+    [
+      "Guitar",
+      "Chords"
+    ],
+    [
+      "Photography",
+      "Exposure"
+    ],
+    [
+      "Pottery",
+      "Glazing"
+    ],
+    [
+      "Beekeeping",
+      "Hive inspection"
+    ],
+    [
+      "Question asking",
+      "Clarifying assumptions"
+    ],
+    [
+      "Turkish",
+      "Vowel harmony"
+    ],
+    [
+      "Hydrogeology",
+      "Aquifer tests"
+    ],
+    [
+      "Cooking",
+      "Emulsification"
+    ]
+  ],
+  "live": true,
+  "cap_usd": 5.0,
+  "spend_upper_bound_usd": 0.1,
+  "prior_spend_upper_bound_usd": 0.0,
+  "smoke": true,
+  "billing_caveat": "Calculated conservative upper bound, not invoice. Fixed search content may be included in usage and counted twice. Failed calls reserve $0.10. No hidden retry.",
+  "summary": [
+    {
+      "provider": "catalogue",
+      "temperature": "cold",
+      "measured_n": 0,
+      "coverage": 0,
+      "median_ms": null,
+      "p95_ms": null
+    },
+    {
+      "provider": "catalogue",
+      "temperature": "warm",
+      "measured_n": 0,
+      "coverage": 0,
+      "median_ms": null,
+      "p95_ms": null
+    },
+    {
+      "provider": "web_search",
+      "temperature": "cold",
+      "measured_n": 0,
+      "coverage": 0,
+      "median_ms": null,
+      "p95_ms": null
+    },
+    {
+      "provider": "web_search",
+      "temperature": "warm",
+      "measured_n": 0,
+      "coverage": 0,
+      "median_ms": null,
+      "p95_ms": null
+    },
+    {
+      "provider": "hybrid",
+      "temperature": "cold",
+      "measured_n": 0,
+      "coverage": 0,
+      "median_ms": null,
+      "p95_ms": null
+    },
+    {
+      "provider": "hybrid",
+      "temperature": "warm",
+      "measured_n": 0,
+      "coverage": 0,
+      "median_ms": null,
+      "p95_ms": null
+    }
+  ],
+  "calls": [
+    {
+      "status": "failed_unknown_usage",
+      "reserved_usd": 0.1,
+      "latency_ms": 1772.6765999104828,
+      "error_type": "BadRequestError"
+    }
+  ],
+  "observations": [
+    {
+      "provider": "web_search",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "failed",
+      "error_type": "BadRequestError",
+      "calculated_upper_bound_usd": 0.1
+    }
+  ]
+}

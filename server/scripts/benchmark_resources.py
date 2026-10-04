@@ -9,6 +9,7 @@ import asyncio
 import json
 import os
 import random
+import re
 import statistics
 import time
 from pathlib import Path
@@ -35,11 +36,40 @@ MANIFEST = [
 ]
 
 
+def sanitized_error(exc, secret=None):
+    """Export bounded API error fields only, never headers/request bodies or keys."""
+    result = {"error_type": type(exc).__name__}
+    status = getattr(exc, "status_code", None)
+    if isinstance(status, int):
+        result["http_status"] = status
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        error = body.get("error", body)
+        if isinstance(error, dict):
+            for field in ("code", "param", "type"):
+                value = error.get(field)
+                if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.\[\]-]{1,100}", value):
+                    result[f"api_{field}"] = value
+            message = error.get("message")
+            if isinstance(message, str):
+                if secret:
+                    message = message.replace(secret, "[credential]")
+                # Error messages can echo submitted values: redact credentials,
+                # addresses and URLs before any persistence or display.
+                message = re.sub(r"(?i)\b(?:sk-|sess-)[A-Za-z0-9_-]+", "[credential]", message)
+                message = re.sub(r"(?i)\bBearer\s+\S+", "Bearer [credential]", message)
+                message = re.sub(r"https?://\S+", "[url]", message)
+                message = re.sub(r"\b[^\s@]+@[^\s@]+\b", "[email]", message)
+                result["api_message"] = message[:500]
+    return result
+
+
 class Meter:
-    def __init__(self, client, cap, ledger=None):
+    def __init__(self, client, cap, ledger=None, secret=None):
         self.client, self.cap = client, min(cap, 5.0)
         self.spent = 0.0
         self.calls = []
+        self.secret = secret
         self.ledger = ledger
         self.lock = None
         if ledger:
@@ -94,7 +124,7 @@ class Meter:
                     "status": "failed_unknown_usage",
                     "reserved_usd": reservation,
                     "latency_ms": (time.perf_counter() - started) * 1000,
-                    "error_type": type(exc).__name__,
+                    **sanitized_error(exc, self.secret),
                 }
             )
             raise
@@ -130,7 +160,7 @@ async def run(args):
         )
     client = AsyncOpenAI(api_key=key, max_retries=0, timeout=18) if key else None
     try:
-        meter = Meter(client, args.cap, args.ledger.resolve()) if client else None
+        meter = Meter(client, args.cap, args.ledger.resolve(), secret=key) if client else None
     except Exception:
         if client:
             await client.close()
@@ -190,7 +220,7 @@ async def run(args):
                     "repetition": repetition,
                     "temperature": temperature,
                     "status": "failed",
-                    "error_type": type(exc).__name__,
+                    **sanitized_error(exc, key),
                     "calculated_upper_bound_usd": (meter.spent - before) if meter else 0,
                 }
             rows.append(row)

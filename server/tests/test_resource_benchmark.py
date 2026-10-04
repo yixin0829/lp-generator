@@ -4,9 +4,58 @@ import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
+import httpx
 import pytest
+from openai import BadRequestError
 
-from scripts.benchmark_resources import Meter
+from scripts.benchmark_resources import Meter, sanitized_error
+
+
+@pytest.mark.asyncio
+async def test_api_rejection_exports_redacted_diagnostics_and_keeps_reservation(tmp_path):
+    error = BadRequestError(
+        "Do not export this raw exception",
+        response=httpx.Response(
+            400, request=httpx.Request("POST", "https://api.openai.com/v1/responses")
+        ),
+        body={
+            "error": {
+                "code": "unsupported_parameter",
+                "param": "max_tool_calls",
+                "type": "invalid_request_error",
+                "message": "Unsupported max_tool_calls sk-synthetic-secret Bearer synthetic-token https://example.com/private person@example.com",
+            }
+        },
+    )
+    meter = Meter(
+        SimpleNamespace(responses=SimpleNamespace(create=AsyncMock(side_effect=error))),
+        5,
+        tmp_path / "budget.json",
+    )
+    try:
+        with pytest.raises(BadRequestError):
+            await meter.create()
+        diagnostic = meter.calls[0]
+        assert diagnostic["http_status"] == 400
+        assert diagnostic["api_param"] == "max_tool_calls"
+        assert diagnostic["api_code"] == "unsupported_parameter"
+        assert diagnostic["api_message"].startswith("Unsupported max_tool_calls")
+        serialized = json.dumps(diagnostic)
+        for sensitive in ("sk-synthetic-secret", "synthetic-token", "example.com", "raw exception"):
+            assert sensitive not in serialized
+        assert meter.spent == pytest.approx(0.1)
+    finally:
+        meter.close()
+
+
+def test_diagnostics_never_export_arbitrary_exception_text_or_body():
+    assert sanitized_error(RuntimeError("secret text")) == {"error_type": "RuntimeError"}
+    error = SimpleNamespace(body={"request": {"api_key": "secret"}, "message": "x" * 900})
+    diagnostic = sanitized_error(error)
+    assert len(diagnostic["api_message"]) == 500
+    assert "secret" not in json.dumps(diagnostic)
+    error.body = {"message": "Rejected opaque-private-value"}
+    assert sanitized_error(error, "opaque-private-value")["api_message"] == "Rejected [credential]"
 
 
 @pytest.mark.asyncio
