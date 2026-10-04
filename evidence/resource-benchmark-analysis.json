@@ -1,0 +1,118 @@
+{
+  "full_summaries": [
+    {
+      "provider": "catalogue",
+      "temperature": "cold",
+      "measured_n": 24,
+      "coverage": 12,
+      "median_ms": 0.053999945521354675,
+      "p95_ms": 0.12290012091398239
+    },
+    {
+      "provider": "catalogue",
+      "temperature": "warm",
+      "measured_n": 24,
+      "coverage": 12,
+      "median_ms": 0.006150105036795139,
+      "p95_ms": 0.012699980288743973
+    },
+    {
+      "provider": "web_search",
+      "temperature": "cold",
+      "measured_n": 15,
+      "coverage": 15,
+      "median_ms": 6390.876299934462,
+      "p95_ms": 9356.112300185487
+    },
+    {
+      "provider": "web_search",
+      "temperature": "warm",
+      "measured_n": 15,
+      "coverage": 15,
+      "median_ms": 0.011299969628453255,
+      "p95_ms": 0.015799887478351593
+    },
+    {
+      "provider": "hybrid",
+      "temperature": "cold",
+      "measured_n": 16,
+      "coverage": 16,
+      "median_ms": 0.08615001570433378,
+      "p95_ms": 8397.60800008662
+    },
+    {
+      "provider": "hybrid",
+      "temperature": "warm",
+      "measured_n": 16,
+      "coverage": 16,
+      "median_ms": 0.010750023648142815,
+      "p95_ms": 0.017799902707338333
+    }
+  ],
+  "attempted_cold": {
+    "hybrid": 24,
+    "web_search": 24,
+    "catalogue": 24
+  },
+  "failures": {
+    "web_search": 9,
+    "hybrid": 8
+  },
+  "failed_topics": {
+    "Turkish": 3,
+    "Cooking": 4,
+    "Guitar": 2,
+    "Photography": 2,
+    "Pottery": 2,
+    "Question asking": 2,
+    "Beekeeping": 2
+  },
+  "calls": 36,
+  "search_items": 57,
+  "full_known_usage_subtotal_excluding_search_content_usd": 0.6098086999999999,
+  "smoke_known_usage_subtotal_excluding_search_content_usd": 0.013116,
+  "ledger_reserved_usd": 3.900000000000002,
+  "source_publishers": {
+    "www.nikonusa.com": 4,
+    "www.open.edu": 4,
+    "ocw.mit.edu": 33,
+    "docs.python.org": 14,
+    "developer.mozilla.org": 15,
+    "react.dev": 13,
+    "www.justinguitar.com": 8,
+    "www.postgresql.org": 8
+  },
+  "topic_coverage": {
+    "catalogue": [
+      "Guitar",
+      "JavaScript",
+      "Photography",
+      "Python",
+      "React",
+      "SQL"
+    ],
+    "web_search": [
+      "Beekeeping",
+      "Hydrogeology",
+      "JavaScript",
+      "Pottery",
+      "Python",
+      "Question asking",
+      "React",
+      "SQL",
+      "Turkish"
+    ],
+    "hybrid": [
+      "Beekeeping",
+      "Guitar",
+      "Hydrogeology",
+      "JavaScript",
+      "Photography",
+      "Pottery",
+      "Python",
+      "React",
+      "SQL"
+    ]
+  },
+  "successful_zero_sources": 12
+}

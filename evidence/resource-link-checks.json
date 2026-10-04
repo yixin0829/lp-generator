@@ -1,0 +1,62 @@
+[
+  {
+    "url": "https://docs.python.org/3/tutorial/controlflow.html",
+    "status": 200,
+    "verified_http_2xx": true
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/",
+    "status": 200,
+    "verified_http_2xx": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+    "status": 200,
+    "verified_http_2xx": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide",
+    "status": 200,
+    "verified_http_2xx": true
+  },
+  {
+    "url": "https://react.dev/learn/adding-interactivity",
+    "status": 200,
+    "verified_http_2xx": true
+  },
+  {
+    "url": "https://react.dev/learn/managing-state",
+    "status": 200,
+    "verified_http_2xx": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-join.html",
+    "status": 200,
+    "verified_http_2xx": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-sql.html",
+    "status": 200,
+    "verified_http_2xx": true
+  },
+  {
+    "url": "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+    "status": 403,
+    "verified_http_2xx": false
+  },
+  {
+    "url": "https://www.justinguitar.com/guitar-lessons",
+    "status": 403,
+    "verified_http_2xx": false
+  },
+  {
+    "url": "https://www.nikonusa.com/learn-and-explore",
+    "status": 403,
+    "verified_http_2xx": false
+  },
+  {
+    "url": "https://www.open.edu/openlearn/history-the-arts/visual-art/photography",
+    "status": 403,
+    "verified_http_2xx": false
+  }
+]

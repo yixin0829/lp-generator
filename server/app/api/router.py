@@ -2,10 +2,11 @@
 
 from fastapi import APIRouter
 
-from app.routers import feedback, learning_paths, shares, stats
+from app.routers import feedback, learning_paths, resources, shares, stats
 
 router = APIRouter(prefix="/v1", tags=["v1"])
 router.include_router(learning_paths.router)
 router.include_router(stats.router)
 router.include_router(feedback.router)
 router.include_router(shares.router)
+router.include_router(resources.router)

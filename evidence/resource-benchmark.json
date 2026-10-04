@@ -1,0 +1,2109 @@
+{
+  "catalogue_version": "2026-10-04-v1",
+  "seed": 20261004,
+  "manifest": [
+    [
+      "Python",
+      "Loops"
+    ],
+    [
+      "JavaScript",
+      "Closures"
+    ],
+    [
+      "React",
+      "State"
+    ],
+    [
+      "SQL",
+      "Joins"
+    ],
+    [
+      "Guitar",
+      "Chords"
+    ],
+    [
+      "Photography",
+      "Exposure"
+    ],
+    [
+      "Pottery",
+      "Glazing"
+    ],
+    [
+      "Beekeeping",
+      "Hive inspection"
+    ],
+    [
+      "Question asking",
+      "Clarifying assumptions"
+    ],
+    [
+      "Turkish",
+      "Vowel harmony"
+    ],
+    [
+      "Hydrogeology",
+      "Aquifer tests"
+    ],
+    [
+      "Cooking",
+      "Emulsification"
+    ]
+  ],
+  "live": false,
+  "cap_usd": 5.0,
+  "spend_upper_bound_usd": 0,
+  "billing_caveat": "Calculated conservative upper bound, not invoice. Fixed search content may be included in usage and counted twice. Failed calls reserve $0.10. No hidden retry.",
+  "summary": [
+    {
+      "provider": "catalogue",
+      "temperature": "cold",
+      "measured_n": 36,
+      "coverage": 18,
+      "median_ms": 0.043199979700148106,
+      "p95_ms": 0.11799996718764305
+    },
+    {
+      "provider": "catalogue",
+      "temperature": "warm",
+      "measured_n": 36,
+      "coverage": 18,
+      "median_ms": 0.004200031980872154,
+      "p95_ms": 0.0070999376475811005
+    },
+    {
+      "provider": "web_search",
+      "temperature": "cold",
+      "measured_n": 0,
+      "coverage": 0,
+      "median_ms": null,
+      "p95_ms": null
+    },
+    {
+      "provider": "web_search",
+      "temperature": "warm",
+      "measured_n": 0,
+      "coverage": 0,
+      "median_ms": null,
+      "p95_ms": null
+    },
+    {
+      "provider": "hybrid",
+      "temperature": "cold",
+      "measured_n": 18,
+      "coverage": 18,
+      "median_ms": 0.046900007873773575,
+      "p95_ms": 0.09010010398924351
+    },
+    {
+      "provider": "hybrid",
+      "temperature": "warm",
+      "measured_n": 18,
+      "coverage": 18,
+      "median_ms": 0.004800036549568176,
+      "p95_ms": 0.010400079190731049
+    }
+  ],
+  "calls": [],
+  "observations": [
+    {
+      "provider": "catalogue",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.11799996718764305,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.01610000617802143,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.09010010398924351,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.010400079190731049,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.33270008862018585,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.006499933078885078,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.06909994408488274,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005499925464391708,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.05079992115497589,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005400041118264198,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04920014180243015,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004499917849898338,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04760012961924076,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004400033503770828,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04549999721348286,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004600035026669502,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.046999892219901085,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004600035026669502,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04830001853406429,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004600035026669502,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.046900007873773575,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004399800673127174,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.046900007873773575,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00500003807246685,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.06890017539262772,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.009200070053339005,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.0716999638825655,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.0070999376475811005,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.062400009483098984,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.006200047209858894,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.02819998189806938,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005600042641162872,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.023399945348501205,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004500150680541992,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.0567000824958086,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.006499933078885078,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.058900099247694016,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00609993003308773,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.02519995905458927,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00490015372633934,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.056900084018707275,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005699926987290382,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.05870009772479534,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005499925464391708,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.024899840354919434,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00490015372633934,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.05530007183551788,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005200039595365524,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.05559995770454407,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005299923941493034,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.05619996227324009,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.005200039595365524,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04660012200474739,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00519980676472187,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.044899992644786835,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004499917849898338,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.042800093069672585,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.0041997991502285,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04329998046159744,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00400003045797348,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04539988003671169,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00409991480410099,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.045900000259280205,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004200031980872154,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.020300038158893585,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.0038999132812023163,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04269997589290142,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00400003045797348,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://docs.python.org/3/tutorial/controlflow.html",
+        "https://docs.python.org/3/tutorial/"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.019700033590197563,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.003800028935074806,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04309997893869877,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.0038999132812023163,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.01919991336762905,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.003700144588947296,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.053999945521354675,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004700152203440666,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.postgresql.org/docs/current/tutorial-join.html",
+        "https://www.postgresql.org/docs/current/tutorial-sql.html"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04520011134445667,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.0041997991502285,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.019399914890527725,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.003700144588947296,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.017800135537981987,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.003600027412176132,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.01750001683831215,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.003600027412176132,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.017800135537981987,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.003600027412176132,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04529999569058418,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004200031980872154,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.019399914890527725,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Turkish",
+      "concept": "Vowel harmony",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.003600027412176132,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.017700018361210823,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.0034999102354049683,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "SQL",
+      "concept": "Joins",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.043899985030293465,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "JavaScript",
+      "concept": "Closures",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004600035026669502,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 1,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.01940014772117138,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.003700144588947296,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04549999721348286,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Photography",
+      "concept": "Exposure",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004299916326999664,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.nikonusa.com/learn-and-explore",
+        "https://www.open.edu/openlearn/history-the-arts/visual-art/photography"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04320009611546993,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.004400033503770828,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://www.justinguitar.com/classes/beginner-guitar-course-grade-one",
+        "https://www.justinguitar.com/guitar-lessons"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Pottery",
+      "concept": "Glazing",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.0195999164134264,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.003800028935074806,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Hydrogeology",
+      "concept": "Aquifer tests",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 2,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.01750001683831215,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Cooking",
+      "concept": "Emulsification",
+      "repetition": 2,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.003600027412176132,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "web_search",
+      "topic": "Guitar",
+      "concept": "Chords",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "web_search",
+      "topic": "Python",
+      "concept": "Loops",
+      "repetition": 2,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "hybrid",
+      "topic": "Question asking",
+      "concept": "Clarifying assumptions",
+      "repetition": 0,
+      "status": "blocked_missing_credential"
+    },
+    {
+      "provider": "catalogue",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.04429998807609081,
+      "resource_count": 2,
+      "cached": false,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "React",
+      "concept": "State",
+      "repetition": 0,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.00409991480410099,
+      "resource_count": 2,
+      "cached": true,
+      "source_urls": [
+        "https://react.dev/learn/adding-interactivity",
+        "https://react.dev/learn/managing-state"
+      ],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 1,
+      "temperature": "cold",
+      "status": "measured",
+      "latency_ms": 0.019800150766968727,
+      "resource_count": 0,
+      "cached": false,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    },
+    {
+      "provider": "catalogue",
+      "topic": "Beekeeping",
+      "concept": "Hive inspection",
+      "repetition": 1,
+      "temperature": "warm",
+      "status": "measured",
+      "latency_ms": 0.003600027412176132,
+      "resource_count": 0,
+      "cached": true,
+      "source_urls": [],
+      "calculated_upper_bound_usd": 0
+    }
+  ]
+}

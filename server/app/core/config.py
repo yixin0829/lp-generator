@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -67,6 +67,9 @@ class Settings(BaseSettings):
         default="generated_count", validation_alias="FIRESTORE_COUNTER_FIELD"
     )
     feedback_backend: str = Field(default="noop", validation_alias="FEEDBACK_BACKEND")
+    resource_provider: Literal["catalogue", "web_search", "hybrid"] = Field(
+        default="catalogue", validation_alias="RESOURCE_PROVIDER"
+    )
     feedback_rate_limit: str = Field(default="10/minute", validation_alias="FEEDBACK_RATE_LIMIT")
     firestore_feedback_collection: str = Field(
         default="feedback", validation_alias="FIRESTORE_FEEDBACK_COLLECTION"
