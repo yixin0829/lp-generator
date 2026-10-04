@@ -32,6 +32,7 @@ import { apiUrl } from "../../config/api";
 import { findPublicTopicByAlias } from "../../data/publicTopics";
 import Seo from "../../seo/Seo";
 import NetworkGraph from "./NetworkGraph";
+import ConceptResources from "../../components/ConceptResources/ConceptResources";
 import { createShareSnapshot } from "../../util/shareSnapshot";
 
 const LEVEL_ORDER = ["Beginner", "Intermediate", "Advanced"];
@@ -299,6 +300,7 @@ export default function LearningPath() {
           ) : (
             <LPItems key={topic} lp={lp} setLp={setLp} conceptDetails={conceptDetails} />
           )}
+          <ConceptResources key={topic} topic={topic} concepts={hasGraph ? graphData.nodes : Object.entries(lp).flatMap(([level, items]) => Array.isArray(items) ? items.map((item) => ({ label: typeof item === "string" ? item : item.name, level })) : [])} />
         </>
       ) : (
         <div
