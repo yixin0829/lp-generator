@@ -72,6 +72,7 @@ In local dev, the frontend calls the backend directly (no proxy needed).
 
 ### Backend
 - `OPENAI_API_KEY` — Required (except in test env where it auto-fills)
+- `OPENAI_MODEL` - Generation model (default `gpt-6-luna`, with reasoning disabled to preserve the previous non-reasoning workload); does not change moderation
 - `API_KEY` / `REQUIRE_API_KEY` — Backend auth (enabled by default in production)
 - `CORS_ORIGINS` — Comma-separated allowed origins (must be explicit in production)
 - `COUNTER_BACKEND` — `noop` (default) or `firestore`
