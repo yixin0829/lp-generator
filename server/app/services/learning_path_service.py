@@ -8,6 +8,7 @@ from typing import Any
 
 from loguru import logger
 from openai import (
+    NOT_GIVEN,
     APIConnectionError,
     APITimeoutError,
     AsyncOpenAI,
@@ -214,7 +215,7 @@ class LearningPathService:
     def __init__(
         self,
         client: AsyncOpenAI,
-        model: str = "[REDACTED]",
+        model: str = "gpt-6-luna",
         max_topic_length: int = 120,
     ) -> None:
         self._client = client
@@ -306,6 +307,9 @@ class LearningPathService:
         try:
             return await self._client.responses.parse(
                 model=self._model,
+                # Luna defaults to medium reasoning. Preserve the previous
+                # non-reasoning workload; other model overrides keep their behavior.
+                reasoning={"effort": "none"} if self._model == "gpt-6-luna" else NOT_GIVEN,
                 input=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": f'Generate a learning path for "{topic}".'},
