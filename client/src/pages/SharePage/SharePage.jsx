@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import LearningPathView from "../../components/LearningPathView/LearningPathView";
 import { apiUrl } from "../../config/api";
 import Seo from "../../seo/Seo";
-import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
+import LoadingProgress from "../LoadingProgress/LoadingProgress";
 import "./SharePage.scss";
 
 export default function SharePage() {
@@ -55,7 +55,7 @@ export default function SharePage() {
         to the original path won't change this copy. It won't appear in the
         topic list.
       </p>
-      {state.phase === "loading" && <LoadingSpinner />}
+      {state.phase === "loading" && <LoadingProgress />}
       {state.phase === "error" && <h1>{state.message}</h1>}
       {state.snapshot && (
         <>

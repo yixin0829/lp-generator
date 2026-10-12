@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
+import LoadingProgress from "../LoadingProgress/LoadingProgress";
 import {
   DndContext,
   DragOverlay,
@@ -378,7 +378,7 @@ export default function LearningPath() {
             height: "40vh",
           }}
         >
-          {isLoading ? <LoadingSpinner /> : null}
+          {isLoading ? <LoadingProgress /> : null}
         </div>
       )}
       <div style={{ height: "30px" }} />

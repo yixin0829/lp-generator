@@ -109,7 +109,7 @@ test("mobile details stay scrollable without shrinking the graph viewport", asyn
   );
 });
 
-test("the loading icon keeps spinning with reduced motion enabled", async ({
+test("the preparing progress bar stays active until the path is ready", async ({
   page,
 }) => {
   let finish;
@@ -121,19 +121,24 @@ test("the loading icon keeps spinning with reduced motion enabled", async ({
     await route.fulfill({ json: { completion: completion() } });
   });
   await page.goto("/learningpath?term=Loading%20review");
-  const spinner = page.locator(".loading-spinner");
-  await expect(spinner).toBeVisible();
-  const first = await spinner.evaluate((el) => getComputedStyle(el).transform);
+  const progress = page.getByRole("progressbar", {
+    name: "Preparing your learning path",
+  });
+  await expect(progress).toBeVisible();
+  await expect(
+    page.getByText("Preparing your learning path...", { exact: true }),
+  ).toBeVisible();
+  await expect(progress).not.toHaveAttribute("aria-valuenow", /.+/);
+  const fill = progress.locator(".preparing-progress-fill");
+  const first = await fill.evaluate((el) => getComputedStyle(el).transform);
   await page.waitForTimeout(180);
-  const later = await spinner.evaluate((el) => getComputedStyle(el).transform);
+  const later = await fill.evaluate((el) => getComputedStyle(el).transform);
   expect(later).not.toBe(first);
   expect(
-    await spinner.evaluate(
-      (el) => getComputedStyle(el).animationIterationCount,
-    ),
+    await fill.evaluate((el) => getComputedStyle(el).animationIterationCount),
   ).toBe("infinite");
   finish();
-  await expect(spinner).toHaveCount(0);
+  await expect(progress).toHaveCount(0);
 });
 
 test("only concept headings drag; summaries show details without reordering", async ({
