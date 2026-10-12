@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import LoadingProgress from "../LoadingProgress/LoadingProgress";
 import {
@@ -148,6 +148,7 @@ export default function LearningPath() {
   const [badRequest, setBadRequest] = useState(false);
   const [isModeratedTopic, setIsModeratedTopic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const revealPath = useCallback(() => setIsLoading(false), []);
   const [shareUrl, setShareUrl] = useState("");
   const [searchParams] = useSearchParams();
   const topic = searchParams.get("term")?.trim() ?? "";
@@ -224,13 +225,13 @@ export default function LearningPath() {
         setFailureStatus(statusCode);
         setIsModeratedTopic(isModerationError(statusCode, errorDetail));
         setBadRequest(true);
+        setIsLoading(false);
       } else {
         const { flat, details, graphData: gd } = extractConceptData(completion);
         setConceptDetails(details);
         setLp(flat);
         setGraphData(gd);
       }
-      setIsLoading(false);
     };
 
     getLp();
@@ -262,14 +263,14 @@ export default function LearningPath() {
       <div className="title-container">
         <h1>{topic} learning path</h1>
       </div>
-      {lp && (
+      {lp && !isLoading && (
         <p>
           {viewMode === "graph"
             ? "Select a concept to see how it connects to the others."
             : "Drag and drop concepts to reorder them, then copy the path to your notes!"}
         </p>
       )}
-      {badRequest || lp ? <SearchMore /> : <div></div>}
+      {badRequest || (lp && !isLoading) ? <SearchMore /> : <div></div>}
       {badRequest ? (
         <div className="status-panel" role="alert">
           {isModeratedTopic ? (
@@ -300,7 +301,7 @@ export default function LearningPath() {
             </>
           )}
         </div>
-      ) : lp ? (
+      ) : lp && !isLoading ? (
         <>
           <div className="learning-path-controls">
             {hasGraph && (
@@ -389,6 +390,8 @@ export default function LearningPath() {
             <LoadingProgress
               key={`${topic}:${retryCount}`}
               estimateGeneration
+              complete={Boolean(lp)}
+              onComplete={revealPath}
             />
           ) : null}
         </div>

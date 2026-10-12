@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { apiUrl } from "../../config/api";
 import "./LoadingProgress.scss";
 
@@ -13,7 +13,12 @@ function validEstimate(value) {
   );
 }
 
-export default function LoadingProgress({ estimateGeneration = false }) {
+export default function LoadingProgress({
+  estimateGeneration = false,
+  complete = false,
+  onComplete,
+}) {
+  const fillRef = useRef(null);
   const [estimate, setEstimate] = useState(null);
   const [elapsed, setElapsed] = useState(0);
 
@@ -43,6 +48,56 @@ export default function LoadingProgress({ estimateGeneration = false }) {
     };
   }, [estimateGeneration]);
 
+  useLayoutEffect(() => {
+    if (!complete) return;
+    const element = fillRef.current;
+    const track = element.parentElement.getBoundingClientRect();
+    const current = Math.min(
+      1,
+      Math.max(
+        0,
+        (element.getBoundingClientRect().right - track.left) / track.width,
+      ),
+    );
+    element.style.setProperty("animation", "none", "important");
+    element.style.transition = "none";
+    element.style.width = "100%";
+    const animation = element.animate(
+      [
+        { transform: `scaleX(${current})`, opacity: 1 },
+        { transform: "scaleX(1)", opacity: 1 },
+      ],
+      {
+        duration: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? 0
+          : 200,
+        easing: "linear",
+        fill: "forwards",
+      },
+    );
+    let cancelled = false;
+    let frame;
+    animation.finished
+      .then(() => {
+        if (cancelled) return;
+        // Paint the full bar before replacing it with the learning path.
+        frame = requestAnimationFrame(() => {
+          frame = requestAnimationFrame(() => {
+            if (!cancelled) onComplete?.();
+          });
+        });
+      })
+      .catch(() => {}); // Unmounting cancels the animation on navigation.
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+      animation.cancel();
+      element.style.removeProperty("animation");
+      element.style.removeProperty("transition");
+      element.style.removeProperty("width");
+    };
+  }, [complete, onComplete]);
+
   const overdue = estimate && elapsed > estimate.upper_seconds;
   // This is an elapsed-time estimate, not a measurement of completed work.
   // Stop advancing at the usual upper bound; keep activity visible on overruns.
@@ -65,23 +120,22 @@ export default function LoadingProgress({ estimateGeneration = false }) {
         role="progressbar"
         aria-label="Preparing your learning path"
         aria-valuetext={
-          estimate
-            ? "Estimated progress; preparing your learning path"
-            : "In progress"
+          complete
+            ? "Complete"
+            : estimate
+              ? "Estimated progress; preparing your learning path"
+              : "In progress"
         }
       >
         <div
+          ref={fillRef}
           className="preparing-progress-fill"
-          style={estimate ? { width: `${fill}%` } : undefined}
+          style={estimate ? { transform: `scaleX(${fill / 100})` } : undefined}
         />
       </div>
       <p>Preparing your learning path...</p>
-      {estimate && (
-        <p className="preparing-estimate">
-          {overdue
-            ? "Taking longer than usual..."
-            : `Usually ${estimate.lower_seconds}–${estimate.upper_seconds} seconds`}
-        </p>
+      {overdue && !complete && (
+        <p className="preparing-estimate">Taking longer than usual...</p>
       )}
     </div>
   );
