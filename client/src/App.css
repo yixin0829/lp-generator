@@ -375,14 +375,6 @@ button:disabled {
 .learning-path-page .search-more {
   margin: 1.5rem 0;
 }
-.learning-path-page .concept-item > p {
-  font-size: 1rem;
-  margin: 0.35rem 0 1rem;
-}
-.learning-path-page .concept-item > li {
-  font-size: 1.05rem;
-  font-weight: 600;
-}
 .learning-path-page .share-result {
   overflow-wrap: anywhere;
 }

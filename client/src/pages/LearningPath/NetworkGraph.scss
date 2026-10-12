@@ -1,4 +1,5 @@
 .network-graph-container {
+  --graph-canvas-height: 620px;
   --node-beginner: #29816a;
   --node-intermediate: #476f9d;
   --node-advanced: #9b702f;
@@ -14,6 +15,9 @@
   animation: none;
 
   .graph-details-link {
+    display: none;
+  }
+  .graph-details-slot {
     display: none;
   }
 
@@ -99,9 +103,15 @@
   .graph-workspace {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 260px;
+    grid-template-rows: minmax(0, 1fr);
+    height: var(--graph-canvas-height);
+    overflow: hidden;
   }
   .graph-canvas {
     min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
   .graph-guidance,
   .graph-scroll-help {
@@ -117,7 +127,8 @@
     display: none;
   }
   .graph-viewport {
-    height: 540px;
+    flex: 1;
+    min-height: 0;
   }
   .network-graph-svg {
     display: block;
@@ -187,6 +198,11 @@
     background: var(--surface-card);
     padding: 22px;
     min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    overflow-wrap: anywhere;
   }
   .graph-inspector h3 {
     font-size: 1.25rem;
@@ -259,6 +275,13 @@
   --selection: #8cbcff;
 }
 @media (max-width: 900px) {
+  .network-graph-container {
+    --graph-canvas-height: 680px;
+  }
+  .network-graph-container .graph-details-slot {
+    display: block;
+    min-height: 44px;
+  }
   .network-graph-container .graph-details-link {
     display: block;
     min-height: 44px;
@@ -271,10 +294,13 @@
   }
   .network-graph-container .graph-workspace {
     grid-template-columns: 1fr;
+    grid-template-rows: var(--graph-canvas-height) auto;
+    height: auto;
   }
   .network-graph-container .graph-inspector {
     border-left: 0;
     border-top: 1px solid var(--graph-border);
+    max-height: 360px;
   }
   .network-graph-container .graph-empty-details {
     display: none;
@@ -305,9 +331,6 @@
 @media (max-width: 500px) {
   .network-graph-container .graph-toolbar {
     padding: 10px 12px;
-  }
-  .network-graph-container .graph-viewport {
-    height: 520px;
   }
   .network-graph-container .graph-guidance {
     padding: 12px;

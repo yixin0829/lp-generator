@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import {
@@ -333,17 +333,23 @@ export default function LearningPath() {
               </div>
             )}
             <Button
+              className="share-action"
+              isSecondary
+              aria-describedby="share-visibility"
               label={isSharing ? "Creating link..." : "Share path"}
               disabled={isSharing}
               onClick={shareLearningPath}
             />
           </div>
-          <p className="share-hint">
+          <p id="share-visibility" className="share-hint">
             Anyone with the link can view a copy of this path.
           </p>
           {shareUrl && (
             <p className="share-result">
-              Share link: <a href={shareUrl}>{shareUrl}</a>
+              <a href={shareUrl} target="_blank" rel="noopener noreferrer">
+                Open share link <span aria-hidden="true">↗</span>
+              </a>
+              <span className="share-url">{shareUrl}</span>
             </p>
           )}
           {viewMode === "graph" && hasGraph ? (
@@ -420,8 +426,10 @@ function LPItems({ lp, setLp, conceptDetails }) {
   const [items, setItems] = useState(lp);
   const [activeId, setActiveId] = useState();
   const sensors = useSensors(
-    useSensor(MouseSensor),
-    useSensor(TouchSensor),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
@@ -577,13 +585,15 @@ function Container({ id, items, conceptDetails }) {
     >
       <div ref={setNodeRef} className="level-container">
         <h2>{id}</h2>
-        {(Array.isArray(items) ? items : []).map((itemId) => (
-          <SortableItem
-            key={itemId}
-            id={itemId}
-            details={conceptDetails?.[itemId]}
-          />
-        ))}
+        <ul className="concept-list">
+          {(Array.isArray(items) ? items : []).map((itemId) => (
+            <SortableItem
+              key={itemId}
+              id={itemId}
+              details={conceptDetails?.[itemId]}
+            />
+          ))}
+        </ul>
       </div>
     </SortableContext>
   );
@@ -594,6 +604,7 @@ function SortableItem({ id, details }) {
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -604,43 +615,77 @@ function SortableItem({ id, details }) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <li ref={setNodeRef} style={style} className="sortable-concept">
       <Item
         id={id}
         style={{ opacity: isDragging ? 0.5 : 1 }}
-        details={isDragging ? null : details}
+        details={details}
+        hideDetails={isDragging}
+        handleProps={{ ...attributes, ...listeners, ref: setActivatorNodeRef }}
       />
-    </div>
+    </li>
   );
 }
 
-function Item({ id, style, details }) {
+function Item({ id, style, details, handleProps, hideDetails = false }) {
   const [hovered, setHovered] = useState(false);
-
+  const [expanded, setExpanded] = useState(false);
+  const detailId = useId();
+  const showDetails = !hideDetails && (hovered || expanded);
   return (
-    <div
-      style={style}
-      className="concept-item"
-      onMouseEnter={() => details && setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <li>{id}</li>
-      {details?.summary && <p>{details.summary}</p>}
-      {hovered && details && (
-        <div className="concept-tooltip">
-          <h4>{id}</h4>
-          <div className="tooltip-section">
-            <span className="tooltip-label">What it is</span>
-            <p>{details.summary}</p>
-          </div>
-          <div className="tooltip-section">
-            <span className="tooltip-label">Why it matters</span>
-            <p>{details.why}</p>
-          </div>
-          <div className="tooltip-section">
-            <span className="tooltip-label">How it connects</span>
-            <p>{details.connection}</p>
-          </div>
+    <div style={style} className="concept-item">
+      {handleProps ? (
+        <button
+          type="button"
+          className="concept-drag-handle"
+          {...handleProps}
+          aria-label={"Reorder " + id}
+        >
+          <span aria-hidden="true">•</span>
+          <span>{id}</span>
+        </button>
+      ) : (
+        <div className="concept-drag-preview">• {id}</div>
+      )}
+      {details?.summary && (
+        <div
+          className="concept-summary-area"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          <button
+            type="button"
+            className="concept-summary"
+            aria-expanded={showDetails}
+            aria-controls={detailId}
+            onClick={() => setExpanded((value) => !value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                setHovered(false);
+                setExpanded(false);
+              }
+            }}
+          >
+            {details.summary}
+          </button>
+          {showDetails && (
+            <div
+              className="concept-tooltip"
+              id={detailId}
+              role="region"
+              aria-label={id + " details"}
+            >
+              <h4>{id}</h4>
+              <div className="tooltip-section">
+                <span className="tooltip-label">Why it matters</span>
+                <p>{details.why}</p>
+              </div>
+              <div className="tooltip-section">
+                <span className="tooltip-label">How it connects</span>
+                <p>{details.connection}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

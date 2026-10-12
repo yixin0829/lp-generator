@@ -49,6 +49,7 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
 
   useEffect(() => {
     controllerRef.current?.select(selectedId);
+    if (inspectorRef.current) inspectorRef.current.scrollTop = 0;
   }, [selectedId]);
 
   useEffect(() => {
@@ -91,6 +92,11 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
           edge.source !== edge.target,
       )
       .map((edge) => ({ ...edge }));
+    const degree = new Map(simNodes.map((node) => [node.id, 0]));
+    simEdges.forEach((edge) => {
+      degree.set(edge.source, degree.get(edge.source) + 1);
+      degree.set(edge.target, degree.get(edge.target) + 1);
+    });
     svg.selectAll("*").remove();
     const defs = svg.append("defs");
     defs
@@ -260,6 +266,11 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
         d3
           .forceLink(simEdges)
           .id((node) => node.id)
+          .strength(
+            (edge) =>
+              0.3 /
+              Math.min(degree.get(edge.source.id), degree.get(edge.target.id)),
+          )
           .distance(
             (edge) =>
               edge.source.radius + edge.target.radius + (width < 500 ? 36 : 48),
@@ -477,24 +488,26 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
               aria-label="Connected learning concepts"
             />
           </div>
-          {selected && (
-            <button
-              type="button"
-              className="graph-details-link"
-              aria-controls={"graph-details-" + id}
-              onClick={() => {
-                inspectorRef.current?.scrollIntoView({
-                  block: "nearest",
-                  behavior: "instant",
-                });
-                inspectorRef.current
-                  ?.querySelector("button")
-                  ?.focus({ preventScroll: true });
-              }}
-            >
-              View {selected.label} details ↓
-            </button>
-          )}
+          <div className="graph-details-slot">
+            {selected && (
+              <button
+                type="button"
+                className="graph-details-link"
+                aria-controls={"graph-details-" + id}
+                onClick={() => {
+                  inspectorRef.current?.scrollIntoView({
+                    block: "nearest",
+                    behavior: "instant",
+                  });
+                  inspectorRef.current
+                    ?.querySelector("button")
+                    ?.focus({ preventScroll: true });
+                }}
+              >
+                View {selected.label} details ↓
+              </button>
+            )}
+          </div>
           <p className="graph-scroll-help">
             Arrows point from a prerequisite to what depends on it.
             <span className="graph-desktop-help">
@@ -507,6 +520,7 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
           ref={inspectorRef}
           className="graph-inspector"
           id={"graph-details-" + id}
+          tabIndex={0}
           aria-label="Concept details"
           aria-live="polite"
         >

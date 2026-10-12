@@ -129,7 +129,6 @@ export default function HomePage() {
         <SearchbarHome onChange={setSearchTerm} />
         <Button label="Generate" type="submit" disabled={!searchTerm.trim()} />
       </form>
-      <p className="search-hint">New topics are generated with AI.</p>
       <Recommended />
     </main>
   );
