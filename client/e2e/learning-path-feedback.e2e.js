@@ -112,6 +112,7 @@ test("mobile details stay scrollable without shrinking the graph viewport", asyn
 test("the preparing progress bar stays active until the path is ready", async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   let finish;
   const pending = new Promise((resolve) => {
     finish = resolve;

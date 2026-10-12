@@ -385,7 +385,12 @@ export default function LearningPath() {
             height: "40vh",
           }}
         >
-          {isLoading ? <LoadingProgress /> : null}
+          {isLoading ? (
+            <LoadingProgress
+              key={`${topic}:${retryCount}`}
+              estimateGeneration
+            />
+          ) : null}
         </div>
       )}
       <div style={{ height: "30px" }} />

@@ -23,6 +23,20 @@
     animation: preparing-progress-travel 1600ms ease-in-out infinite alternate !important;
   }
 
+  .is-estimated .preparing-progress-fill {
+    animation: none !important;
+    transition: width 250ms linear;
+  }
+
+  .is-overdue .preparing-progress-fill {
+    animation: preparing-progress-pulse 1600ms ease-in-out infinite alternate !important;
+  }
+
+  .preparing-estimate {
+    margin-top: -12px;
+    font-size: 13px;
+  }
+
   p {
     margin: 0;
     text-align: center;
@@ -40,8 +54,18 @@
   }
 }
 
+@keyframes preparing-progress-pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .loading-progress-container .preparing-progress-fill {
-    animation-duration: 3200ms !important;
+  .loading-progress-container .preparing-progress .preparing-progress-fill {
+    animation: none !important;
+    transition: none;
   }
 }

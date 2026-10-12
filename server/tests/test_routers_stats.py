@@ -14,6 +14,7 @@ def test_stats_returns_counter_value(client: TestClient, mocker):
     try:
         resp = client.get("/v1/stats")
         assert resp.status_code == 200
-        assert resp.json() == {"learning_paths_generated": 1234}
+        assert resp.json()["learning_paths_generated"] == 1234
+        assert "generation_estimate" in resp.json()
     finally:
         app.dependency_overrides.clear()
