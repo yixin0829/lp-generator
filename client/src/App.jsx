@@ -17,7 +17,9 @@ export default function App() {
       <SnackbarProvider>
         <BrowserRouter>
           <Analytics />
-          <OnboardingProvider><TransitionRoutes /></OnboardingProvider>
+          <OnboardingProvider>
+            <TransitionRoutes />
+          </OnboardingProvider>
         </BrowserRouter>
       </SnackbarProvider>
     </ThemeProvider>

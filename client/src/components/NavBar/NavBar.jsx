@@ -32,8 +32,16 @@ export default function Navbar() {
             </Link>
           );
         })}
-        <button type="button" className="navbar-link navbar-help" onClick={replay}>How to use</button>
-        <ThemeToggle />
+        <div className="navbar-tools">
+          <button
+            type="button"
+            className="navbar-link navbar-help"
+            onClick={replay}
+          >
+            How to use
+          </button>
+          <ThemeToggle />
+        </div>
       </nav>
     </header>
   );

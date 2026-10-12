@@ -68,7 +68,10 @@ export default function FeedbackPage() {
       <p className="feedback-subtitle">
         Have a suggestion or found a bug? We'd love to hear from you!
       </p>
-      <p>Want to learn a topic? <Link to="/">Generate a learning path on Home</Link> instead.</p>
+      <p>
+        Want to learn a topic?{" "}
+        <Link to="/">Generate a learning path on Home</Link> instead.
+      </p>
       <div style={{ height: "20px" }} />
 
       {phase === "submitted" ? (

@@ -19,7 +19,11 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
-    try { localStorage.setItem("theme", theme); } catch { /* Keep the active theme for this visit. */ }
+    try {
+      localStorage.setItem("theme", theme);
+    } catch {
+      /* Keep the active theme for this visit. */
+    }
     document
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute("content", theme === "dark" ? "#111113" : "#fafafc");

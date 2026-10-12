@@ -21,7 +21,7 @@ const steps = [
   },
   {
     title: "Find your starting point",
-    text: "Use List for a clear sequence or Graph to see how concepts connect. Hover over a concept for an explanation and why it matters. Start with a beginner concept you do not know yet.",
+    text: "Use List for a clear sequence or Graph to see how concepts connect. Select a concept in Graph to read its explanation and prerequisites. Start with a beginner concept you do not know yet.",
     example: "Beginner → Intermediate → Advanced",
   },
   {

@@ -141,9 +141,10 @@ export default function LearningPath() {
   const [lp, setLp] = useState(null);
   const [conceptDetails, setConceptDetails] = useState({});
   const [graphData, setGraphData] = useState(null);
-  const [viewMode, setViewMode] = useState("list");
+  const [viewMode, setViewMode] = useState("graph");
   const [retryCount, setRetryCount] = useState(0);
   const [isSharing, setIsSharing] = useState(false);
+  const [failureStatus, setFailureStatus] = useState(null);
   const [badRequest, setBadRequest] = useState(false);
   const [isModeratedTopic, setIsModeratedTopic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -199,6 +200,7 @@ export default function LearningPath() {
     setGraphData(null);
     setShareUrl("");
     setBadRequest(false);
+    setFailureStatus(null);
     setIsModeratedTopic(false);
 
     if (!topic) {
@@ -219,6 +221,7 @@ export default function LearningPath() {
         !Array.isArray(completion);
 
       if (statusCode !== 200 || !hasValidCompletion) {
+        setFailureStatus(statusCode);
         setIsModeratedTopic(isModerationError(statusCode, errorDetail));
         setBadRequest(true);
       } else {
@@ -290,11 +293,17 @@ export default function LearningPath() {
           ) : (
             <>
               <h2>Couldn't generate this learning path.</h2>
-              <p>Try again with the same topic, or enter something else.</p>
-              <Button
-                label="Try again"
-                onClick={() => setRetryCount((count) => count + 1)}
-              />
+              <p>
+                {failureStatus === 400
+                  ? "Try a shorter topic or a different phrase."
+                  : "Try again with the same topic, or enter something else."}
+              </p>
+              {failureStatus !== 400 && (
+                <Button
+                  label="Try again"
+                  onClick={() => setRetryCount((count) => count + 1)}
+                />
+              )}
             </>
           )}
         </div>

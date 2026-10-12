@@ -72,19 +72,14 @@
       margin-right: 0;
       padding: 15px 20px;
     }
-    opacity: 0;
+    opacity: 1;
+    flex: 1;
+    min-width: 240px;
 
     &:hover {
       z-index: 10;
     }
   }
-  @for $i from 1 to 100 {
-    div > .level-container:nth-child(#{$i}) {
-      animation: float-in 1000ms forwards;
-      animation-delay: $i * 200ms + 200ms;
-    }
-  }
-
   .title-container {
     display: flex;
     flex-direction: row;

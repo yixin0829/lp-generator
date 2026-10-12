@@ -51,6 +51,10 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
     controllerRef.current?.select(selectedId);
   }, [selectedId]);
 
+  useEffect(() => {
+    controllerRef.current?.setDragMode(dragEnabled);
+  }, [dragEnabled]);
+
   // The graph only rebuilds for new data. Theme is CSS; resize changes the viewport.
   useEffect(() => {
     if (!svgRef.current || !viewportRef.current) return;
@@ -324,6 +328,12 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
           }
         }),
     );
+    // D3 drag sets inline touch-action:none, even when its event filter rejects
+    // dragging. Remove that restriction while page scrolling is enabled.
+    function setDragMode(enabled) {
+      groups.style("touch-action", enabled ? "none" : "pan-y pinch-zoom");
+    }
+    setDragMode(dragEnabledRef.current);
     const updateMotion = () => {
       if (media.matches) {
         settleWithoutMotion();
@@ -361,6 +371,7 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
     controllerRef.current = {
       select,
       reveal,
+      setDragMode,
       fit: () => {
         fitOnResize = true;
         fit();

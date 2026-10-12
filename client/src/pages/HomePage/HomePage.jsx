@@ -114,7 +114,8 @@ export default function HomePage() {
         Generate a learning path for anything that's on your mind.
         {lpCounter > 0 && (
           <span className="subtitle-count">
-            <strong>{lpCounter.toLocaleString()}</strong> paths have been generated.
+            <strong>{lpCounter.toLocaleString()}</strong> paths have been
+            generated.
           </span>
         )}
       </p>
@@ -178,7 +179,7 @@ export function SearchbarHome({ onChange, onEnter }) {
         placeholder="e.g. JavaScript or cooking"
         onChange={onChange}
         onEnterKey={onEnter}
-        inputArgs={{ id, maxLength: 200, enterKeyHint: "go" }}
+        inputArgs={{ id, maxLength: 120, enterKeyHint: "go" }}
       />
     </div>
   );
