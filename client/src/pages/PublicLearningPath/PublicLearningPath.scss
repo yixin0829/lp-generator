@@ -1,6 +1,6 @@
 .public-learning-path { margin: 100px max(18px, 7%) 60px; color: var(--text-primary); }
 .public-learning-path h1 { font-size: clamp(2.2rem, 5vw, 4rem); }
-.topic-category { color: var(--gradient-end); font-weight: 700; }
+.topic-category { color: var(--text-tertiary); font-weight: 500; font-size: .9375rem; }
 .introduction { max-width: 850px; font-size: 1.1rem; color: var(--text-secondary); }
 .breadcrumbs { margin-bottom: 22px; }
 .learning-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 30px 0; }

@@ -15,8 +15,8 @@ export default function Searchbar({
   const [value, setValue] = useState(initialValue ?? "");
 
   function onKeyDown(event) {
-    if (event.key === "Enter") {
-      setValue("");
+    if (event.key === "Enter" && !event.nativeEvent.isComposing && onEnterKey) {
+      event.preventDefault();
       onEnterKey?.(value);
     }
   }

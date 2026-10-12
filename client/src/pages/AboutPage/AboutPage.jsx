@@ -72,18 +72,24 @@ const aboutJsonLd = {
 
 export default function AboutPage() {
   return (
-    <div className="about-page">
+    <main className="about-page">
       <Seo
         title="About"
         description="Meet the developers behind LearnAnything — an AI-powered learning path generator that helps you learn any topic from beginner to advanced."
         path="/about"
         jsonLd={aboutJsonLd}
       />
-      <div style={{ height: "100px" }} />
+
       <h1>About</h1>
-      <p>Why did we build LearnAnything? You might ask. Well, we want you to think of LearnAnything as more than just a learning path generator, but as an entry point for YOU to begin your learning journey on any topic that you could possibly imagine. Just as Mahatma Gandhi once said, "Live as if you were to die tomorrow. Learn as if you were to live forever."</p>
+      <p>
+        Why did we build LearnAnything? You might ask. Well, we want you to
+        think of LearnAnything as more than just a learning path generator, but
+        as an entry point for YOU to begin your learning journey on any topic
+        that you could possibly imagine. Just as Mahatma Gandhi once said, "Live
+        as if you were to die tomorrow. Learn as if you were to live forever."
+      </p>
       <div style={{ height: "30px" }} />
-      <h1>Meet the Devs</h1>
+      <h2>Meet the developers</h2>
       <div style={{ height: "10px" }} />
       <div className="about-container">
         <Person
@@ -102,14 +108,14 @@ export default function AboutPage() {
         />
       </div>
       <div style={{ height: "50px" }} />
-    </div>
+    </main>
   );
 }
 
 const Person = ({ personName, personDescription, personImage }) => {
   return (
     <div className="person-bio">
-      <img src={personImage} alt="dev img" />
+      <img src={personImage} alt={personName} />
       <h3>{personName}</h3>
       <p>{personDescription}</p>
     </div>

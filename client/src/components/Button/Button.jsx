@@ -10,9 +10,15 @@ export default function Button({
   icon,
   inline,
   className,
+  type = "button",
+  disabled = false,
+  ...buttonProps
 }) {
   return (
     <button
+      {...buttonProps}
+      type={type}
+      disabled={disabled}
       onClick={onClick}
       style={{
         ...style,

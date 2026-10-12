@@ -24,18 +24,39 @@ def service(mock_client) -> LearningPathService:
 
 SAMPLE_GRAPH_DATA = {
     "nodes": [
-        {"id": "variables", "label": "Variables", "level": "Beginner",
-         "summary": "Named containers for data.", "why": "Fundamental building block."},
-        {"id": "data_types", "label": "Data Types", "level": "Beginner",
-         "summary": "Categories of values.", "why": "Prevents bugs."},
-        {"id": "functions", "label": "Functions", "level": "Intermediate",
-         "summary": "Reusable code blocks.", "why": "Key abstraction mechanism."},
+        {
+            "id": "variables",
+            "label": "Variables",
+            "level": "Beginner",
+            "summary": "Named containers for data.",
+            "why": "Fundamental building block.",
+        },
+        {
+            "id": "data_types",
+            "label": "Data Types",
+            "level": "Beginner",
+            "summary": "Categories of values.",
+            "why": "Prevents bugs.",
+        },
+        {
+            "id": "functions",
+            "label": "Functions",
+            "level": "Intermediate",
+            "summary": "Reusable code blocks.",
+            "why": "Key abstraction mechanism.",
+        },
     ],
     "edges": [
-        {"source": "variables", "target": "data_types",
-         "relationship": "Variable storage precedes type understanding."},
-        {"source": "data_types", "target": "functions",
-         "relationship": "Type knowledge needed for function parameters."},
+        {
+            "source": "variables",
+            "target": "data_types",
+            "relationship": "Variable storage precedes type understanding.",
+        },
+        {
+            "source": "data_types",
+            "target": "functions",
+            "relationship": "Type knowledge needed for function parameters.",
+        },
     ],
 }
 
@@ -120,6 +141,42 @@ class TestBreakCycles:
 
 
 class TestGraphToLevels:
+    def test_preserves_all_incoming_and_outgoing_dependencies(self):
+        nodes = [
+            {"id": name.lower(), "label": name, "level": "Beginner", "summary": name, "why": name}
+            for name in ("Variables", "Functions", "Scope", "Closures")
+        ]
+        edges = [
+            {
+                "source": "variables",
+                "target": "functions",
+                "relationship": "Parameters hold values.",
+            },
+            {
+                "source": "variables",
+                "target": "scope",
+                "relationship": "Scope controls access to variables.",
+            },
+            {
+                "source": "functions",
+                "target": "closures",
+                "relationship": "A closure includes a function.",
+            },
+            {
+                "source": "scope",
+                "target": "closures",
+                "relationship": "A closure retains its lexical scope.",
+            },
+        ]
+        assert break_cycles(nodes, edges) == edges
+        concepts = {
+            concept["name"]: concept for concept in graph_to_levels(nodes, edges)["Beginner"]
+        }
+        assert "Leads to Functions:" in concepts["Variables"]["connection"]
+        assert "Leads to Scope:" in concepts["Variables"]["connection"]
+        assert "Requires Functions:" in concepts["Closures"]["connection"]
+        assert "Requires Scope:" in concepts["Closures"]["connection"]
+
     def test_produces_three_levels(self):
         nodes = SAMPLE_GRAPH_DATA["nodes"]
         edges = SAMPLE_GRAPH_DATA["edges"]
@@ -142,15 +199,25 @@ class TestGraphToLevels:
 
 
 class TestGenerateLearningPath:
+    @pytest.mark.parametrize("multiple_prerequisites", [False, True])
     async def test_success_returns_graph_structure(
-        self, service: LearningPathService, mock_client, mocker
+        self, service: LearningPathService, mock_client, mocker, multiple_prerequisites
     ):
+        graph = {"nodes": SAMPLE_GRAPH_DATA["nodes"], "edges": list(SAMPLE_GRAPH_DATA["edges"])}
+        if multiple_prerequisites:
+            graph["edges"].append(
+                {
+                    "source": "variables",
+                    "target": "functions",
+                    "relationship": "Function parameters bind names to values.",
+                }
+            )
         mock_client.moderations.create = mocker.AsyncMock(
             return_value=mocker.Mock(results=[mocker.Mock(flagged=False)])
         )
         mock_client.responses.parse = mocker.AsyncMock(
             return_value=mocker.Mock(
-                output_parsed=LearningPathGraphOutput(**SAMPLE_GRAPH_DATA),
+                output_parsed=LearningPathGraphOutput(**graph),
                 usage=mocker.Mock(
                     model_dump=lambda: {
                         "input_tokens": 10,
@@ -171,7 +238,7 @@ class TestGenerateLearningPath:
         assert "Intermediate" in completion
         assert "Advanced" in completion
         assert len(completion["nodes"]) == 3
-        assert len(completion["edges"]) == 2
+        assert completion["edges"] == graph["edges"]
         assert result["usage"]["total_tokens"] == 15
         assert result["usage"]["prompt_tokens"] == 10
         assert result["usage"]["completion_tokens"] == 5
