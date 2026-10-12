@@ -8,6 +8,8 @@
   --node-advanced-fill: #fbf3e5;
   --connection: #8792a1;
   --selection: #0066cc;
+  --edge-incoming: #0066cc;
+  --edge-outgoing: #a65400;
   border: 1px solid var(--graph-border);
   border-radius: 16px;
   background: var(--graph-bg);
@@ -150,8 +152,13 @@
     stroke-width: 1.5;
   }
   .graph-links line.is-connected {
-    stroke: var(--selection);
     stroke-width: 2.5;
+  }
+  .graph-links line.is-incoming {
+    stroke: var(--edge-incoming);
+  }
+  .graph-links line.is-outgoing {
+    stroke: var(--edge-outgoing);
   }
   .graph-links line.is-muted {
     opacity: 0.22;
@@ -235,6 +242,25 @@
     margin: 0;
     padding: 0;
   }
+  [data-direction="incoming"] {
+    --edge-color: var(--edge-incoming);
+  }
+  [data-direction="outgoing"] {
+    --edge-color: var(--edge-outgoing);
+  }
+  .graph-edge-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .graph-edge-legend [aria-hidden="true"] {
+    color: var(--edge-color);
+    font-weight: 700;
+    margin-right: 4px;
+  }
   .graph-connections li {
     padding: 0;
     font-size: inherit;
@@ -253,7 +279,7 @@
   .graph-connections button span {
     display: block;
     font-size: 11px;
-    color: var(--text-tertiary);
+    color: var(--edge-color);
     margin-bottom: 4px;
   }
   .graph-connections li p {
@@ -273,6 +299,8 @@
   --node-advanced-fill: #3c3324;
   --connection: #8a94a3;
   --selection: #8cbcff;
+  --edge-incoming: #8cbcff;
+  --edge-outgoing: #efb36c;
 }
 @media (max-width: 900px) {
   .network-graph-container {

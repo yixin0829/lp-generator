@@ -253,6 +253,8 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
           "is-connected",
           (edge) => edge.source.id === nodeId || edge.target.id === nodeId,
         )
+        .classed("is-incoming", (edge) => edge.target.id === nodeId)
+        .classed("is-outgoing", (edge) => edge.source.id === nodeId)
         .classed(
           "is-muted",
           (edge) =>
@@ -547,6 +549,17 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
               {connections.length > 0 && (
                 <>
                   <h4>Connected concepts</h4>
+                  <div
+                    className="graph-edge-legend"
+                    aria-label="Connection directions"
+                  >
+                    <span data-direction="incoming">
+                      <span aria-hidden="true">→</span> Incoming · prerequisite
+                    </span>
+                    <span data-direction="outgoing">
+                      <span aria-hidden="true">→</span> Outgoing · dependent
+                    </span>
+                  </div>
                   <ul className="graph-connections">
                     {connections.map((edge, index) => {
                       const incoming = edge.target === selected.id;
@@ -554,7 +567,10 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
                         incoming ? edge.source : edge.target,
                       );
                       return (
-                        <li key={neighbor.id + index}>
+                        <li
+                          key={neighbor.id + index}
+                          data-direction={incoming ? "incoming" : "outgoing"}
+                        >
                           <button
                             type="button"
                             onClick={() => selectNode(neighbor.id, true)}

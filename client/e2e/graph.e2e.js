@@ -73,6 +73,53 @@ test("drag tracks the pointer under reduced motion and releases the node", async
   ).toBe(true);
 });
 
+test("selection colors incoming and outgoing edges separately in both themes", async ({
+  page,
+}) => {
+  await openGraph(page);
+  const viewport = await page.locator(".graph-viewport").boundingBox();
+  for (const selected of ["functions", "algorithms"]) {
+    await page.locator(`[data-node-id="${selected}"]`).click();
+    for (let theme = 0; theme < 2; theme++) {
+      const lines = await page
+        .locator(".graph-links line")
+        .evaluateAll((elements) =>
+          elements.map((line) => ({
+            source: line.__data__.source.id,
+            target: line.__data__.target.id,
+            incoming: line.classList.contains("is-incoming"),
+            outgoing: line.classList.contains("is-outgoing"),
+            stroke: getComputedStyle(line).stroke,
+          })),
+        );
+      for (const line of lines) {
+        expect(line.incoming).toBe(line.target === selected);
+        expect(line.outgoing).toBe(line.source === selected);
+      }
+      const incoming = lines.find((line) => line.incoming);
+      const outgoing = lines.find((line) => line.outgoing);
+      expect(incoming).toBeTruthy();
+      expect(outgoing).toBeTruthy();
+      expect(incoming.stroke).not.toBe(outgoing.stroke);
+      await expect(page.locator(".graph-edge-legend")).toContainText(
+        "Incoming · prerequisite",
+      );
+      await expect(page.locator(".graph-edge-legend")).toContainText(
+        "Outgoing · dependent",
+      );
+      expect((await page.locator(".graph-viewport").boundingBox()).height).toBe(
+        viewport.height,
+      );
+      await page.getByRole("button", { name: /Switch to .* mode/ }).click();
+    }
+  }
+  await page.getByRole("button", { name: "Close concept details" }).click();
+  await expect(
+    page.locator(".graph-links .is-incoming, .graph-links .is-outgoing"),
+  ).toHaveCount(0);
+  await expect(page.locator(".graph-edge-legend")).toHaveCount(0);
+});
+
 test("theme and resize preserve zoom and graph positions", async ({ page }) => {
   await openGraph(page);
   await page.getByRole("button", { name: "Zoom in", exact: true }).click();
