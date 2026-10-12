@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     app_env: str = Field(default="development", validation_alias="APP_ENV")
     version: str = Field(default="v1", validation_alias="API_VERSION")
     cors_origins: list[str] = Field(default_factory=lambda: ["*"], validation_alias="CORS_ORIGINS")
-    openai_model: str = Field(default="gpt-4.1-mini", validation_alias="OPENAI_MODEL")
+    openai_model: str = Field(default="gpt-6-luna", validation_alias="OPENAI_MODEL")
     max_topic_length: int = Field(default=120, validation_alias="MAX_TOPIC_LENGTH", gt=0)
     openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
     counter_backend: str = Field(default="noop", validation_alias="COUNTER_BACKEND")

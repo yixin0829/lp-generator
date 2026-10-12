@@ -53,7 +53,7 @@ class LearningPathResponse(BaseModel):
                     "Advanced": [],
                 },
                 "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
-                "model": "gpt-5-mini",
+                "model": "gpt-6-luna",
                 "cached": False,
             },
         }

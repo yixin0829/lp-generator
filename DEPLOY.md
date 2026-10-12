@@ -34,6 +34,7 @@ flowchart LR
 ### Server (Cloud Run)
 
 - `OPENAI_API_KEY` (Secret Manager secret reference)
+- `OPENAI_MODEL=gpt-6-luna` (learning-path generation; an existing value overrides the code default)
 - `API_KEY` (Secret Manager secret reference; required when auth enabled)
 - `REQUIRE_API_KEY=true`
 - `RATE_LIMIT_ENABLED=true`
@@ -143,6 +144,31 @@ Both triggers have `includedFiles: server/**`, so they only fire when files unde
 3. Deploy a new revision to the Cloud Run service (using the SHA-pinned image)
 
 Env vars and Secret Manager references on each service **persist across revisions** — the triggers only rebuild the image and deploy.
+
+### GPT-6 Luna rollout
+
+The generation default is `gpt-6-luna`, using Responses structured outputs with
+`reasoning.effort=none` to preserve the previous non-reasoning workload. Moderation
+continues through the existing Moderations API; it does not use the generation model.
+The prompt, graph schema, and `store=True` behavior are unchanged. See the
+[official model page](https://developers.openai.com/api/docs/models/gpt-6-luna) and
+[migration guide](https://developers.openai.com/api/docs/guides/latest-model/gpt-6-astra#migration-quickstart).
+
+Before an authorized rollout, inspect `OPENAI_MODEL` on staging and production.
+An old override persists through image deployments: set it to `gpt-6-luna` or remove
+it to use the new code default. Likewise, update any local `server/.env` override
+manually; copying the new example does not modify an existing environment file.
+
+The learning-path cache is keyed by topic, not model. Existing cached paths can
+still report the previous model until their TTL expires (default seven days).
+For an immediate cutover, use a fresh `FIRESTORE_CACHE_COLLECTION` per environment
+when deploying; retain the old collection for rollback instead of deleting data.
+Existing immutable shares and curated paths remain historical snapshots.
+
+Validate model access and representative generation quality, latency, and usage
+in staging before production promotion. Mocked tests verify request compatibility,
+not live account access or model output quality. Deploying and changing service
+environment variables are separate runtime actions from preparing this PR.
 
 ### Manual steps (first-time setup or env changes only)
 

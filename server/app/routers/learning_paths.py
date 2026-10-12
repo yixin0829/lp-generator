@@ -1,6 +1,7 @@
 """Learning path API router."""
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi.concurrency import run_in_threadpool
 from loguru import logger
 
 from app.core.config import get_config
@@ -22,6 +23,26 @@ router = APIRouter(
 )
 
 
+def _safe_increment_counter(counter_service: BaseCounterService) -> None:
+    """Increment the generation counter, swallowing failures (background-safe)."""
+    try:
+        counter_service.increment_learning_paths_generated()
+    except CounterServiceError as e:
+        logger.warning("Learning path counter increment failed: {}", e)
+    except Exception as e:  # noqa: BLE001 - background task must never raise
+        logger.warning("Unexpected learning path counter increment failure: {}", e)
+
+
+def _safe_cache_set(cache_service: BaseCacheService, key: str, payload: dict) -> None:
+    """Write to cache, swallowing failures (background-safe)."""
+    try:
+        cache_service.set(key, payload)
+    except CacheServiceError as e:
+        logger.warning("Cache write failed: {}", e)
+    except Exception as e:  # noqa: BLE001 - background task must never raise
+        logger.warning("Unexpected cache write failure: {}", e)
+
+
 @router.get(
     "/{topic}",
     response_model=LearningPathResponse,
@@ -38,6 +59,7 @@ router = APIRouter(
 async def get_lp(
     request: Request,
     topic: str,
+    background_tasks: BackgroundTasks,
     service: LearningPathService = Depends(get_learning_path_service),
     counter_service: BaseCounterService = Depends(get_counter_service),
     cache_service: BaseCacheService = Depends(get_cache_service),
@@ -45,19 +67,19 @@ async def get_lp(
     """Take any topic and call OpenAI to generate a learning path in JSON format."""
     normalized = service.normalize_topic(topic)
 
-    # Try cache first
+    # Try cache first. Cache reads are blocking network calls, so run them off
+    # the event loop to avoid stalling other concurrent requests.
     try:
-        cached = cache_service.get(normalized)
+        cached = await run_in_threadpool(cache_service.get, normalized)
     except CacheServiceError as e:
         logger.warning("Cache read failed, proceeding without cache: {}", e)
         cached = None
 
     if cached is not None:
         cached["cached"] = True
-        try:
-            counter_service.increment_learning_paths_generated()
-        except CounterServiceError as e:
-            logger.warning("Learning path counter increment failed: {}", e)
+        # Counter increment is not needed for the response; defer it so the
+        # cached payload returns to the client immediately.
+        background_tasks.add_task(_safe_increment_counter, counter_service)
         return cached
 
     # Cache miss — generate from OpenAI
@@ -76,16 +98,11 @@ async def get_lp(
             detail="An unexpected error occurred while generating the learning path.",
         ) from e
 
-    # Write to cache (fire-and-forget on failure)
-    try:
-        cache_service.set(normalized, payload)
-    except CacheServiceError as e:
-        logger.warning("Cache write failed: {}", e)
-
-    try:
-        counter_service.increment_learning_paths_generated()
-    except CounterServiceError as e:
-        logger.warning("Learning path counter increment failed: {}", e)
-
     payload["cached"] = False
+
+    # Cache write and counter increment are not on the critical path; run them
+    # after the response is sent so generation latency is not inflated.
+    background_tasks.add_task(_safe_cache_set, cache_service, normalized, payload)
+    background_tasks.add_task(_safe_increment_counter, counter_service)
+
     return payload

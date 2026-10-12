@@ -1,6 +1,7 @@
 """Stats API router."""
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.concurrency import run_in_threadpool
 from loguru import logger
 
 from app.core.config import get_config
@@ -33,7 +34,7 @@ async def get_stats(
 ) -> StatsResponse:
     """Return current counters for frontend display."""
     try:
-        count = counter_service.get_learning_paths_generated()
+        count = await run_in_threadpool(counter_service.get_learning_paths_generated)
     except CounterServiceError as e:
         logger.exception("Stats read failed: {}", e)
         raise HTTPException(

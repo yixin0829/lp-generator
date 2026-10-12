@@ -1,11 +1,14 @@
 """Learning path generation service."""
 
+import asyncio
+import contextlib
 import string
 from collections import defaultdict, deque
 from typing import Any
 
 from loguru import logger
 from openai import (
+    NOT_GIVEN,
     APIConnectionError,
     APITimeoutError,
     AsyncOpenAI,
@@ -218,7 +221,7 @@ class LearningPathService:
     def __init__(
         self,
         client: AsyncOpenAI,
-        model: str = "[REDACTED]",
+        model: str = "gpt-6-luna",
         max_topic_length: int = 120,
     ) -> None:
         self._client = client
@@ -305,19 +308,14 @@ class LearningPathService:
             "total_tokens": total_tokens,
         }
 
-    async def generate_learning_path(self, topic: str) -> dict[str, Any]:
-        """
-        Generate learning path for the given topic.
-        Returns dict with topic, completion (nodes, edges, + level buckets), usage, model.
-        Raises LearningPathError for expected request and upstream failures.
-        """
-        topic = self.normalize_topic(topic)
-        self.validate_topic_length(topic)
-        await self.check_moderation(topic)
-
+    async def _request_completion(self, topic: str) -> Any:
+        """Call OpenAI structured-output generation, mapping SDK errors."""
         try:
-            response = await self._client.responses.parse(
+            return await self._client.responses.parse(
                 model=self._model,
+                # Luna defaults to medium reasoning. Preserve the previous
+                # non-reasoning workload; other model overrides keep their behavior.
+                reasoning={"effort": "none"} if self._model == "gpt-6-luna" else NOT_GIVEN,
                 input=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": f'Generate a learning path for "{topic}".'},
@@ -327,6 +325,32 @@ class LearningPathService:
             )
         except Exception as e:
             raise self._map_upstream_error(e) from e
+
+    async def generate_learning_path(self, topic: str) -> dict[str, Any]:
+        """
+        Generate learning path for the given topic.
+        Returns dict with topic, completion (nodes, edges, + level buckets), usage, model.
+        Raises LearningPathError for expected request and upstream failures.
+        """
+        topic = self.normalize_topic(topic)
+        self.validate_topic_length(topic)
+
+        # Run content moderation and generation concurrently so the moderation
+        # round-trip is removed from the critical path. Moderation still gates
+        # the response: if it flags the topic we cancel the in-flight generation
+        # and surface the moderation error instead.
+        moderation_task = asyncio.ensure_future(self.check_moderation(topic))
+        generation_task = asyncio.ensure_future(self._request_completion(topic))
+
+        try:
+            await moderation_task
+        except BaseException:
+            generation_task.cancel()
+            with contextlib.suppress(BaseException):
+                await generation_task
+            raise
+
+        response = await generation_task
 
         if response.output_parsed is None:
             msg = "Error while reading OpenAI's response.output_parsed for learning path."
