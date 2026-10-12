@@ -28,7 +28,7 @@ export default function LoadingProgress({
     const started = performance.now();
     const timer = setInterval(
       () => setElapsed((performance.now() - started) / 1000),
-      250,
+      100,
     );
     // An optional estimate must never delay or fail the generation request.
     fetch(apiUrl("/v1/stats"), { signal: controller.signal })
@@ -70,7 +70,7 @@ export default function LoadingProgress({
       {
         duration: window.matchMedia("(prefers-reduced-motion: reduce)").matches
           ? 0
-          : 200,
+          : 1000,
         easing: "linear",
         fill: "forwards",
       },

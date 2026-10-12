@@ -27,6 +27,7 @@
   .is-estimated .preparing-progress-fill {
     width: 100%;
     animation: none !important;
+    // Overlap the 100 ms updates so the fill keeps moving between samples.
     transition: transform 250ms linear;
   }
 

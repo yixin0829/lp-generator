@@ -146,6 +146,13 @@ test("a fast result fills the bar before revealing the path", async ({
     requestAnimationFrame(sample);
   });
   finish();
+  await expect(page.getByRole("progressbar")).toHaveAttribute(
+    "aria-valuetext",
+    "Complete",
+  );
+  await page.waitForTimeout(500);
+  await expect(page.getByRole("progressbar")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy path" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Copy path" })).toBeVisible();
   const frames = await page.evaluate(() => window.progressFrames);
   expect(frames.some((frame) => frame.ratio >= 0.999 && !frame.revealed)).toBe(
