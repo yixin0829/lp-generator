@@ -261,13 +261,6 @@ export default function LearningPath() {
       />
       <div className="title-container">
         <h1>{topic} learning path</h1>
-        <Button
-          className="copy-action"
-          label="Copy path"
-          isSecondary
-          disabled={!lp}
-          onClick={() => copyToClipboard(lp, conceptDetails, enqueueSnackbar)}
-        />
       </div>
       {lp && (
         <p>
@@ -332,14 +325,28 @@ export default function LearningPath() {
                 </button>
               </div>
             )}
-            <Button
-              className="share-action"
-              isSecondary
-              aria-describedby="share-visibility"
-              label={isSharing ? "Creating link..." : "Share path"}
-              disabled={isSharing}
-              onClick={shareLearningPath}
-            />
+            <div
+              className="path-actions"
+              role="group"
+              aria-label="Learning path actions"
+            >
+              <Button
+                className="copy-action"
+                label="Copy path"
+                isSecondary
+                onClick={() =>
+                  copyToClipboard(lp, conceptDetails, enqueueSnackbar)
+                }
+              />
+              <Button
+                className="share-action"
+                isSecondary
+                aria-describedby="share-visibility"
+                label={isSharing ? "Creating link..." : "Share path"}
+                disabled={isSharing}
+                onClick={shareLearningPath}
+              />
+            </div>
           </div>
           <p id="share-visibility" className="share-hint">
             Anyone with the link can view a copy of this path.

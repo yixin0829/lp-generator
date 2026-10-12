@@ -254,9 +254,16 @@
     .view-toggle {
       margin-bottom: 0;
     }
+    .path-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+    .copy-action,
     .share-action {
       flex: 0 0 auto;
-      margin-left: auto;
+      margin: 0;
       padding: 10px 16px;
     }
   }
