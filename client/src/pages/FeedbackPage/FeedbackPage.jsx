@@ -68,6 +68,7 @@ export default function FeedbackPage() {
       <p className="feedback-subtitle">
         Have a suggestion or found a bug? We'd love to hear from you!
       </p>
+      <p>Want to learn a topic? <Link to="/">Generate a learning path on Home</Link> instead.</p>
       <div style={{ height: "20px" }} />
 
       {phase === "submitted" ? (
@@ -90,7 +91,7 @@ export default function FeedbackPage() {
             id="feedback-text"
             aria-describedby="feedback-limit feedback-error"
             className="feedback-textarea"
-            placeholder="What's on your mind?"
+            placeholder="What could we improve? For a problem, tell us what you tried and what happened."
             maxLength={MAX_LENGTH}
             value={text}
             onChange={(e) => setText(e.target.value)}
