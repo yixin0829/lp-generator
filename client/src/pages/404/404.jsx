@@ -1,24 +1,13 @@
-import React from "react";
-import Cat from "../../assets/cat.png";
+import { Link } from "react-router-dom";
 import Seo from "../../seo/Seo";
-
-const Page404 = () => {
+export function Page404() {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "90vh",
-        minHeight: "500px",
-      }}
-    >
+    <main id="not-found-content" className="not-found-page">
       <Seo title="Page Not Found" noindex />
-      <img src={Cat} className="full-img" alt="" />
-      <h2 className="bad-request">Page not found.</h2>
-    </div>
+      <p className="stage-number">404</p>
+      <h1>Page not found.</h1>
+      <p>Check the address or head back to the home page.</p>
+      <Link to="/">Back to home</Link>
+    </main>
   );
-};
-
-export { Page404 };
+}

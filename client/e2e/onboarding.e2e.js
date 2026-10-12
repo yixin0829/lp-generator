@@ -70,7 +70,7 @@ test("Escape dismisses without implicitly opting out, and replay restarts at ste
 test("feedback routes topic seekers to Home, where the guide appears once", async ({ page }) => {
   await page.goto("/feedback");
   await expect(page.getByRole("dialog")).not.toBeVisible();
-  await expect(page.getByText("report a problem, suggest a feature", { exact: false })).toBeVisible();
+  await expect(page.getByText("Have a suggestion or found a bug?", { exact: false })).toBeVisible();
   await page.getByRole("link", { name: "Generate a learning path on Home" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("button", { name: "Close guide" }).click();

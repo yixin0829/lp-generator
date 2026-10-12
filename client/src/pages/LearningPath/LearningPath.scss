@@ -20,18 +20,6 @@
     color: var(--text-secondary);
   }
 
-  li {
-    font-size: 20px;
-    padding: 0 5px;
-    color: var(--text-primary);
-    transition: background-color 500ms;
-    &:hover {
-      background-color: var(--li-hover-bg);
-      cursor: move;
-      border-radius: 5px;
-    }
-  }
-
   @media (max-width: 767px) {
     h1 {
       width: 100%;
@@ -49,7 +37,6 @@
   }
 
   .flex-container {
-    user-select: none;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -72,19 +59,14 @@
       margin-right: 0;
       padding: 15px 20px;
     }
-    opacity: 0;
+    opacity: 1;
+    flex: 1;
+    min-width: 240px;
 
     &:hover {
       z-index: 10;
     }
   }
-  @for $i from 1 to 100 {
-    div > .level-container:nth-child(#{$i}) {
-      animation: float-in 1000ms forwards;
-      animation-delay: $i * 200ms + 200ms;
-    }
-  }
-
   .title-container {
     display: flex;
     flex-direction: row;
@@ -110,34 +92,80 @@
   .concept-item {
     position: relative;
   }
+  .concept-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .sortable-concept {
+    padding: 0;
+    margin-bottom: 18px;
+  }
+  .concept-drag-handle,
+  .concept-drag-preview {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-height: 44px;
+    width: 100%;
+    padding: 6px 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-primary);
+    font: inherit;
+    font-weight: 600;
+    text-align: left;
+  }
+  .concept-drag-handle {
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+  .concept-drag-handle:active {
+    cursor: grabbing;
+  }
+  .concept-summary-area {
+    position: relative;
+    padding-left: 16px;
+  }
+  .concept-summary {
+    display: block;
+    width: 100%;
+    padding: 0;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.6;
+    cursor: help;
+    user-select: text;
+  }
+  @media (hover: hover) {
+    .concept-drag-handle:hover {
+      background: var(--li-hover-bg);
+    }
+  }
 
   .concept-tooltip {
     position: absolute;
     left: 0;
-    top: calc(100% + 4px);
+    top: 100%;
     z-index: 1000;
     background: var(--tooltip-bg);
     border: 1px solid var(--tooltip-border);
     border-radius: 10px;
     padding: 14px 18px;
     box-shadow: var(--shadow-lg);
-    min-width: 280px;
-    max-width: 360px;
-    pointer-events: none;
+    width: 100%;
+    min-width: 0;
+    max-height: 320px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    pointer-events: auto;
     animation: fade-in 150ms ease-out;
-
-    &::before {
-      content: "";
-      position: absolute;
-      top: -6px;
-      left: 20px;
-      width: 10px;
-      height: 10px;
-      background: var(--tooltip-bg);
-      border-top: 1px solid var(--tooltip-border);
-      border-left: 1px solid var(--tooltip-border);
-      transform: rotate(45deg);
-    }
 
     h4 {
       font-size: 15px;
@@ -171,8 +199,8 @@
     }
 
     @media (max-width: 767px) {
-      min-width: 220px;
-      max-width: 280px;
+      min-width: 0;
+      max-width: 100%;
       padding: 10px 14px;
 
       h4 {
@@ -226,106 +254,42 @@
     .view-toggle {
       margin-bottom: 0;
     }
-  }
-}
-
-.network-graph-container {
-  position: relative;
-  width: 100%;
-  border: 1px solid var(--graph-border);
-  border-radius: 12px;
-  background: var(--graph-bg);
-  overflow: hidden;
-  animation: fade-in 600ms ease-out;
-
-  .network-graph-svg {
-    display: block;
-    width: 100%;
-    touch-action: none;
-  }
-
-  .graph-legend {
-    display: flex;
-    gap: 16px;
-    padding: 12px 18px;
-    border-bottom: 1px solid var(--graph-border);
-    background: var(--graph-legend-bg);
-
-    .legend-item {
+    .path-actions {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--graph-legend-text);
+      gap: 8px;
+      margin-left: auto;
     }
-
-    .legend-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
-  }
-}
-
-.graph-tooltip {
-  background: var(--tooltip-bg);
-  border: 1px solid var(--tooltip-border);
-  border-radius: 10px;
-  padding: 14px 18px;
-  box-shadow: var(--shadow-lg);
-  min-width: 240px;
-  max-width: 340px;
-  animation: fade-in 100ms ease-out;
-
-  h4 {
-    font-size: 15px;
-    font-weight: 700;
-    margin: 0 0 10px;
-    color: var(--tooltip-heading);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .edge-title {
-    font-size: 14px;
-    color: var(--tooltip-label);
-  }
-
-  .level-badge {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 2px 8px;
-    border-radius: 6px;
-    border: 1px solid;
-    white-space: nowrap;
-  }
-
-  .tooltip-section {
-    margin-bottom: 8px;
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    .tooltip-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--tooltip-label);
-      display: block;
-      margin-bottom: 2px;
-    }
-
-    p {
-      font-size: 13px;
-      line-height: 1.45;
-      color: var(--tooltip-text);
+    .copy-action,
+    .share-action {
+      flex: 0 0 auto;
       margin: 0;
+      padding: 10px 16px;
     }
+  }
+  .share-hint {
+    font-size: 0.875rem;
+    margin-top: -6px;
+    margin-bottom: 18px;
+  }
+  .share-result {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 16px;
+    font-size: 0.875rem;
+  }
+  .share-result a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    gap: 5px;
+  }
+  .share-url {
+    color: var(--text-tertiary);
+    overflow-wrap: anywhere;
+    min-width: 0;
+    user-select: all;
   }
 }
 
@@ -364,14 +328,4 @@
 
 .search-more {
   animation: float-in 1s;
-}
-
-.gradient-text {
-  background-image: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 700;
-  color: transparent;
-  display: inline;
 }

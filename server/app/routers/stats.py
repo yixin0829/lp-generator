@@ -5,11 +5,12 @@ from fastapi.concurrency import run_in_threadpool
 from loguru import logger
 
 from app.core.config import get_config
-from app.core.dependencies import get_counter_service
+from app.core.dependencies import get_counter_service, get_generation_timing_service
 from app.core.security import limiter, require_api_key
 from app.schemas.learning_path import HTTPError
 from app.schemas.stats import StatsResponse
 from app.services.counter_service import BaseCounterService, CounterServiceError
+from app.services.generation_timing_service import GenerationTimingService
 
 config = get_config()
 router = APIRouter(
@@ -31,6 +32,7 @@ router = APIRouter(
 async def get_stats(
     request: Request,
     counter_service: BaseCounterService = Depends(get_counter_service),
+    timing_service: GenerationTimingService = Depends(get_generation_timing_service),
 ) -> StatsResponse:
     """Return current counters for frontend display."""
     try:
@@ -42,4 +44,5 @@ async def get_stats(
             detail="Stats are temporarily unavailable.",
         ) from e
 
-    return StatsResponse(learning_paths_generated=count)
+    estimate = await run_in_threadpool(timing_service.estimate)
+    return StatsResponse(learning_paths_generated=count, generation_estimate=estimate)

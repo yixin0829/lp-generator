@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
+import LoadingProgress from "../LoadingProgress/LoadingProgress";
 import {
   DndContext,
   DragOverlay,
@@ -23,8 +23,6 @@ import {
 
 import "./LearningPath.scss";
 
-import CopyToClip from "../../assets/copy-regular.svg";
-import SpaceShip from "../../assets/spaceship.png";
 import { SearchbarHome } from "../HomePage/HomePage";
 import Button from "../../components/Button/Button";
 import { useSnackbar } from "notistack";
@@ -42,7 +40,9 @@ function isModerationError(statusCode, detail) {
     return false;
   }
   const normalizedDetail = detail.toLowerCase();
-  return MODERATION_DETAIL_HINTS.some((hint) => normalizedDetail.includes(hint));
+  return MODERATION_DETAIL_HINTS.some((hint) =>
+    normalizedDetail.includes(hint),
+  );
 }
 
 async function generateLp(topic) {
@@ -72,7 +72,11 @@ async function generateLp(topic) {
     }
 
     const errorDetail =
-      response.status === 200 ? null : typeof data?.detail === "string" ? data.detail : null;
+      response.status === 200
+        ? null
+        : typeof data?.detail === "string"
+          ? data.detail
+          : null;
     return { data, statusCode: response.status, errorDetail };
   } catch (error) {
     console.error("[LearningPath] generateLp error:", error);
@@ -93,14 +97,18 @@ function extractConceptData(completion) {
     if (!concepts) continue;
     flat[level] = concepts.map((c) => {
       if (typeof c === "string") return c;
-      details[c.name] = { summary: c.summary, why: c.why, connection: c.connection };
+      details[c.name] = {
+        summary: c.summary,
+        why: c.why,
+        connection: c.connection,
+      };
       return c.name;
     });
   }
   return { flat, details, graphData };
 }
 
-function copyToClipboard(lp, conceptDetails, showSnackbar) {
+async function copyToClipboard(lp, conceptDetails, showSnackbar) {
   if (!lp) {
     showSnackbar("Please wait until the learning path is generated!");
     return;
@@ -119,8 +127,14 @@ function copyToClipboard(lp, conceptDetails, showSnackbar) {
     }
     out += "\n";
   }
-  navigator.clipboard.writeText(out.trimEnd());
-  showSnackbar("Copied to clipboard!");
+  try {
+    await navigator.clipboard.writeText(out.trimEnd());
+    showSnackbar("Copied to clipboard!");
+  } catch {
+    showSnackbar(
+      "Could not copy. Check your browser clipboard permission and try again.",
+    );
+  }
 }
 
 export default function LearningPath() {
@@ -128,36 +142,46 @@ export default function LearningPath() {
   const [conceptDetails, setConceptDetails] = useState({});
   const [graphData, setGraphData] = useState(null);
   const [viewMode, setViewMode] = useState("graph");
+  const [retryCount, setRetryCount] = useState(0);
+  const [isSharing, setIsSharing] = useState(false);
+  const [failureStatus, setFailureStatus] = useState(null);
   const [badRequest, setBadRequest] = useState(false);
   const [isModeratedTopic, setIsModeratedTopic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const revealPath = useCallback(() => setIsLoading(false), []);
   const [shareUrl, setShareUrl] = useState("");
   const [searchParams] = useSearchParams();
   const topic = searchParams.get("term")?.trim() ?? "";
   const { enqueueSnackbar } = useSnackbar();
 
   async function shareLearningPath() {
-    if (!lp || !graphData) return;
+    if (!lp || !graphData || isSharing) return;
+    setIsSharing(true);
     try {
       const response = await fetch(apiUrl("/v1/shares"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(createShareSnapshot({
-          topic,
-          levels: lp,
-          conceptDetails,
-          graph: graphData,
-          defaultView: viewMode,
-        })),
+        body: JSON.stringify(
+          createShareSnapshot({
+            topic,
+            levels: lp,
+            conceptDetails,
+            graph: graphData,
+            defaultView: viewMode,
+          }),
+        ),
       });
       const body = await response.json().catch(() => ({}));
-      if (!response.ok || !body.share_id) throw new Error(body.detail || "Unable to create share.");
+      if (!response.ok || !body.share_id)
+        throw new Error(body.detail || "Unable to create share.");
       const createdUrl = `${window.location.origin}/share/${body.share_id}`;
       setShareUrl(createdUrl);
       if (navigator.clipboard?.writeText) {
         try {
           await navigator.clipboard.writeText(createdUrl);
-          enqueueSnackbar("Share link copied! Anyone with the link can view this snapshot.");
+          enqueueSnackbar(
+            "Share link copied! Anyone with the link can view this copy.",
+          );
         } catch {
           enqueueSnackbar("Share created. Copy the link shown below.");
         }
@@ -166,6 +190,8 @@ export default function LearningPath() {
       }
     } catch (error) {
       enqueueSnackbar(error.message || "Unable to create share.");
+    } finally {
+      setIsSharing(false);
     }
   }
 
@@ -175,6 +201,7 @@ export default function LearningPath() {
     setGraphData(null);
     setShareUrl("");
     setBadRequest(false);
+    setFailureStatus(null);
     setIsModeratedTopic(false);
 
     if (!topic) {
@@ -195,37 +222,38 @@ export default function LearningPath() {
         !Array.isArray(completion);
 
       if (statusCode !== 200 || !hasValidCompletion) {
+        setFailureStatus(statusCode);
         setIsModeratedTopic(isModerationError(statusCode, errorDetail));
         setBadRequest(true);
+        setIsLoading(false);
       } else {
         const { flat, details, graphData: gd } = extractConceptData(completion);
         setConceptDetails(details);
         setLp(flat);
         setGraphData(gd);
       }
-      setIsLoading(false);
     };
 
     getLp();
     return () => {
       cancelled = true;
     };
-  }, [topic]);
+  }, [topic, retryCount]);
 
   if (!topic) {
     return (
-      <div className="learning-path-page">
+      <main className="learning-path-page">
         <Seo title="Learning Path" noindex />
-        <h2 className="bad-request">Please provide a topic in the URL (?term=...).</h2>
+        <h2 className="bad-request">What do you want to learn?</h2>
         <SearchMore />
-      </div>
+      </main>
     );
   }
 
   const hasGraph = graphData?.nodes?.length > 0;
 
   return (
-    <div className="learning-path-page">
+    <main className="learning-path-page">
       <Seo
         title={`Learn ${topic}`}
         description={`AI-generated learning path for ${topic}: beginner to advanced concepts.`}
@@ -233,53 +261,64 @@ export default function LearningPath() {
         noindex
       />
       <div className="title-container">
-        <h1>
-          Learning <div className="gradient-text">{topic}</div> ...
-        </h1>
-        <img
-          src={CopyToClip}
-          className="copy-button"
-          onClick={() => {
-            copyToClipboard(lp, conceptDetails, enqueueSnackbar);
-          }}
-          alt="copy"
-        />
+        <h1>{topic} learning path</h1>
       </div>
-      <p>
-        {viewMode === "graph"
-          ? "Explore the concept graph — hover nodes and edges for details."
-          : "Drag and drop bullets to reorder and copy the result to your own notes!"}
-      </p>
-      {badRequest || lp ? <SearchMore /> : <div></div>}
+      {lp && !isLoading && (
+        <p>
+          {viewMode === "graph"
+            ? "Select a concept to see how it connects to the others."
+            : "Drag and drop concepts to reorder them, then copy the path to your notes!"}
+        </p>
+      )}
+      {badRequest || (lp && !isLoading) ? <SearchMore /> : <div></div>}
       {badRequest ? (
-        <div>
-          <img src={SpaceShip} className="full-img" alt="" />
+        <div className="status-panel" role="alert">
           {isModeratedTopic ? (
             <>
               <h2 className="bad-request">
-                This topic cannot be generated because it was flagged by content moderation.
+                This topic cannot be generated because it was flagged by content
+                moderation.
               </h2>
               <p className="bad-request">
-                Please try a safer, educational phrasing (for example, focus on history,
-                prevention, ethics, or legal context).
+                Please try a safer, educational phrasing (for example, focus on
+                history, prevention, ethics, or legal context).
               </p>
             </>
           ) : (
-            <h2 className="bad-request">Please try again with another response.</h2>
+            <>
+              <h2>Couldn't generate this learning path.</h2>
+              <p>
+                {failureStatus === 400
+                  ? "Try a shorter topic or a different phrase."
+                  : "Try again with the same topic, or enter something else."}
+              </p>
+              {failureStatus !== 400 && (
+                <Button
+                  label="Try again"
+                  onClick={() => setRetryCount((count) => count + 1)}
+                />
+              )}
+            </>
           )}
         </div>
-      ) : lp ? (
+      ) : lp && !isLoading ? (
         <>
           <div className="learning-path-controls">
             {hasGraph && (
-              <div className="view-toggle">
+              <div
+                className="view-toggle"
+                role="group"
+                aria-label="Learning path view"
+              >
                 <button
+                  aria-pressed={viewMode === "graph"}
                   className={viewMode === "graph" ? "active" : ""}
                   onClick={() => setViewMode("graph")}
                 >
                   Graph
                 </button>
                 <button
+                  aria-pressed={viewMode === "list"}
                   className={viewMode === "list" ? "active" : ""}
                   onClick={() => setViewMode("list")}
                 >
@@ -287,9 +326,40 @@ export default function LearningPath() {
                 </button>
               </div>
             )}
-            <Button label="Share snapshot" onClick={shareLearningPath} />
+            <div
+              className="path-actions"
+              role="group"
+              aria-label="Learning path actions"
+            >
+              <Button
+                className="copy-action"
+                label="Copy path"
+                isSecondary
+                onClick={() =>
+                  copyToClipboard(lp, conceptDetails, enqueueSnackbar)
+                }
+              />
+              <Button
+                className="share-action"
+                isSecondary
+                aria-describedby="share-visibility"
+                label={isSharing ? "Creating link..." : "Share path"}
+                disabled={isSharing}
+                onClick={shareLearningPath}
+              />
+            </div>
           </div>
-          {shareUrl && <p className="share-result">Immutable share: <a href={shareUrl}>{shareUrl}</a></p>}
+          <p id="share-visibility" className="share-hint">
+            Anyone with the link can view a copy of this path.
+          </p>
+          {shareUrl && (
+            <p className="share-result">
+              <a href={shareUrl} target="_blank" rel="noopener noreferrer">
+                Open share link <span aria-hidden="true">↗</span>
+              </a>
+              <span className="share-url">{shareUrl}</span>
+            </p>
+          )}
           {viewMode === "graph" && hasGraph ? (
             <NetworkGraph
               key={topic}
@@ -297,7 +367,12 @@ export default function LearningPath() {
               edges={graphData.edges}
             />
           ) : (
-            <LPItems key={topic} lp={lp} setLp={setLp} conceptDetails={conceptDetails} />
+            <LPItems
+              key={topic}
+              lp={lp}
+              setLp={setLp}
+              conceptDetails={conceptDetails}
+            />
           )}
         </>
       ) : (
@@ -311,11 +386,18 @@ export default function LearningPath() {
             height: "40vh",
           }}
         >
-          {isLoading ? <LoadingSpinner /> : null}
+          {isLoading ? (
+            <LoadingProgress
+              key={`${topic}:${retryCount}`}
+              estimateGeneration
+              complete={Boolean(lp)}
+              onComplete={revealPath}
+            />
+          ) : null}
         </div>
       )}
       <div style={{ height: "30px" }} />
-    </div>
+    </main>
   );
 }
 
@@ -342,14 +424,16 @@ function SearchMore() {
   }
 
   return (
-    <div style={{ textAlign: "center" }} className="search-more">
-      <div style={{ width: "100%", display: "flex", flexDirection: "row" }}>
-        <SearchbarHome onChange={setSearchTerm} onEnter={goSearch} />
-        <div style={{ width: "15px" }} className="desktop-only" />
-        <Button label="Generate" className="desktop-only" onClick={goSearch} />
-      </div>
-      <div style={{ height: "15px" }} />
-    </div>
+    <form
+      className="search-more topic-search"
+      onSubmit={(event) => {
+        event.preventDefault();
+        goSearch();
+      }}
+    >
+      <SearchbarHome onChange={setSearchTerm} />
+      <Button label="Generate" type="submit" disabled={!searchTerm.trim()} />
+    </form>
   );
 }
 
@@ -357,11 +441,13 @@ function LPItems({ lp, setLp, conceptDetails }) {
   const [items, setItems] = useState(lp);
   const [activeId, setActiveId] = useState();
   const sensors = useSensors(
-    useSensor(MouseSensor),
-    useSensor(TouchSensor),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
   useEffect(() => {
     setItems(lp);
@@ -455,7 +541,11 @@ function LPItems({ lp, setLp, conceptDetails }) {
       setItems((currentItems) => {
         const nextItems = {
           ...currentItems,
-          [overContainer]: arrayMove(currentItems[overContainer], activeIndex, overIndex),
+          [overContainer]: arrayMove(
+            currentItems[overContainer],
+            activeIndex,
+            overIndex,
+          ),
         };
         setLp(nextItems);
         return nextItems;
@@ -484,7 +574,12 @@ function LPItems({ lp, setLp, conceptDetails }) {
         onDragEnd={handleDragEnd}
       >
         {Object.keys(items).map((itemsKey) => (
-          <Container key={itemsKey} id={itemsKey} items={items[itemsKey]} conceptDetails={conceptDetails} />
+          <Container
+            key={itemsKey}
+            id={itemsKey}
+            items={items[itemsKey]}
+            conceptDetails={conceptDetails}
+          />
         ))}
         <DragOverlay dropAnimation={dropAnimation}>
           {activeId ? <Item id={activeId} /> : null}
@@ -505,9 +600,15 @@ function Container({ id, items, conceptDetails }) {
     >
       <div ref={setNodeRef} className="level-container">
         <h2>{id}</h2>
-        {(Array.isArray(items) ? items : []).map((itemId) => (
-          <SortableItem key={itemId} id={itemId} details={conceptDetails?.[itemId]} />
-        ))}
+        <ul className="concept-list">
+          {(Array.isArray(items) ? items : []).map((itemId) => (
+            <SortableItem
+              key={itemId}
+              id={itemId}
+              details={conceptDetails?.[itemId]}
+            />
+          ))}
+        </ul>
       </div>
     </SortableContext>
   );
@@ -518,6 +619,7 @@ function SortableItem({ id, details }) {
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -528,38 +630,77 @@ function SortableItem({ id, details }) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <Item id={id} style={{ opacity: isDragging ? 0.5 : 1 }} details={isDragging ? null : details} />
-    </div>
+    <li ref={setNodeRef} style={style} className="sortable-concept">
+      <Item
+        id={id}
+        style={{ opacity: isDragging ? 0.5 : 1 }}
+        details={details}
+        hideDetails={isDragging}
+        handleProps={{ ...attributes, ...listeners, ref: setActivatorNodeRef }}
+      />
+    </li>
   );
 }
 
-function Item({ id, style, details }) {
+function Item({ id, style, details, handleProps, hideDetails = false }) {
   const [hovered, setHovered] = useState(false);
-
+  const [expanded, setExpanded] = useState(false);
+  const detailId = useId();
+  const showDetails = !hideDetails && (hovered || expanded);
   return (
-    <div
-      style={style}
-      className="concept-item"
-      onMouseEnter={() => details && setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <li>{id}</li>
-      {hovered && details && (
-        <div className="concept-tooltip">
-          <h4>{id}</h4>
-          <div className="tooltip-section">
-            <span className="tooltip-label">What it is</span>
-            <p>{details.summary}</p>
-          </div>
-          <div className="tooltip-section">
-            <span className="tooltip-label">Why it matters</span>
-            <p>{details.why}</p>
-          </div>
-          <div className="tooltip-section">
-            <span className="tooltip-label">How it connects</span>
-            <p>{details.connection}</p>
-          </div>
+    <div style={style} className="concept-item">
+      {handleProps ? (
+        <button
+          type="button"
+          className="concept-drag-handle"
+          {...handleProps}
+          aria-label={"Reorder " + id}
+        >
+          <span aria-hidden="true">•</span>
+          <span>{id}</span>
+        </button>
+      ) : (
+        <div className="concept-drag-preview">• {id}</div>
+      )}
+      {details?.summary && (
+        <div
+          className="concept-summary-area"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          <button
+            type="button"
+            className="concept-summary"
+            aria-expanded={showDetails}
+            aria-controls={detailId}
+            onClick={() => setExpanded((value) => !value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                setHovered(false);
+                setExpanded(false);
+              }
+            }}
+          >
+            {details.summary}
+          </button>
+          {showDetails && (
+            <div
+              className="concept-tooltip"
+              id={detailId}
+              role="region"
+              aria-label={id + " details"}
+            >
+              <h4>{id}</h4>
+              <div className="tooltip-section">
+                <span className="tooltip-label">Why it matters</span>
+                <p>{details.why}</p>
+              </div>
+              <div className="tooltip-section">
+                <span className="tooltip-label">How it connects</span>
+                <p>{details.connection}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

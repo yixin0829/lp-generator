@@ -35,23 +35,30 @@ Return edges representing prerequisite dependencies:
 - relationship: 1 sentence explaining how the source enables the target
 
 Rules:
+- Model conceptual prerequisites, not a reading-order chain. Do not connect two nodes solely because they are adjacent in the list.
+- For each concept, consider every other concept it directly depends on. Include multiple incoming edges when it needs several foundations, and multiple outgoing edges when a foundation supports several concepts.
+- Add an edge only when its prerequisite relationship can be explained. Do not invent dependencies or force branching to meet an edge count.
 - Every node must appear in at least one edge (as source or target).
 - Edges should flow from foundational to advanced concepts (Beginner → Intermediate → Advanced).
+- Dependencies within the same difficulty level are allowed.
 - Cross-level edges are allowed (e.g., a Beginner concept can connect directly to an Advanced one).
 - Avoid cycles: do not create circular dependency chains.
 - Keep labels concise (2-4 words max).
-- Aim for 12-20 edges total to create a well-connected but readable graph.
+- Usually 12-20 edges are enough, but correctness of the dependencies matters more than this range.
 
-Example output for "JavaScript":
+Abbreviated example for "JavaScript" showing multiple prerequisites; return 10-15 concepts for the actual topic:
 {
   "nodes": [
     {"id": "variables", "label": "Variables", "level": "Beginner", "summary": "Named containers that store data values.", "why": "The most fundamental building block of any program."},
-    {"id": "data_types", "label": "Data Types", "level": "Beginner", "summary": "Categories like strings, numbers, and booleans.", "why": "Understanding types prevents bugs and enables correct operations."},
+    {"id": "functions", "label": "Functions", "level": "Beginner", "summary": "Callable blocks of code with parameters and return values.", "why": "Functions define reusable behavior."},
+    {"id": "scope", "label": "Lexical Scope", "level": "Intermediate", "summary": "Rules determining which bindings a function can access.", "why": "Scope explains where values are available."},
     {"id": "closures", "label": "Closures", "level": "Advanced", "summary": "Functions retaining access to their outer scope.", "why": "Enables data privacy, currying, and factory functions."}
   ],
   "edges": [
-    {"source": "variables", "target": "data_types", "relationship": "Understanding variable storage is needed before learning how different data types behave."},
-    {"source": "data_types", "target": "closures", "relationship": "Type knowledge underpins how closed-over values are captured and used."}
+    {"source": "variables", "target": "functions", "relationship": "Function parameters and local bindings hold values."},
+    {"source": "variables", "target": "scope", "relationship": "Scope determines where variable bindings can be accessed."},
+    {"source": "functions", "target": "closures", "relationship": "A closure includes a function that can be passed around or returned."},
+    {"source": "scope", "target": "closures", "relationship": "A closure retains access to bindings in its lexical environment."}
   ]
 }"""
 
@@ -176,27 +183,26 @@ def topological_sort_within_level(nodes: list[dict], edges: list[dict], level: s
 def graph_to_levels(nodes: list[dict], edges: list[dict]) -> dict[str, list[dict]]:
     """Convert graph nodes into Beginner/Intermediate/Advanced level buckets
     with topological ordering, producing the legacy box-view format."""
+    node_by_id = {node["id"]: node for node in nodes}
+    connections: dict[str, list[str]] = defaultdict(list)
+    for edge in edges:
+        source = node_by_id.get(edge["source"])
+        target = node_by_id.get(edge["target"])
+        if not source or not target:
+            continue
+        connections[source["id"]].append(f"Leads to {target['label']}: {edge['relationship']}")
+        connections[target["id"]].append(f"Requires {source['label']}: {edge['relationship']}")
     levels: dict[str, list[dict]] = {}
     for level in ("Beginner", "Intermediate", "Advanced"):
-        sorted_nodes = topological_sort_within_level(nodes, edges, level)
         levels[level] = [
             {
-                "name": n["label"],
-                "summary": n["summary"],
-                "why": n["why"],
-                "connection": "",
+                "name": node["label"],
+                "summary": node["summary"],
+                "why": node["why"],
+                "connection": " ".join(connections[node["id"]]),
             }
-            for n in sorted_nodes
+            for node in topological_sort_within_level(nodes, edges, level)
         ]
-
-    for e in edges:
-        source_label = next((n["label"] for n in nodes if n["id"] == e["source"]), e["source"])
-        target_label = next((n["label"] for n in nodes if n["id"] == e["target"]), e["target"])
-        for level_list in levels.values():
-            for concept in level_list:
-                if concept["name"] == source_label and not concept["connection"]:
-                    concept["connection"] = f"Leads to {target_label}: {e['relationship']}"
-                    break
 
     return levels
 

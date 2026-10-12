@@ -1,0 +1,74 @@
+.loading-progress-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 0 16px;
+
+  .preparing-progress {
+    width: min(220px, 65vw);
+    height: 6px;
+    border-radius: 999px;
+    background: var(--border-subtle);
+    overflow: hidden;
+  }
+
+  .preparing-progress-fill {
+    width: 40%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--text-primary);
+    transform-origin: left center;
+    // Generation provides no percentage, so this indicates activity only.
+    animation: preparing-progress-travel 1600ms ease-in-out infinite alternate !important;
+  }
+
+  .is-estimated .preparing-progress-fill {
+    width: 100%;
+    animation: none !important;
+    // Overlap the 100 ms updates so the fill keeps moving between samples.
+    transition: transform 250ms linear;
+  }
+
+  .is-overdue .preparing-progress-fill {
+    animation: preparing-progress-pulse 1600ms ease-in-out infinite alternate !important;
+  }
+
+  .preparing-estimate {
+    margin-top: -12px;
+    font-size: 13px;
+  }
+
+  p {
+    margin: 0;
+    text-align: center;
+    font-size: 16px;
+    color: var(--text-secondary);
+  }
+}
+
+@keyframes preparing-progress-travel {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(150%);
+  }
+}
+
+@keyframes preparing-progress-pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-progress-container .preparing-progress .preparing-progress-fill {
+    animation: none !important;
+    transition: none;
+  }
+}

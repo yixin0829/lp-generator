@@ -3,6 +3,14 @@
 from pydantic import BaseModel, ConfigDict
 
 
+class GenerationEstimate(BaseModel):
+    model: str
+    sample_count: int
+    median_seconds: float
+    lower_seconds: int
+    upper_seconds: int
+
+
 class StatsResponse(BaseModel):
     """Response model for /v1/stats."""
 
@@ -15,3 +23,4 @@ class StatsResponse(BaseModel):
     )
 
     learning_paths_generated: int
+    generation_estimate: GenerationEstimate | None = None

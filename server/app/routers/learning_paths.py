@@ -1,15 +1,23 @@
 """Learning path API router."""
 
+from time import perf_counter
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
 from loguru import logger
 
 from app.core.config import get_config
-from app.core.dependencies import get_cache_service, get_counter_service, get_learning_path_service
+from app.core.dependencies import (
+    get_cache_service,
+    get_counter_service,
+    get_generation_timing_service,
+    get_learning_path_service,
+)
 from app.core.security import limiter, require_api_key
 from app.schemas.learning_path import HTTPError, LearningPathResponse
 from app.services.cache_service import BaseCacheService, CacheServiceError
 from app.services.counter_service import BaseCounterService, CounterServiceError
+from app.services.generation_timing_service import GenerationTimingService
 from app.services.learning_path_service import (
     LearningPathError,
     LearningPathService,
@@ -63,8 +71,10 @@ async def get_lp(
     service: LearningPathService = Depends(get_learning_path_service),
     counter_service: BaseCounterService = Depends(get_counter_service),
     cache_service: BaseCacheService = Depends(get_cache_service),
+    timing_service: GenerationTimingService = Depends(get_generation_timing_service),
 ) -> dict:
     """Take any topic and call OpenAI to generate a learning path in JSON format."""
+    started = perf_counter()
     normalized = service.normalize_topic(topic)
 
     # Try cache first. Cache reads are blocking network calls, so run them off
@@ -99,10 +109,12 @@ async def get_lp(
         ) from e
 
     payload["cached"] = False
+    duration_seconds = perf_counter() - started
 
     # Cache write and counter increment are not on the critical path; run them
     # after the response is sent so generation latency is not inflated.
     background_tasks.add_task(_safe_cache_set, cache_service, normalized, payload)
     background_tasks.add_task(_safe_increment_counter, counter_service)
+    background_tasks.add_task(timing_service.record, duration_seconds)
 
     return payload

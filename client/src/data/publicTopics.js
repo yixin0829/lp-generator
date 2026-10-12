@@ -1,3 +1,5 @@
+import { publicTopicDependencies } from "./publicTopicDependencies.js";
+
 const reviewedDate = "2026-08-08";
 
 const definitions = [
@@ -115,20 +117,45 @@ function makeEntry([slug, topic, category, aliases, concepts]) {
     summary: `${label} is a practical part of building reliable skill in ${topic.toLowerCase()}.`,
     why: `It gives you the foundation needed for the ${index === concepts.length - 1 ? "final project" : "next stage"} in this path.`,
   }));
-  const edges = nodes.slice(0, -1).map((node, index) => ({
-    source: node.id,
-    target: nodes[index + 1].id,
-    relationship: `${node.label} prepares you to work confidently with ${nodes[index + 1].label}.`,
-  }));
-  const levels = Object.fromEntries(["Beginner", "Intermediate", "Advanced"].map((level) => [
-    level,
-    nodes.filter((node) => node.level === level).map((node) => ({
-      name: node.label,
-      summary: node.summary,
-      why: node.why,
-      connection: edges.find((edge) => edge.source === node.id)?.relationship ?? "Use this stage to consolidate and reflect on the complete learning path.",
-    })),
-  ]));
+  const byLabel = new Map(nodes.map((node) => [node.label, node]));
+  const dependencies = publicTopicDependencies[slug];
+  if (!dependencies)
+    throw new Error(`Missing dependencies for public topic: ${slug}`);
+  const edges = dependencies.map(([sourceLabel, targetLabel, relationship]) => {
+    const source = byLabel.get(sourceLabel),
+      target = byLabel.get(targetLabel);
+    if (!source || !target)
+      throw new Error(
+        `Unknown dependency concept in ${slug}: ${sourceLabel} -> ${targetLabel}`,
+      );
+    return { source: source.id, target: target.id, relationship };
+  });
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const levels = Object.fromEntries(
+    ["Beginner", "Intermediate", "Advanced"].map((level) => [
+      level,
+      nodes
+        .filter((node) => node.level === level)
+        .map((node) => ({
+          name: node.label,
+          summary: node.summary,
+          why: node.why,
+          connection: edges
+            .filter(
+              (edge) => edge.source === node.id || edge.target === node.id,
+            )
+            .map(
+              (edge) =>
+                (edge.target === node.id
+                  ? "Requires " + byId.get(edge.source).label
+                  : "Leads to " + byId.get(edge.target).label) +
+                ": " +
+                edge.relationship,
+            )
+            .join(" "),
+        })),
+    ]),
+  );
 
   return {
     published: true,
@@ -137,10 +164,17 @@ function makeEntry([slug, topic, category, aliases, concepts]) {
     topic,
     aliases: [topic, ...aliases],
     category,
-    excerpt: `A reviewed beginner-to-advanced ${topic.toLowerCase()} roadmap with nine practical stages, clear outcomes, and trusted resources.`,
-    introduction: `This learning path turns ${topic.toLowerCase()} into a manageable sequence. Work through the stages in order, practise each idea in a small exercise, and keep evidence of what you can do. The final stages emphasize integration: use the earlier foundations together instead of treating each concept as an isolated fact.`,
-    prerequisites: ["Curiosity and a regular weekly practice block", "A place to keep notes, exercises, and reflections"],
-    outcomes: [`Explain the core ideas behind ${topic.toLowerCase()}`, `Apply the skill in a complete, self-directed project`, "Evaluate your work and choose a useful next step"],
+    excerpt: `A reviewed beginner-to-advanced ${topic.toLowerCase()} roadmap with nine concepts, clear outcomes, and trusted resources.`,
+    introduction: `This learning path turns ${topic.toLowerCase()} into a manageable sequence. Use the list as a suggested reading order. The graph shows which concepts build on each other, including concepts with more than one prerequisite. Practise each idea in a small exercise. The final stages emphasize integration: use the earlier foundations together instead of treating each concept as an isolated fact.`,
+    prerequisites: [
+      "Curiosity and a regular weekly practice block",
+      "A place to keep notes, exercises, and reflections",
+    ],
+    outcomes: [
+      `Explain the core ideas behind ${topic.toLowerCase()}`,
+      `Apply the skill in a complete, self-directed project`,
+      "Evaluate your work and choose a useful next step",
+    ],
     resources: [primaryResourceBySlug[slug], resourcesByCategory[category][0]],
     relatedSlugs: relatedBySlug[slug],
     graph: { nodes, edges },
@@ -149,14 +183,22 @@ function makeEntry([slug, topic, category, aliases, concepts]) {
 }
 
 export const publicTopics = definitions.map(makeEntry);
-export const publicTopicBySlug = new Map(publicTopics.map((topic) => [topic.slug, topic]));
+export const publicTopicBySlug = new Map(
+  publicTopics.map((topic) => [topic.slug, topic]),
+);
 
 function normalizeAlias(value) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 export const publicTopicByAlias = new Map(
-  publicTopics.flatMap((topic) => topic.aliases.map((alias) => [normalizeAlias(alias), topic])),
+  publicTopics.flatMap((topic) =>
+    topic.aliases.map((alias) => [normalizeAlias(alias), topic]),
+  ),
 );
 
 export function findPublicTopicByAlias(value) {
@@ -168,12 +210,62 @@ export function validatePublicTopics(topics = publicTopics) {
   const slugs = new Set();
   const intents = new Set();
   for (const topic of topics) {
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(topic.slug) || slugs.has(topic.slug)) errors.push(`Invalid or duplicate slug: ${topic.slug}`);
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(topic.slug) || slugs.has(topic.slug))
+      errors.push(`Invalid or duplicate slug: ${topic.slug}`);
     slugs.add(topic.slug);
-    if (!topic.published || !topic.reviewedDate || topic.introduction.length < 200 || topic.excerpt.length < 80) errors.push(`Incomplete editorial metadata: ${topic.slug}`);
-    if (topic.resources.length < 2 || topic.resources.some((resource) => !resource?.title || !/^https:\/\//.test(resource.url))) errors.push(`Invalid authoritative resources: ${topic.slug}`);
+    if (
+      !topic.published ||
+      !topic.reviewedDate ||
+      topic.introduction.length < 200 ||
+      topic.excerpt.length < 80
+    )
+      errors.push(`Incomplete editorial metadata: ${topic.slug}`);
+    if (
+      topic.resources.length < 2 ||
+      topic.resources.some(
+        (resource) => !resource?.title || !/^https:\/\//.test(resource.url),
+      )
+    )
+      errors.push(`Invalid authoritative resources: ${topic.slug}`);
     const ids = new Set(topic.graph.nodes.map((node) => node.id));
-    if (ids.size !== topic.graph.nodes.length || topic.graph.edges.some((edge) => !ids.has(edge.source) || !ids.has(edge.target))) errors.push(`Invalid graph references: ${topic.slug}`);
+    if (
+      ids.size !== topic.graph.nodes.length ||
+      topic.graph.edges.some(
+        (edge) => !ids.has(edge.source) || !ids.has(edge.target),
+      )
+    )
+      errors.push(`Invalid graph references: ${topic.slug}`);
+    const adjacency = new Map(topic.graph.nodes.map((node) => [node.id, []]));
+    const incoming = new Map(topic.graph.nodes.map((node) => [node.id, 0]));
+    const pairs = new Set();
+    const connected = new Set();
+    for (const edge of topic.graph.edges) {
+      const pair = JSON.stringify([edge.source, edge.target]);
+      if (
+        pairs.has(pair) ||
+        edge.source === edge.target ||
+        !edge.relationship?.trim()
+      )
+        errors.push(`Invalid dependency: ${topic.slug}`);
+      pairs.add(pair);
+      if (!ids.has(edge.source) || !ids.has(edge.target)) continue;
+      adjacency.get(edge.source).push(edge.target);
+      incoming.set(edge.target, incoming.get(edge.target) + 1);
+      connected.add(edge.source);
+      connected.add(edge.target);
+    }
+    if (connected.size !== ids.size)
+      errors.push(`Disconnected concept: ${topic.slug}`);
+    const ready = [...ids].filter((id) => incoming.get(id) === 0);
+    let visited = 0;
+    for (let cursor = 0; cursor < ready.length; cursor++) {
+      visited++;
+      for (const target of adjacency.get(ready[cursor])) {
+        incoming.set(target, incoming.get(target) - 1);
+        if (incoming.get(target) === 0) ready.push(target);
+      }
+    }
+    if (visited !== ids.size) errors.push(`Cyclic dependencies: ${topic.slug}`);
     for (const alias of topic.aliases) {
       const intent = normalizeAlias(alias);
       if (intents.has(intent)) errors.push(`Duplicate topic intent: ${alias}`);
@@ -181,7 +273,12 @@ export function validatePublicTopics(topics = publicTopics) {
     }
   }
   for (const topic of topics) {
-    if (topic.relatedSlugs.length < 3 || topic.relatedSlugs.length > 5 || topic.relatedSlugs.some((slug) => !slugs.has(slug))) errors.push(`Invalid related topics: ${topic.slug}`);
+    if (
+      topic.relatedSlugs.length < 3 ||
+      topic.relatedSlugs.length > 5 ||
+      topic.relatedSlugs.some((slug) => !slugs.has(slug))
+    )
+      errors.push(`Invalid related topics: ${topic.slug}`);
   }
   if (errors.length) throw new Error(errors.join("\n"));
   return true;

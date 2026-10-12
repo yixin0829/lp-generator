@@ -17,7 +17,9 @@ export default function App() {
       <SnackbarProvider>
         <BrowserRouter>
           <Analytics />
-          <OnboardingProvider><TransitionRoutes /></OnboardingProvider>
+          <OnboardingProvider>
+            <TransitionRoutes />
+          </OnboardingProvider>
         </BrowserRouter>
       </SnackbarProvider>
     </ThemeProvider>
@@ -45,14 +47,26 @@ function TransitionRoutes() {
               path={page.path}
               key={page.path}
               element={
-                <div key={transitionKey} className="page route-transition">
+                <div
+                  key={transitionKey}
+                  id="main-content"
+                  tabIndex={-1}
+                  className="page route-transition"
+                >
                   <PageComponent />
                 </div>
               }
             />
           );
         })}
-        <Route path="*" element={<Page404Route />} />
+        <Route
+          path="*"
+          element={
+            <div id="main-content" tabIndex={-1}>
+              <Page404Route />
+            </div>
+          }
+        />
       </Routes>
     </>
   );

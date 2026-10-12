@@ -1,347 +1,605 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import * as d3 from "d3";
-import { useTheme } from "../../context/ThemeContext";
+import {
+  clippedEdge,
+  fitGraph,
+  labelLines,
+  nodeRadius,
+  orientGraph,
+} from "./graphGeometry";
+import "./NetworkGraph.scss";
 
-const LEVEL_COLORS = {
-  Beginner: "#22c55e",
-  Intermediate: "#f59e0b",
-  Advanced: "#ef4444",
-};
+const LEVELS = ["Beginner", "Intermediate", "Advanced"];
+const EMPTY = [];
 
-const LEVEL_COLORS_LIGHT = {
-  light: {
-    Beginner: "#dcfce7",
-    Intermediate: "#fef3c7",
-    Advanced: "#fee2e2",
-  },
-  dark: {
-    Beginner: "#14532d",
-    Intermediate: "#713f12",
-    Advanced: "#7f1d1d",
-  },
-};
-
-const NODE_RADIUS = 28;
-const ARROW_ID = "arrowhead";
-
-function truncateLabel(label, maxLen = 20) {
-  if (!label || label.length <= maxLen) return label;
-  return label.slice(0, maxLen - 1) + "…";
-}
-
-function wrapText(text, maxWidth) {
-  const words = text.split(/\s+/);
-  const lines = [];
-  let current = "";
-  for (const word of words) {
-    const test = current ? `${current} ${word}` : word;
-    if (test.length > maxWidth && current) {
-      lines.push(current);
-      current = word;
-    } else {
-      current = test;
-    }
-  }
-  if (current) lines.push(current);
-  return lines;
-}
-
-function getThemeColors(theme) {
-  const isDark = theme === "dark";
-  return {
-    nodeFills: LEVEL_COLORS_LIGHT[isDark ? "dark" : "light"],
-    nodeText: isDark ? "#eeeeee" : "#1e293b",
-    edge: isDark ? "#3e3e3e" : "#cbd5e1",
-    arrow: isDark ? "#585858" : "#94a3b8",
-    edgeHighlight: "#7c3aed",
-  };
-}
-
-export default function NetworkGraph({ nodes, edges }) {
+export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
   const svgRef = useRef(null);
-  const containerRef = useRef(null);
-  const simulationRef = useRef(null);
-  const [tooltip, setTooltip] = useState(null);
-  const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
-  const { theme } = useTheme();
+  const viewportRef = useRef(null);
+  const inspectorRef = useRef(null);
+  const controllerRef = useRef(null);
+  const selectedRef = useRef(null);
+  const dragEnabledRef = useRef(false);
+  const [selectedId, setSelectedId] = useState(null);
+  const [dragEnabled, setDragEnabled] = useState(false);
+  const [zoomPercent, setZoomPercent] = useState(100);
+  const id = useId().replace(/[^a-zA-Z0-9]/g, "");
+  const markerId = "graph-arrow-" + id;
+  const selected = nodes.find((node) => node.id === selectedId);
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const connections = selected
+    ? edges.filter(
+        (edge) =>
+          (edge.source === selected.id || edge.target === selected.id) &&
+          byId.has(edge.source) &&
+          byId.has(edge.target),
+      )
+    : [];
+  selectedRef.current = selectedId;
+  dragEnabledRef.current = dragEnabled;
 
-  const handleResize = useCallback(() => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setDimensions({
-        width: Math.max(rect.width, 400),
-        height: Math.max(Math.min(rect.width * 0.65, 700), 450),
-      });
-    }
-  }, []);
+  function selectNode(nodeId, reveal = false) {
+    setSelectedId(nodeId);
+    if (reveal) controllerRef.current?.reveal(nodeId);
+  }
+
+  function closeDetails() {
+    svgRef.current?.querySelector('[aria-pressed="true"]')?.focus();
+    setSelectedId(null);
+  }
 
   useEffect(() => {
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [handleResize]);
+    controllerRef.current?.select(selectedId);
+    if (inspectorRef.current) inspectorRef.current.scrollTop = 0;
+  }, [selectedId]);
 
   useEffect(() => {
-    if (!nodes?.length || !svgRef.current) return;
+    controllerRef.current?.setDragMode(dragEnabled);
+  }, [dragEnabled]);
 
-    const colors = getThemeColors(theme);
-    const { width, height } = dimensions;
-    const nodeMap = new Map(nodes.map((n) => [n.id, { ...n }]));
-    const validEdges = edges.filter((e) => nodeMap.has(e.source) && nodeMap.has(e.target));
-
-    const simNodes = nodes.map((n) => ({ ...n }));
-    const simEdges = validEdges.map((e) => ({ ...e }));
-
+  // The graph only rebuilds for new data. Theme is CSS; resize changes the viewport.
+  useEffect(() => {
+    if (!svgRef.current || !viewportRef.current) return;
     const svg = d3.select(svgRef.current);
+    const viewport = viewportRef.current;
+    const { width, height } = viewport.getBoundingClientRect();
+    let size = { width, height };
+    let fitOnResize = false;
+    let disposed = false;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const coarse = () => window.matchMedia("(pointer: coarse)").matches;
+    const canDrag = () => !coarse() || dragEnabledRef.current;
+    const simNodes = nodes.map((node, index) => {
+      const lines = labelLines(node.label || node.id);
+      const radius = nodeRadius(lines);
+      const angle = index * Math.PI * (3 - Math.sqrt(5));
+      const distance = Math.sqrt(index) * (radius * 2 + 20);
+      return {
+        ...node,
+        lines,
+        radius,
+        x: Math.cos(angle) * distance,
+        y: Math.sin(angle) * distance,
+        fx: null,
+        fy: null,
+      };
+    });
+    const nodeMap = new Map(simNodes.map((node) => [node.id, node]));
+    const simEdges = edges
+      .filter(
+        (edge) =>
+          nodeMap.has(edge.source) &&
+          nodeMap.has(edge.target) &&
+          edge.source !== edge.target,
+      )
+      .map((edge) => ({ ...edge }));
+    const degree = new Map(simNodes.map((node) => [node.id, 0]));
+    simEdges.forEach((edge) => {
+      degree.set(edge.source, degree.get(edge.source) + 1);
+      degree.set(edge.target, degree.get(edge.target) + 1);
+    });
     svg.selectAll("*").remove();
-
     const defs = svg.append("defs");
     defs
       .append("marker")
-      .attr("id", ARROW_ID)
-      .attr("viewBox", "0 0 10 6")
-      .attr("refX", NODE_RADIUS + 10)
-      .attr("refY", 3)
-      .attr("markerWidth", 8)
-      .attr("markerHeight", 6)
+      .attr("id", markerId)
+      .attr("viewBox", "0 0 10 8")
+      .attr("refX", 9)
+      .attr("refY", 4)
+      .attr("markerWidth", 9)
+      .attr("markerHeight", 8)
+      .attr("markerUnits", "userSpaceOnUse")
       .attr("orient", "auto")
       .append("path")
-      .attr("d", "M0,0 L10,3 L0,6 Z")
-      .attr("fill", colors.arrow);
-
-    const g = svg.append("g");
-
-    const zoom = d3.zoom().scaleExtent([0.3, 3]).on("zoom", (event) => {
-      g.attr("transform", event.transform);
-    });
-    svg.call(zoom);
-
-    const linkGroup = g
+      .attr("d", "M0,0 L9,4 L0,8 Z")
+      .attr("fill", "context-stroke");
+    const scene = svg.append("g").attr("class", "graph-scene");
+    const links = scene
       .append("g")
-      .attr("class", "links")
+      .attr("class", "graph-links")
       .selectAll("line")
       .data(simEdges)
       .join("line")
-      .attr("stroke", colors.edge)
-      .attr("stroke-width", 2)
-      .attr("marker-end", `url(#${ARROW_ID})`)
-      .attr("pointer-events", "none");
-
-    const linkHitArea = g
+      .attr("marker-end", "url(#" + markerId + ")");
+    const groups = scene
       .append("g")
-      .attr("class", "link-hit-areas")
-      .selectAll("line")
-      .data(simEdges)
-      .join("line")
-      .attr("stroke", "transparent")
-      .attr("stroke-width", 14)
-      .attr("cursor", "pointer")
-      .on("mouseenter", (event, d) => {
-        const sourceNode = simNodes.find((n) => n.id === (typeof d.source === "object" ? d.source.id : d.source));
-        const targetNode = simNodes.find((n) => n.id === (typeof d.target === "object" ? d.target.id : d.target));
-        linkGroup.filter((ld) => ld === d).attr("stroke", colors.edgeHighlight).attr("stroke-width", 3);
-        setTooltip({
-          type: "edge",
-          x: event.clientX,
-          y: event.clientY,
-          data: {
-            source: sourceNode?.label || d.source,
-            target: targetNode?.label || d.target,
-            relationship: d.relationship,
-          },
-        });
-      })
-      .on("mousemove", (event) => {
-        setTooltip((prev) => (prev ? { ...prev, x: event.clientX, y: event.clientY } : null));
-      })
-      .on("mouseleave", (event, d) => {
-        linkGroup.filter((ld) => ld === d).attr("stroke", colors.edge).attr("stroke-width", 2);
-        setTooltip(null);
-      });
-
-    const nodeGroup = g
-      .append("g")
-      .attr("class", "nodes")
+      .attr("class", "graph-nodes")
       .selectAll("g")
-      .data(simNodes)
+      .data(simNodes, (node) => node.id)
       .join("g")
-      .attr("cursor", "grab")
-      .call(
-        d3
-          .drag()
-          .on("start", (event, d) => {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-          })
-          .on("drag", (event, d) => {
-            d.fx = event.x;
-            d.fy = event.y;
-          })
-          .on("end", (event, d) => {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-          })
-      );
-
-    nodeGroup
+      .attr("class", "graph-node")
+      .attr("data-node-id", (node) => node.id)
+      .attr("data-level", (node) => node.level)
+      .attr("tabindex", 0)
+      .attr("role", "button")
+      .attr(
+        "aria-label",
+        (node) =>
+          node.label + ", " + (node.level || "Concept") + ". Show details",
+      )
+      .attr("aria-controls", "graph-details-" + id)
+      .on("click", (event, node) => {
+        if (!event.defaultPrevented) setSelectedId(node.id);
+      })
+      .on("keydown", (event, node) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          setSelectedId(node.id);
+        }
+      })
+      .on("focus", (event, node) => reveal(node.id, true));
+    groups
       .append("circle")
-      .attr("r", NODE_RADIUS)
-      .attr("fill", (d) => colors.nodeFills[d.level] || "#f1f5f9")
-      .attr("stroke", (d) => LEVEL_COLORS[d.level] || "#64748b")
-      .attr("stroke-width", 2.5);
-
-    nodeGroup.each(function (d) {
-      const lines = wrapText(truncateLabel(d.label, 16), 10);
-      const sel = d3.select(this);
-      lines.forEach((line, i) => {
-        sel
-          .append("text")
-          .text(line)
-          .attr("text-anchor", "middle")
-          .attr("dy", `${(i - (lines.length - 1) / 2) * 1.15 + 0.35}em`)
-          .attr("font-size", lines.length > 2 ? "8px" : "9px")
-          .attr("font-weight", 600)
-          .attr("fill", colors.nodeText)
-          .attr("pointer-events", "none");
-      });
+      .attr("class", "graph-node-ring")
+      .attr("r", (node) => node.radius + 5);
+    groups
+      .append("circle")
+      .attr("class", "graph-node-disc")
+      .attr("r", (node) => node.radius);
+    groups.each(function (node) {
+      const text = d3
+        .select(this)
+        .append("text")
+        .attr("class", "graph-node-label")
+        .attr("text-anchor", "middle")
+        .attr("aria-hidden", "true");
+      node.lines.forEach((line, index) =>
+        text
+          .append("tspan")
+          .attr("x", 0)
+          .attr("y", (index - (node.lines.length - 1) / 2) * 17 + 5)
+          .text(line),
+      );
     });
-
-    nodeGroup
-      .on("mouseenter", (event, d) => {
-        d3.select(event.currentTarget).select("circle").attr("stroke-width", 4);
-        setTooltip({
-          type: "node",
-          x: event.clientX,
-          y: event.clientY,
-          data: {
-            label: d.label,
-            level: d.level,
-            summary: d.summary,
-            why: d.why,
-          },
-        });
+    const zoom = d3
+      .zoom()
+      .scaleExtent([0.05, 2.5])
+      .filter((event) => {
+        if (event.type === "wheel") return event.ctrlKey || event.metaKey;
+        if (event.type === "dblclick") return false;
+        return !event.button && canDrag();
       })
-      .on("mousemove", (event) => {
-        setTooltip((prev) => (prev ? { ...prev, x: event.clientX, y: event.clientY } : null));
-      })
-      .on("mouseleave", (event) => {
-        d3.select(event.currentTarget).select("circle").attr("stroke-width", 2.5);
-        setTooltip(null);
+      .on("zoom", (event) => {
+        scene.attr("transform", event.transform);
+        setZoomPercent(Math.round(event.transform.k * 100));
+        if (event.sourceEvent) fitOnResize = false;
       });
-
+    svg.call(zoom).on("dblclick.zoom", null);
+    function draw() {
+      links.each(function (edge) {
+        const end = clippedEdge(edge.source, edge.target);
+        d3.select(this)
+          .attr("x1", end.x1)
+          .attr("y1", end.y1)
+          .attr("x2", end.x2)
+          .attr("y2", end.y2);
+      });
+      groups.attr(
+        "transform",
+        (node) => "translate(" + node.x + "," + node.y + ")",
+      );
+    }
+    function fit() {
+      const transform = fitGraph(
+        simNodes,
+        size.width,
+        size.height,
+        size.width < 500 ? 16 : 28,
+      );
+      svg.call(
+        zoom.transform,
+        d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.k),
+      );
+    }
+    function reveal(nodeId, onlyIfOutside = false) {
+      const node = nodeMap.get(nodeId);
+      if (!node) return;
+      const transform = d3.zoomTransform(svg.node());
+      const [x, y] = transform.apply([node.x, node.y]);
+      const r = node.radius * transform.k;
+      if (
+        onlyIfOutside &&
+        x - r > 8 &&
+        x + r < size.width - 8 &&
+        y - r > 8 &&
+        y + r < size.height - 8
+      )
+        return;
+      fitOnResize = false;
+      const scale = onlyIfOutside ? transform.k : Math.max(transform.k, 1);
+      svg.call(
+        zoom.transform,
+        d3.zoomIdentity
+          .translate(
+            size.width / 2 - node.x * scale,
+            size.height / 2 - node.y * scale,
+          )
+          .scale(scale),
+      );
+    }
+    function select(nodeId) {
+      const neighbors = new Set([nodeId]);
+      simEdges.forEach((edge) => {
+        if (edge.source.id === nodeId || edge.target.id === nodeId) {
+          neighbors.add(edge.source.id);
+          neighbors.add(edge.target.id);
+        }
+      });
+      groups
+        .attr("aria-pressed", (node) => (node.id === nodeId ? "true" : "false"))
+        .classed("is-selected", (node) => node.id === nodeId)
+        .classed("is-muted", (node) => !!nodeId && !neighbors.has(node.id));
+      links
+        .classed(
+          "is-connected",
+          (edge) => edge.source.id === nodeId || edge.target.id === nodeId,
+        )
+        .classed("is-incoming", (edge) => edge.target.id === nodeId)
+        .classed("is-outgoing", (edge) => edge.source.id === nodeId)
+        .classed(
+          "is-muted",
+          (edge) =>
+            !!nodeId && edge.source.id !== nodeId && edge.target.id !== nodeId,
+        );
+    }
     const simulation = d3
       .forceSimulation(simNodes)
       .force(
         "link",
         d3
           .forceLink(simEdges)
-          .id((d) => d.id)
-          .distance(120)
+          .id((node) => node.id)
+          .strength(
+            (edge) =>
+              0.3 /
+              Math.min(degree.get(edge.source.id), degree.get(edge.target.id)),
+          )
+          .distance(
+            (edge) =>
+              edge.source.radius + edge.target.radius + (width < 500 ? 36 : 48),
+          ),
       )
-      .force("charge", d3.forceManyBody().strength(-400))
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide(NODE_RADIUS + 15))
-      .force("x", d3.forceX(width / 2).strength(0.05))
-      .force("y", d3.forceY(height / 2).strength(0.05))
-      .on("tick", () => {
-        linkGroup
-          .attr("x1", (d) => d.source.x)
-          .attr("y1", (d) => d.source.y)
-          .attr("x2", (d) => d.target.x)
-          .attr("y2", (d) => d.target.y);
-
-        linkHitArea
-          .attr("x1", (d) => d.source.x)
-          .attr("y1", (d) => d.source.y)
-          .attr("x2", (d) => d.target.x)
-          .attr("y2", (d) => d.target.y);
-
-        nodeGroup.attr("transform", (d) => `translate(${d.x},${d.y})`);
-      });
-
-    simulationRef.current = simulation;
-
-    return () => {
-      simulation.stop();
-    };
-  }, [nodes, edges, dimensions, theme]);
-
-  return (
-    <div ref={containerRef} className="network-graph-container">
-      <div className="graph-legend">
-        {Object.entries(LEVEL_COLORS).map(([level, color]) => (
-          <span key={level} className="legend-item">
-            <span className="legend-dot" style={{ background: color }} />
-            {level}
-          </span>
-        ))}
-      </div>
-      <svg
-        ref={svgRef}
-        width={dimensions.width}
-        height={dimensions.height}
-        className="network-graph-svg"
-      />
-      {tooltip && <GraphTooltip tooltip={tooltip} />}
-    </div>
-  );
-}
-
-function GraphTooltip({ tooltip }) {
-  const { type, x, y, data } = tooltip;
-  const { theme } = useTheme();
-  const offsetX = 15;
-  const offsetY = 10;
-
-  const fillColors = LEVEL_COLORS_LIGHT[theme === "dark" ? "dark" : "light"];
-
-  const style = {
-    position: "fixed",
-    left: `${x + offsetX}px`,
-    top: `${y + offsetY}px`,
-    zIndex: 9999,
-    pointerEvents: "none",
-  };
-
-  if (type === "node") {
-    return (
-      <div className="graph-tooltip" style={style}>
-        <h4>
-          <span
-            className="level-badge"
-            style={{
-              background: fillColors[data.level],
-              color: LEVEL_COLORS[data.level],
-              borderColor: LEVEL_COLORS[data.level],
-            }}
-          >
-            {data.level}
-          </span>
-          {data.label}
-        </h4>
-        <div className="tooltip-section">
-          <span className="tooltip-label">What it is</span>
-          <p>{data.summary}</p>
-        </div>
-        <div className="tooltip-section">
-          <span className="tooltip-label">Why it matters</span>
-          <p>{data.why}</p>
-        </div>
-      </div>
+      .force("charge", d3.forceManyBody().strength(-240))
+      .force(
+        "collision",
+        d3.forceCollide((node) => node.radius + (width < 500 ? 6 : 18)),
+      )
+      .force("center", d3.forceCenter(0, 0))
+      .force("x", d3.forceX(0).strength(width < 500 ? 0.16 : 0.045))
+      .force("y", d3.forceY(0).strength(width < 500 ? 0.1 : 0.06))
+      .on("tick", draw);
+    function settleWithoutMotion() {
+      simulation.stop().alpha(1).alphaTarget(0);
+      for (let tick = 0; tick < 300; tick++) simulation.tick();
+      draw();
+      if (fitOnResize) fit();
+    }
+    if (media.matches) {
+      settleWithoutMotion();
+      orientGraph(simNodes, size.width, size.height);
+    }
+    draw();
+    svg.call(
+      zoom.transform,
+      d3.zoomIdentity.translate(size.width / 2, size.height / 2),
     );
-  }
+    const currentSelection = nodeMap.has(selectedRef.current)
+      ? selectedRef.current
+      : null;
+    if (currentSelection !== selectedRef.current)
+      setSelectedId(currentSelection);
+    select(currentSelection);
+    groups.call(
+      d3
+        .drag()
+        .filter((event) => !event.button && canDrag())
+        .clickDistance(5)
+        .on("start", (event, node) => {
+          fitOnResize = false;
+          node.fx = node.x;
+          node.fy = node.y;
+          if (!event.active)
+            simulation
+              .alphaDecay(media.matches ? 0.08 : 0.0228)
+              .alpha(0.3)
+              .alphaTarget(0.3)
+              .restart();
+        })
+        .on("drag", function (event, node) {
+          node.fx = node.x = event.x;
+          node.fy = node.y = event.y;
+          // Track the pointer immediately; the simulation draws the rest once per frame.
+          d3.select(this).attr(
+            "transform",
+            "translate(" + node.x + "," + node.y + ")",
+          );
+        })
+        .on("end", (event, node) => {
+          node.fx = null;
+          node.fy = null;
+          if (!event.active) {
+            simulation.alphaTarget(0);
+          }
+        }),
+    );
+    // D3 drag sets inline touch-action:none, even when its event filter rejects
+    // dragging. Remove that restriction while page scrolling is enabled.
+    function setDragMode(enabled) {
+      groups.style("touch-action", enabled ? "none" : "pan-y pinch-zoom");
+    }
+    setDragMode(dragEnabledRef.current);
+    const updateMotion = () => {
+      if (media.matches) {
+        settleWithoutMotion();
+      } else {
+        simulation.alpha(0.3).restart();
+      }
+    };
+    media.addEventListener("change", updateMotion);
+    const resize = new ResizeObserver((entries) => {
+      if (disposed) return;
+      const { width: nextWidth, height: nextHeight } = entries[0].contentRect;
+      if (
+        !nextWidth ||
+        !nextHeight ||
+        (nextWidth === size.width && nextHeight === size.height)
+      )
+        return;
+      const old = size;
+      size = { width: nextWidth, height: nextHeight };
+      if (fitOnResize) fit();
+      else {
+        const t = d3.zoomTransform(svg.node());
+        svg.call(
+          zoom.transform,
+          d3.zoomIdentity
+            .translate(
+              t.x + (size.width - old.width) / 2,
+              t.y + (size.height - old.height) / 2,
+            )
+            .scale(t.k),
+        );
+      }
+    });
+    resize.observe(viewport);
+    controllerRef.current = {
+      select,
+      reveal,
+      setDragMode,
+      fit: () => {
+        fitOnResize = true;
+        fit();
+      },
+      zoomBy: (factor) => {
+        fitOnResize = false;
+        svg.call(zoom.scaleBy, factor, [size.width / 2, size.height / 2]);
+      },
+    };
+    return () => {
+      disposed = true;
+      resize.disconnect();
+      simulation.stop();
+      media.removeEventListener("change", updateMotion);
+      svg.on(".zoom", null);
+      groups.on(".drag", null);
+      controllerRef.current = null;
+    };
+  }, [nodes, edges, id, markerId]);
+
+  if (!nodes.length)
+    return <p className="graph-empty">No concepts to show yet.</p>;
 
   return (
-    <div className="graph-tooltip" style={style}>
-      <h4 className="edge-title">
-        {data.source} → {data.target}
-      </h4>
-      <div className="tooltip-section">
-        <span className="tooltip-label">Connection</span>
-        <p>{data.relationship}</p>
+    <section
+      className="network-graph-container"
+      aria-label="Concept graph"
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && selectedId) {
+          event.preventDefault();
+          closeDetails();
+        }
+      }}
+    >
+      <div className="graph-toolbar">
+        <div className="graph-legend" aria-label="Learning stages">
+          {LEVELS.map((level) => (
+            <span className="legend-item" key={level}>
+              <span className="legend-dot" data-level={level} />
+              {level}
+            </span>
+          ))}
+        </div>
+        <div
+          className="graph-tools"
+          role="group"
+          aria-label="Graph view controls"
+        >
+          <button
+            type="button"
+            onClick={() => controllerRef.current?.zoomBy(1 / 1.2)}
+            aria-label="Zoom out"
+            disabled={zoomPercent <= 5}
+          >
+            −
+          </button>
+          <output aria-label="Zoom level" aria-live="off">
+            {zoomPercent}%
+          </output>
+          <button
+            type="button"
+            onClick={() => controllerRef.current?.zoomBy(1.2)}
+            aria-label="Zoom in"
+            disabled={zoomPercent >= 250}
+          >
+            +
+          </button>
+          <button
+            type="button"
+            className="graph-fit"
+            onClick={() => controllerRef.current?.fit()}
+          >
+            Fit
+          </button>
+          <button
+            type="button"
+            className="graph-drag-toggle"
+            aria-pressed={dragEnabled}
+            onClick={() => setDragEnabled((value) => !value)}
+          >
+            Drag graph
+          </button>
+        </div>
       </div>
-    </div>
+      <div className="graph-workspace">
+        <div className="graph-canvas">
+          <p className="graph-guidance">
+            <span className="graph-desktop-help">
+              Select a concept for details. Drag nodes to arrange them.
+            </span>
+            <span className="graph-touch-help">
+              Tap a concept for details. Turn on Drag graph to move around.
+            </span>
+          </p>
+          <div
+            className={"graph-viewport" + (dragEnabled ? " is-draggable" : "")}
+            ref={viewportRef}
+          >
+            <svg
+              ref={svgRef}
+              className="network-graph-svg"
+              role="group"
+              aria-label="Connected learning concepts"
+            />
+          </div>
+          <div className="graph-details-slot">
+            {selected && (
+              <button
+                type="button"
+                className="graph-details-link"
+                aria-controls={"graph-details-" + id}
+                onClick={() => {
+                  inspectorRef.current?.scrollIntoView({
+                    block: "nearest",
+                    behavior: "instant",
+                  });
+                  inspectorRef.current
+                    ?.querySelector("button")
+                    ?.focus({ preventScroll: true });
+                }}
+              >
+                View {selected.label} details ↓
+              </button>
+            )}
+          </div>
+          <p className="graph-scroll-help">
+            Arrows point from a prerequisite to what depends on it.
+            <span className="graph-desktop-help">
+              {" "}
+              Ctrl or ⌘ + scroll to zoom.
+            </span>
+          </p>
+        </div>
+        <aside
+          ref={inspectorRef}
+          className="graph-inspector"
+          id={"graph-details-" + id}
+          tabIndex={0}
+          aria-label="Concept details"
+          aria-live="polite"
+        >
+          {selected ? (
+            <>
+              <div className="graph-detail-heading">
+                <span className="graph-stage-label">{selected.level}</span>
+                <button
+                  type="button"
+                  onClick={closeDetails}
+                  aria-label="Close concept details"
+                >
+                  ×
+                </button>
+              </div>
+              <h3>{selected.label}</h3>
+              {selected.summary && <p>{selected.summary}</p>}
+              {selected.why && (
+                <>
+                  <h4>Why it matters</h4>
+                  <p>{selected.why}</p>
+                </>
+              )}
+              {connections.length > 0 && (
+                <>
+                  <h4>Connected concepts</h4>
+                  <div
+                    className="graph-edge-legend"
+                    aria-label="Connection directions"
+                  >
+                    <span data-direction="incoming">
+                      <span aria-hidden="true">→</span> Incoming · prerequisite
+                    </span>
+                    <span data-direction="outgoing">
+                      <span aria-hidden="true">→</span> Outgoing · dependent
+                    </span>
+                  </div>
+                  <ul className="graph-connections">
+                    {connections.map((edge, index) => {
+                      const incoming = edge.target === selected.id;
+                      const neighbor = byId.get(
+                        incoming ? edge.source : edge.target,
+                      );
+                      return (
+                        <li
+                          key={neighbor.id + index}
+                          data-direction={incoming ? "incoming" : "outgoing"}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => selectNode(neighbor.id, true)}
+                          >
+                            <span>
+                              {incoming ? "Prerequisite" : "Dependent concept"}
+                            </span>
+                            {neighbor.label}
+                          </button>
+                          {edge.relationship && <p>{edge.relationship}</p>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              )}
+            </>
+          ) : (
+            <div className="graph-empty-details">
+              <span className="graph-stage-label">{nodes.length} concepts</span>
+              <h3>Explore the connections</h3>
+              <p>
+                Select any concept to read about it and see what comes before
+                and after.
+              </p>
+            </div>
+          )}
+        </aside>
+      </div>
+    </section>
   );
 }

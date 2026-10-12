@@ -1,109 +1,111 @@
 .home-page {
-  height: 100vh;
-  min-height: 500px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  margin: 0px max(10px, 10%);
-
-  .logo {
-    @media (max-width: 767px) {
-      position: absolute;
-      float: right;
-      right: 10px;
-      z-index: -1;
-    }
+  width: min(100% - 3rem, 960px);
+  margin: 0 auto;
+  padding: clamp(3rem, 9vh, 6rem) 0 3rem;
+  .home-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
   }
-
   h1 {
-    font-size: 70px;
-    font-weight: 700;
-    text-shadow: var(--heading-shadow);
-    color: var(--text-primary);
+    font-size: clamp(2.5rem, 5.6vw, 4.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.045em;
+    font-weight: 650;
+    margin-bottom: 1.5rem;
   }
-
-  h2 {
-    font-size: 24px;
-    font-weight: 400;
-    margin-bottom: 0px;
+  .home-brand h1 {
+    font-size: clamp(2rem, 5.6vw, 4.5rem);
+    margin-bottom: 0;
+  }
+  .home-intro {
+    max-width: 620px;
+    font-size: 1.25rem;
+    line-height: 1.6;
     color: var(--text-secondary);
+    margin-bottom: 2rem;
   }
-
-  .header-shadow {
-    text-shadow: var(--header-text-shadow);
+  .recommended {
+    margin-top: 3rem;
   }
-
-  @media (max-width: 767px) {
-    h1 {
-      width: 100%;
-      font-size: 40px;
-      text-align: center;
-    }
-    h2 {
-      width: 100%;
-      font-size: 16px;
-      text-align: center;
-    }
+  .section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1rem;
   }
-
-  .gradient-text {
-    background-image: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 700;
-    color: transparent;
-    display: inline;
+  .section-heading h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
   }
-
-  .recommended-header {
-    font-size: 28px;
-    margin-top: 25px;
-    margin-bottom: 15px;
-    color: var(--text-primary);
-    @media (max-width: 767px) {
-      margin-top: 35px;
-      margin-bottom: 8px;
-      text-align: center;
-    }
+  .section-heading a {
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
   }
-
-  .recommended-prompt {
-    border-radius: 10px;
-    border-color: var(--recommended-border);
-    border-width: 2px;
-    padding: 10px 20px;
-    border-style: solid;
-    margin-bottom: 15px;
-    margin-right: 15px;
-    color: var(--text-secondary);
-    @media (max-width: 767px) {
-      margin: 5px;
-      min-width: 200px;
-      flex: 1;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 7px 6px;
-      margin-bottom: 5px;
-      font-size: 14px;
-    }
-    user-select: none;
-    transition: border-color 300ms, opacity 300ms, color 300ms;
-    cursor: pointer;
-    &:hover {
-      border-color: var(--recommended-border-hover);
-      opacity: 0.8;
-    }
-  }
-
   .recommended-container {
     display: flex;
-    flex-direction: row;
     flex-wrap: wrap;
-    @media (max-width: 767px) {
-      justify-content: center;
-    }
+    gap: 0.65rem;
+  }
+  .recommended-prompt {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-primary);
+    background: var(--surface-card);
+  }
+  .subtitle-count {
+    display: block;
+  }
+  .subtitle-count strong {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+.topic-search {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  width: 100%;
+}
+.topic-field {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+.topic-field label {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  margin-bottom: 0.5rem;
+}
+.topic-search .primary-button {
+  flex: none;
+  min-height: 52px;
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .home-page {
+    width: calc(100% - 2.5rem);
+    padding-top: 2.5rem;
+  }
+  .home-page .home-intro {
+    font-size: 1.0625rem;
+  }
+  .home-page .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .topic-search {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

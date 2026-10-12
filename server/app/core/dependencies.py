@@ -25,6 +25,7 @@ from app.services.feedback_service import (
     FirestoreFeedbackService,
     NoopFeedbackService,
 )
+from app.services.generation_timing_service import GenerationTimingService
 from app.services.learning_path_service import LearningPathService
 from app.services.share_service import (
     BaseShareService,
@@ -42,6 +43,22 @@ def get_learning_path_service() -> LearningPathService:
         client=AsyncOpenAI(api_key=config.openai_api_key),
         model=config.openai_model,
         max_topic_length=config.max_topic_length,
+    )
+
+
+@lru_cache
+def get_generation_timing_service() -> GenerationTimingService:
+    config = get_config()
+    client = None
+    if config.cache_backend == "firestore":
+        try:
+            client = firestore.Client()
+        except Exception:
+            logger.warning("Timing storage unavailable; using local timing history")
+    return GenerationTimingService(
+        model=config.openai_model,
+        client=client,
+        collection=f"{config.firestore_cache_collection}_timings",
     )
 
 

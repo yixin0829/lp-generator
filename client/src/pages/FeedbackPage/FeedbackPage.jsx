@@ -48,37 +48,51 @@ export default function FeedbackPage() {
       }
 
       setPhase("submitted");
-    } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
+    } catch {
+      setError("Your feedback didn't go through. Please try again.");
       setPhase("idle");
     }
   }
 
   return (
-    <div className="feedback-page">
+    <main className="feedback-page">
       <Seo
         title="Feedback"
-        description={`Share your feedback about ${SITE_NAME} — tell us what you love or what we can improve.`}
+        description={`Share your feedback about ${SITE_NAME}. Tell us what you like or what we can improve.`}
         path="/feedback"
         noindex
         jsonLd={feedbackJsonLd}
       />
-      <div style={{ height: "100px" }} />
+
       <h1>Feedback</h1>
       <p className="feedback-subtitle">
-        Help improve LearnAnything: report a problem, suggest a feature, or tell us what worked well.
+        Have a suggestion or found a bug? We'd love to hear from you!
       </p>
-      <p>Want to learn a topic? <Link to="/">Generate a learning path on Home</Link> instead.</p>
+      <p>
+        Want to learn a topic?{" "}
+        <Link to="/">Generate a learning path on Home</Link> instead.
+      </p>
       <div style={{ height: "20px" }} />
 
       {phase === "submitted" ? (
-        <div className="feedback-thanks">
+        <div className="feedback-thanks" role="status">
           <h2>Thank you!</h2>
-          <p>Your feedback has been submitted. We really appreciate you taking the time.</p>
+          <p>We got your feedback. Thanks for taking the time!</p>
+          <Link to="/">Back to home</Link>
         </div>
       ) : (
-        <div className="feedback-form">
+        <form
+          className="feedback-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleSubmit();
+          }}
+          aria-busy={phase === "submitting"}
+        >
+          <label htmlFor="feedback-text">Your feedback</label>
           <textarea
+            id="feedback-text"
+            aria-describedby="feedback-limit feedback-error"
             className="feedback-textarea"
             placeholder="What could we improve? For a problem, tell us what you tried and what happened."
             maxLength={MAX_LENGTH}
@@ -88,25 +102,24 @@ export default function FeedbackPage() {
             rows={6}
           />
           <div className="feedback-meta">
-            {error && <span className="feedback-error">{error}</span>}
-            <span className="feedback-counter">
-              {text.length}/{MAX_LENGTH}
+            <span id="feedback-error" className="feedback-error" role="alert">
+              {error}
+            </span>
+            <span id="feedback-limit" className="feedback-counter">
+              {text.length.toLocaleString()} / {MAX_LENGTH.toLocaleString()}{" "}
+              characters
             </span>
           </div>
           <div style={{ height: "12px" }} />
           <Button
-            label={phase === "submitting" ? "Submitting..." : "Submit"}
-            onClick={handleSubmit}
-            style={{
-              maxWidth: "200px",
-              opacity: !text.trim() || phase === "submitting" ? 0.6 : 1,
-              pointerEvents: !text.trim() || phase === "submitting" ? "none" : "auto",
-            }}
+            label={phase === "submitting" ? "Sending..." : "Send feedback"}
+            type="submit"
+            disabled={!text.trim() || phase === "submitting"}
           />
-        </div>
+        </form>
       )}
 
       <div style={{ height: "50px" }} />
-    </div>
+    </main>
   );
 }
