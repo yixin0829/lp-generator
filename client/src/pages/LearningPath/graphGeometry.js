@@ -156,7 +156,7 @@ export function edgePath(edge) {
 // concepts on one row (wrapped only when they don't fit the width). Inside a
 // lane, prerequisites come before what depends on them, left to right.
 export function layeredLayout(nodes, edges, viewportWidth) {
-  const width = Math.max(280, viewportWidth || 0);
+  const width = Math.max(240, viewportWidth || 0);
   const m = metrics(width);
   const extra = [
     ...new Set(

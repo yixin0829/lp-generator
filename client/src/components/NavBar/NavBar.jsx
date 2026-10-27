@@ -36,9 +36,13 @@ export default function Navbar() {
           <button
             type="button"
             className="navbar-link navbar-help"
+            aria-label="How to use"
             onClick={replay}
           >
-            How to use
+            <span className="navbar-help-label">How to use</span>
+            <span className="navbar-help-icon" aria-hidden="true">
+              ?
+            </span>
           </button>
           <ThemeToggle />
         </div>
