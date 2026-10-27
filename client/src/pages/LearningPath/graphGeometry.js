@@ -21,13 +21,14 @@ export function labelLines(label, limit = 14) {
 }
 
 // Sizes for the layered layout. Narrow screens get tighter spacing and smaller
-// pills so three columns fit on a phone at 100% zoom.
+// pills so a three-concept lane fits one row on a phone at 100% zoom. Gaps
+// leave room for an arrow between neighbors.
 function metrics(width) {
   const narrow = width < 520;
-  const margin = narrow ? 8 : 12;
-  const bandPad = narrow ? 8 : 14;
-  const gap = narrow ? 8 : 14;
-  const minWidth = narrow ? 92 : 132;
+  const margin = narrow ? 6 : 12;
+  const bandPad = narrow ? 6 : 14;
+  const gap = narrow ? 16 : 28;
+  const minWidth = narrow ? 84 : 132;
   const maxWidth = narrow ? 150 : 188;
   const inner = width - margin * 2 - bandPad * 2;
   const columns = Math.max(
@@ -46,8 +47,8 @@ function metrics(width) {
     pillWidth,
     fontSize,
     lineHeight: narrow ? 15 : 16,
-    charLimit: Math.max(6, Math.floor((pillWidth - 22) / (fontSize * 0.54))),
-    laneHeader: 30,
+    charLimit: Math.max(6, Math.floor((pillWidth - 16) / (fontSize * 0.52))),
+    laneHeader: 40,
     laneBottom: 14,
     laneGap: 12,
     rowGap: narrow ? 26 : 30,
@@ -77,6 +78,10 @@ function laneDepths(laneNodes, edges) {
 }
 
 function side(edge, end) {
+  if (edge.adjacent) {
+    const rightward = edge.target.x > edge.source.x;
+    return (end === "source") === rightward ? "right" : "left";
+  }
   const dy = edge.target.y - edge.source.y;
   if (Math.abs(dy) < 1) return "top";
   const down = dy > 0;
@@ -86,7 +91,9 @@ function side(edge, end) {
 
 // Spread the ends that share one side of a pill so arrows stay distinguishable.
 function assignPorts(nodes, edges) {
-  const ports = new Map(nodes.map((node) => [node, { top: [], bottom: [] }]));
+  const ports = new Map(
+    nodes.map((node) => [node, { top: [], bottom: [], left: [], right: [] }]),
+  );
   edges.forEach((edge) => {
     for (const end of ["source", "target"]) {
       const other = edge[end === "source" ? "target" : "source"];
@@ -111,13 +118,20 @@ export function edgePath(edge) {
   const { source, target } = edge;
   const ss = side(edge, "source"),
     ts = side(edge, "target");
+  if (edge.adjacent) {
+    const dir = ss === "right" ? 1 : -1;
+    const sx = source.x + (dir * source.width) / 2;
+    const tx = target.x - dir * (target.width / 2 + 1.5);
+    return `M${sx},${source.y} L${tx},${target.y}`;
+  }
   const sx = source.x + (edge.sourceOffset || 0);
   const tx = target.x + (edge.targetOffset || 0);
   const sy = source.y + (ss === "bottom" ? 1 : -1) * (source.height / 2);
   const ty =
     target.y + (ts === "bottom" ? 1 : -1) * (target.height / 2 + 1.5);
+  // Same row but not neighbors: arc over the pills in between.
   if (ss === "top" && ts === "top") {
-    const lift = 26 + Math.abs(tx - sx) * 0.08;
+    const lift = 22;
     return `M${sx},${sy} C${sx},${sy - lift} ${tx},${ty - lift} ${tx},${ty}`;
   }
   const bend = Math.max(16, Math.abs(ty - sy) / 2) * (ty > sy ? 1 : -1);
@@ -138,8 +152,9 @@ export function edgePath(edge) {
   );
 }
 
-// Top-to-bottom layout: one lane per difficulty level, and inside each lane one
-// row per prerequisite depth, wrapped to the columns that fit the width.
+// Top-to-bottom layout: one lane per difficulty level, with each lane's
+// concepts on one row (wrapped only when they don't fit the width). Inside a
+// lane, prerequisites come before what depends on them, left to right.
 export function layeredLayout(nodes, edges, viewportWidth) {
   const width = Math.max(280, viewportWidth || 0);
   const m = metrics(width);
@@ -158,6 +173,7 @@ export function layeredLayout(nodes, edges, viewportWidth) {
   const placed = new Map();
   const lanes = [];
   let y = m.margin;
+  let rowIndex = 0;
 
   for (const level of [...LEVELS, ...extra]) {
     const laneNodes = nodes.filter((node) => node.level === level);
@@ -165,43 +181,45 @@ export function layeredLayout(nodes, edges, viewportWidth) {
     const depth = laneDepths(laneNodes, valid);
     const laneTop = y;
     y += m.laneHeader;
-    const maxDepth = Math.max(...depth.values());
-    for (let d = 0; d <= maxDepth; d++) {
-      const group = laneNodes
-        .map((node, index) => {
-          const parents = valid
-            .filter((edge) => edge.target === node.id && placed.has(edge.source))
-            .map((edge) => placed.get(edge.source).x);
-          const bary = parents.length
-            ? parents.reduce((a, b) => a + b, 0) / parents.length
-            : ((index + 0.5) / laneNodes.length) * width;
-          return { node, bary };
-        })
-        .filter(({ node }) => depth.get(node.id) === d)
-        .sort((a, b) => a.bary - b.bary);
-      for (let start = 0; start < group.length; start += m.columns) {
-        const row = group.slice(start, start + m.columns).map(({ node }) => {
-          const lines = labelLines(node.label || node.id, m.charLimit);
-          return {
-            ...node,
-            lines,
-            width: m.pillWidth,
-            height: Math.max(44, lines.length * m.lineHeight + 18),
-          };
-        });
-        const rowHeight = Math.max(...row.map((node) => node.height));
-        const rowWidth = row.length * m.pillWidth + (row.length - 1) * m.gap;
-        row.forEach((node, index) => {
-          node.height = rowHeight;
-          node.x =
-            (width - rowWidth) / 2 +
-            index * (m.pillWidth + m.gap) +
-            m.pillWidth / 2;
-          node.y = y + rowHeight / 2;
-          placed.set(node.id, node);
-        });
-        y += rowHeight + m.rowGap;
-      }
+    const ordered = laneNodes
+      .map((node, index) => {
+        const parents = valid
+          .filter((edge) => edge.target === node.id && placed.has(edge.source))
+          .map((edge) => placed.get(edge.source).x);
+        const bary = parents.length
+          ? parents.reduce((sum, x) => sum + x, 0) / parents.length
+          : ((index + 0.5) / laneNodes.length) * width;
+        return { node, bary };
+      })
+      .sort(
+        (a, b) =>
+          depth.get(a.node.id) - depth.get(b.node.id) || a.bary - b.bary,
+      );
+    for (let start = 0; start < ordered.length; start += m.columns) {
+      const row = ordered.slice(start, start + m.columns).map(({ node }) => {
+        const lines = labelLines(node.label || node.id, m.charLimit);
+        return {
+          ...node,
+          lines,
+          width: m.pillWidth,
+          height: Math.max(44, lines.length * m.lineHeight + 18),
+        };
+      });
+      const rowHeight = Math.max(...row.map((node) => node.height));
+      const rowWidth = row.length * m.pillWidth + (row.length - 1) * m.gap;
+      row.forEach((node, index) => {
+        node.height = rowHeight;
+        node.row = rowIndex;
+        node.col = index;
+        node.x =
+          (width - rowWidth) / 2 +
+          index * (m.pillWidth + m.gap) +
+          m.pillWidth / 2;
+        node.y = y + rowHeight / 2;
+        placed.set(node.id, node);
+      });
+      rowIndex += 1;
+      y += rowHeight + m.rowGap;
     }
     y += m.laneBottom - m.rowGap;
     lanes.push({
@@ -220,6 +238,10 @@ export function layeredLayout(nodes, edges, viewportWidth) {
     ...edge,
     source: placed.get(edge.source),
     target: placed.get(edge.target),
+    adjacent:
+      placed.get(edge.source).row === placed.get(edge.target).row &&
+      Math.abs(placed.get(edge.source).col - placed.get(edge.target).col) ===
+        1,
   }));
   assignPorts(layoutNodes, layoutEdges);
   layoutEdges.forEach((edge) => (edge.d = edgePath(edge)));

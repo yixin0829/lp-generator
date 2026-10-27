@@ -67,6 +67,7 @@ test("concepts sit in difficulty lanes from top to bottom without overlapping", 
       expect(apart).toBe(true);
       if (order.indexOf(a.level) < order.indexOf(b.level))
         expect(a.bottom).toBeLessThan(b.top);
+      if (a.level === b.level) expect(a.top).toBeCloseTo(b.top, 0);
     }
   await expect(page.locator(".graph-lane-label")).toHaveText([
     /^BEGINNER/,
@@ -239,6 +240,23 @@ test.describe("mobile", () => {
     viewport: { width: 390, height: 844 },
     isMobile: true,
     hasTouch: true,
+  });
+  test("a 375px phone shows each three-concept lane on one row at 100%", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await openGraph(page);
+    await expect(page.locator(".graph-tools output")).toHaveText("100%");
+    const tops = await page.locator(".graph-node-pill").evaluateAll((pills) =>
+      pills.map((pill) => [
+        pill.parentNode.dataset.level,
+        Math.round(pill.getBoundingClientRect().top),
+      ]),
+    );
+    for (const level of ["Beginner", "Intermediate", "Advanced"])
+      expect(
+        new Set(tops.filter(([l]) => l === level).map(([, top]) => top)).size,
+      ).toBe(1);
   });
   test("swiping a node scrolls the page until Drag graph is enabled", async ({
     page,

@@ -68,27 +68,61 @@ describe("layered graph layout", () => {
     );
   });
 
-  it("puts a concept below its prerequisites in the same lane", () => {
-    const byId = new Map(
-      layeredLayout(NODES, EDGES, 390).nodes.map((n) => [n.id, n]),
-    );
-    expect(byId.get("vars").y).toBeGreaterThan(byId.get("syntax").y);
-    expect(byId.get("funcs").y).toBeGreaterThan(byId.get("vars").y);
-    expect(byId.get("arch").y).toBeGreaterThan(byId.get("modules").y);
+  for (const width of [340, 390, 760]) {
+    it(`aligns each lane on one row with prerequisites first at ${width}px`, () => {
+      const byId = new Map(
+        layeredLayout(NODES, EDGES, width).nodes.map((n) => [n.id, n]),
+      );
+      for (const lane of [
+        ["syntax", "vars", "funcs"],
+        ["arrays", "dom", "async"],
+        ["modules", "testing", "arch"],
+      ])
+        for (const id of lane) expect(byId.get(id).y).toBe(byId.get(lane[0]).y);
+      expect(byId.get("vars").x).toBeGreaterThan(byId.get("syntax").x);
+      expect(byId.get("funcs").x).toBeGreaterThan(byId.get("vars").x);
+      expect(byId.get("arch").x).toBeGreaterThan(byId.get("modules").x);
+    });
+  }
+
+  it("wraps a lane only when its concepts do not fit the width", () => {
+    const many = Array.from({ length: 8 }, (_, i) => ({
+      id: "n" + i,
+      label: "Concept " + i,
+      level: "Beginner",
+    }));
+    const rows = (width) =>
+      new Set(layeredLayout(many, [], width).nodes.map((n) => n.y)).size;
+    expect(rows(390)).toBeGreaterThan(1);
+    expect(rows(1600)).toBe(2);
   });
 
-  it("routes arrows from the bottom of a prerequisite to the top of the next", () => {
+  it("routes arrows down between lanes and sideways between neighbors", () => {
     const layout = layeredLayout(NODES, EDGES, 390);
     for (const edge of layout.edges) {
-      const [sx, sy, tx, ty] = edge.d
-        .match(/-?[\d.]+/g)
-        .map(Number)
-        .filter((_, i) => i < 2 || i >= 6);
-      expect(Math.abs(sx - edge.source.x)).toBeLessThan(edge.source.width / 2);
-      expect(sy).toBeCloseTo(edge.source.y + edge.source.height / 2);
-      expect(Math.abs(tx - edge.target.x)).toBeLessThan(edge.target.width / 2);
-      expect(ty).toBeLessThan(edge.target.y - edge.target.height / 2);
+      const numbers = edge.d.match(/-?[\d.]+/g).map(Number);
+      const [sx, sy] = numbers;
+      const [tx, ty] = numbers.slice(-2);
+      if (edge.source.y === edge.target.y && edge.adjacent) {
+        expect(sx).toBeCloseTo(edge.source.x + edge.source.width / 2);
+        expect(tx).toBeLessThan(edge.target.x - edge.target.width / 2);
+        expect(tx).toBeGreaterThan(sx);
+        expect(ty).toBe(sy);
+      } else if (edge.source.y === edge.target.y) {
+        expect(sy).toBeCloseTo(edge.source.y - edge.source.height / 2);
+        expect(ty).toBeLessThan(edge.target.y - edge.target.height / 2);
+      } else {
+        expect(Math.abs(sx - edge.source.x)).toBeLessThan(
+          edge.source.width / 2,
+        );
+        expect(sy).toBeCloseTo(edge.source.y + edge.source.height / 2);
+        expect(Math.abs(tx - edge.target.x)).toBeLessThan(
+          edge.target.width / 2,
+        );
+        expect(ty).toBeLessThan(edge.target.y - edge.target.height / 2);
+      }
     }
+    expect(layout.edges.some((edge) => edge.adjacent)).toBe(true);
   });
 
   it("survives cycles, unknown levels, self-links, and dangling edges", () => {
