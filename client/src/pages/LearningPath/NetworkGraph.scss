@@ -1,5 +1,6 @@
 .network-graph-container {
-  --graph-canvas-height: 620px;
+  --graph-min-height: 420px;
+  --graph-max-height: 760px;
   --node-beginner: #29816a;
   --node-intermediate: #476f9d;
   --node-advanced: #9b702f;
@@ -105,8 +106,7 @@
   .graph-workspace {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 260px;
-    grid-template-rows: minmax(0, 1fr);
-    height: var(--graph-canvas-height);
+    grid-template-rows: auto;
     overflow: hidden;
   }
   .graph-canvas {
@@ -128,9 +128,14 @@
   .graph-touch-help {
     display: none;
   }
+  // The graph script sets --graph-layout-height to the lanes' natural height.
   .graph-viewport {
-    flex: 1;
-    min-height: 0;
+    flex: none;
+    height: clamp(
+      var(--graph-min-height),
+      var(--graph-layout-height, 520px),
+      var(--graph-max-height)
+    );
   }
   .network-graph-svg {
     display: block;
@@ -147,48 +152,81 @@
   .graph-viewport.is-draggable .network-graph-svg {
     touch-action: none;
   }
-  .graph-links line {
-    stroke: var(--connection);
-    stroke-width: 1.5;
+  .graph-lane {
+    fill: var(--level-fill, var(--bg-secondary));
+    opacity: 0.6;
   }
-  .graph-links line.is-connected {
+  .graph-lane-label {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    fill: var(--level-color, var(--text-tertiary));
+    stroke: var(--graph-bg);
+    stroke-width: 4px;
+    stroke-linejoin: round;
+    paint-order: stroke;
+  }
+  .graph-links path {
+    fill: none;
+    stroke: var(--level-color, var(--connection));
+    stroke-width: 1.8;
+    stroke-opacity: 0.7;
+  }
+  .graph-links path.is-connected {
     stroke-width: 2.5;
+    stroke-opacity: 1;
   }
-  .graph-links line.is-incoming {
+  .graph-links path.is-incoming {
     stroke: var(--edge-incoming);
   }
-  .graph-links line.is-outgoing {
+  .graph-links path.is-outgoing {
     stroke: var(--edge-outgoing);
   }
-  .graph-links line.is-muted {
-    opacity: 0.22;
+  .graph-links path.is-muted {
+    opacity: 0.18;
   }
   .graph-node {
-    cursor: grab;
+    cursor: pointer;
+    touch-action: pan-y pinch-zoom;
+  }
+  .graph-viewport.is-draggable .graph-node {
+    touch-action: none;
   }
   .graph-node.is-muted {
-    opacity: 0.72;
+    opacity: 0.6;
   }
-  .graph-node-disc {
-    fill: var(--level-fill, var(--surface-card));
+  .graph-node-pill {
+    fill: var(--surface-card);
     stroke: var(--level-color, var(--text-tertiary));
     stroke-width: 1.6;
+  }
+  .graph-node-accent {
+    fill: var(--level-color, var(--text-tertiary));
   }
   .graph-node-ring {
     fill: none;
     stroke: transparent;
     stroke-width: 2;
   }
+  @media (hover: hover) {
+    .graph-node:hover .graph-node-pill {
+      fill: var(--level-fill, var(--surface-card));
+    }
+    .network-graph-svg {
+      cursor: grab;
+    }
+  }
   .graph-node.is-selected .graph-node-ring {
     stroke: var(--selection);
   }
-  .graph-node.is-selected .graph-node-disc {
+  .graph-node.is-selected .graph-node-pill {
+    fill: var(--level-fill, var(--surface-card));
     stroke: var(--selection);
     stroke-width: 2.5;
   }
   .graph-node-label {
     font-family: inherit;
-    font-size: 14px;
     font-weight: 500;
     fill: var(--text-primary);
     pointer-events: none;
@@ -206,6 +244,8 @@
     padding: 22px;
     min-width: 0;
     min-height: 0;
+    // Long details scroll inside the panel instead of growing the graph row.
+    contain: size;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-gutter: stable;
@@ -303,8 +343,10 @@
   --edge-outgoing: #efb36c;
 }
 @media (max-width: 900px) {
+  // Narrow screens show the whole flow at 100% and let the page scroll.
   .network-graph-container {
-    --graph-canvas-height: 680px;
+    --graph-min-height: 240px;
+    --graph-max-height: 2400px;
   }
   .network-graph-container .graph-details-slot {
     display: block;
@@ -322,10 +364,10 @@
   }
   .network-graph-container .graph-workspace {
     grid-template-columns: 1fr;
-    grid-template-rows: var(--graph-canvas-height) auto;
-    height: auto;
+    grid-template-rows: auto auto;
   }
   .network-graph-container .graph-inspector {
+    contain: none;
     border-left: 0;
     border-top: 1px solid var(--graph-border);
     max-height: 360px;

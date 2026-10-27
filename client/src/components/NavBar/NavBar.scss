@@ -60,6 +60,18 @@
   top: 0.75rem;
   z-index: 20;
 }
+.navbar-help-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
 @media (max-width: 600px) {
   .navbar-container {
     padding: 0.5rem 0.75rem;
@@ -69,11 +81,33 @@
   .navbar-brand {
     display: none;
   }
+  // Keep every link, help and the theme toggle on one row down to 320px.
+  .navbar-container nav,
+  .navbar-tools {
+    flex-wrap: nowrap;
+    gap: 0;
+  }
   .navbar-link {
-    padding: 0.5rem 0.65rem;
-    font-size: 0.875rem;
+    padding: 0.5rem clamp(0.3rem, 1.8vw, 0.65rem);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+  .navbar-help {
+    justify-content: center;
+    min-width: 40px;
+  }
+  .navbar-help-label {
+    display: none;
+  }
+  .navbar-help-icon {
+    display: inline-flex;
+  }
+  .navbar-container .theme-toggle {
+    width: 40px;
   }
 }
+
+
 
 @media (min-width: 601px) {
   .navbar-container nav {

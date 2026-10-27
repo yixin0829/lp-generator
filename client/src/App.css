@@ -396,9 +396,6 @@ button:disabled {
   .learning-path-page .title-container {
     flex-direction: column;
   }
-  .learning-path-page .learning-path-controls {
-    flex-wrap: wrap;
-  }
 }
 
 .about-page {

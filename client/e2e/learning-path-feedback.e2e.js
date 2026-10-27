@@ -206,3 +206,38 @@ test("share action stays compact and the share link opens a new tab", async ({
   expect(page.url()).toBe(original);
   await popup.close();
 });
+
+for (const width of [320, 375, 390]) {
+  test(`nav and path controls each fit one row on a ${width}px phone`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await openGenerated(page);
+    const rowCount = (selector) =>
+      page
+        .locator(selector)
+        .evaluateAll((elements) => {
+          const centers = elements.map((el) => {
+            const r = el.getBoundingClientRect();
+            return r.top + r.height / 2;
+          });
+          return Math.max(...centers) - Math.min(...centers);
+        });
+    // Items on one row share a vertical center.
+    expect(
+      await rowCount(".navbar-container nav > a, .navbar-tools > button"),
+    ).toBeLessThan(4);
+    expect(
+      await rowCount(".view-toggle, .copy-action, .share-action"),
+    ).toBeLessThan(4);
+    await expect(
+      page.getByRole("button", { name: "How to use", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Share path", exact: true }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBe(width);
+  });
+}

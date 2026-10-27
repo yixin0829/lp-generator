@@ -266,6 +266,27 @@
       margin: 0;
       padding: 10px 16px;
     }
+    // Phones keep the view toggle and both actions on one row.
+    @media (max-width: 480px) {
+      flex-wrap: nowrap;
+      gap: 8px;
+      .view-toggle button {
+        min-width: 0;
+        padding: 7px 14px;
+        font-size: 14px;
+      }
+      .path-actions {
+        gap: 6px;
+      }
+      .copy-action,
+      .share-action {
+        padding: 9px 12px;
+        white-space: nowrap;
+      }
+      .action-noun {
+        display: none;
+      }
+    }
   }
   .share-hint {
     font-size: 0.875rem;

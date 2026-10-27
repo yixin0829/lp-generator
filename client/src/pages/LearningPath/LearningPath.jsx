@@ -333,7 +333,13 @@ export default function LearningPath() {
             >
               <Button
                 className="copy-action"
-                label="Copy path"
+                aria-label="Copy path"
+                // One inline span keeps the space that a flex button drops.
+                label={
+                  <span>
+                    Copy<span className="action-noun"> path</span>
+                  </span>
+                }
                 isSecondary
                 onClick={() =>
                   copyToClipboard(lp, conceptDetails, enqueueSnackbar)
@@ -343,7 +349,16 @@ export default function LearningPath() {
                 className="share-action"
                 isSecondary
                 aria-describedby="share-visibility"
-                label={isSharing ? "Creating link..." : "Share path"}
+                aria-label={isSharing ? undefined : "Share path"}
+                label={
+                  isSharing ? (
+                    "Creating link..."
+                  ) : (
+                    <span>
+                      Share<span className="action-noun"> path</span>
+                    </span>
+                  )
+                }
                 disabled={isSharing}
                 onClick={shareLearningPath}
               />
