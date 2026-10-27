@@ -17,22 +17,18 @@ async function openGraph(page) {
   await expect(page.locator(".graph-node")).toHaveCount(9);
 }
 
-test("graph keeps multiple prerequisites, 100% zoom, and smaller nodes", async ({
+test("graph keeps multiple prerequisites, 100% zoom, and pill nodes", async ({
   page,
 }) => {
   await openGraph(page);
   await expect(page.locator(".graph-tools output")).toHaveText("100%");
   const geometry = await page.locator(".network-graph-svg").evaluate((svg) => ({
-    radius: Number(
-      svg
-        .querySelector('[data-node-id="functions"] .graph-node-disc')
-        .getAttribute("r"),
-    ),
-    prerequisites: [...svg.querySelectorAll(".graph-links line")]
-      .filter((line) => line.__data__.target.id === "algorithms")
-      .map((line) => line.__data__.source.id),
+    pills: svg.querySelectorAll(".graph-node-pill").length,
+    prerequisites: [...svg.querySelectorAll(".graph-links path")]
+      .filter((path) => path.__data__.target.id === "algorithms")
+      .map((path) => path.__data__.source.id),
   }));
-  expect(geometry.radius).toBe(45);
+  expect(geometry.pills).toBe(9);
   expect(geometry.prerequisites).toEqual(
     expect.arrayContaining(["control_flow", "data_structures"]),
   );
@@ -43,34 +39,40 @@ test("graph keeps multiple prerequisites, 100% zoom, and smaller nodes", async (
   );
 });
 
-test("drag tracks the pointer under reduced motion and releases the node", async ({
+test("concepts sit in difficulty lanes from top to bottom without overlapping", async ({
   page,
 }) => {
   await openGraph(page);
-  const node = page.locator('[data-node-id="functions"]');
-  await node.scrollIntoViewIfNeeded();
-  const rect = await node.boundingBox();
-  const start = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
-  await page.mouse.move(start.x, start.y);
-  await page.mouse.down();
-  await page.mouse.move(start.x + 60, start.y - 30, { steps: 12 });
-  const error = await node.evaluate(
-    (el, target) => {
-      const r = el.getBoundingClientRect();
-      return Math.hypot(
-        r.x + r.width / 2 - target.x,
-        r.y + r.height / 2 - target.y,
-      );
-    },
-    { x: start.x + 60, y: start.y - 30 },
+  const boxes = await page.locator(".graph-node-pill").evaluateAll((pills) =>
+    pills.map((pill) => {
+      const r = pill.getBoundingClientRect();
+      return {
+        level: pill.parentNode.dataset.level,
+        left: r.left,
+        right: r.right,
+        top: r.top,
+        bottom: r.bottom,
+      };
+    }),
   );
-  expect(error).toBeLessThan(1);
-  await page.mouse.up();
-  expect(
-    await node.evaluate(
-      (el) => el.__data__.fx == null && el.__data__.fy == null,
-    ),
-  ).toBe(true);
+  const order = ["Beginner", "Intermediate", "Advanced"];
+  for (const a of boxes)
+    for (const b of boxes) {
+      if (a === b) continue;
+      const apart =
+        a.right <= b.left ||
+        b.right <= a.left ||
+        a.bottom <= b.top ||
+        b.bottom <= a.top;
+      expect(apart).toBe(true);
+      if (order.indexOf(a.level) < order.indexOf(b.level))
+        expect(a.bottom).toBeLessThan(b.top);
+    }
+  await expect(page.locator(".graph-lane-label")).toHaveText([
+    /^BEGINNER/,
+    /^INTERMEDIATE/,
+    /^ADVANCED/,
+  ]);
 });
 
 test("selection colors incoming and outgoing edges separately in both themes", async ({
@@ -82,7 +84,7 @@ test("selection colors incoming and outgoing edges separately in both themes", a
     await page.locator(`[data-node-id="${selected}"]`).click();
     for (let theme = 0; theme < 2; theme++) {
       const lines = await page
-        .locator(".graph-links line")
+        .locator(".graph-links path")
         .evaluateAll((elements) =>
           elements.map((line) => ({
             source: line.__data__.source.id,
@@ -120,7 +122,9 @@ test("selection colors incoming and outgoing edges separately in both themes", a
   await expect(page.locator(".graph-edge-legend")).toHaveCount(0);
 });
 
-test("theme and resize preserve zoom and graph positions", async ({ page }) => {
+test("theme keeps zoom and positions; resize reflows the lanes to fit", async ({
+  page,
+}) => {
   await openGraph(page);
   await page.getByRole("button", { name: "Zoom in", exact: true }).click();
   const read = () =>
@@ -134,11 +138,24 @@ test("theme and resize preserve zoom and graph positions", async ({ page }) => {
     }));
   const before = await read();
   await page.getByRole("button", { name: /Switch to .* mode/ }).click();
-  await page.setViewportSize({ width: 1180, height: 900 });
+  const themed = await read();
+  expect(themed.zoom).toBe(before.zoom);
+  expect(themed.positions).toEqual(before.positions);
+  await page.setViewportSize({ width: 700, height: 900 });
+  await expect(page.locator(".graph-tools output")).toHaveText("100%");
   const after = await read();
-  expect(after.zoom).toBe(before.zoom);
-  expect(after.positions).toEqual(before.positions);
+  expect(after.positions).not.toEqual(before.positions);
   expect(after.rendered).toBe(after.stored);
+  const viewport = await page.locator(".graph-viewport").boundingBox();
+  const pills = await page
+    .locator(".graph-node-pill")
+    .evaluateAll((elements) =>
+      elements.map((pill) => pill.getBoundingClientRect().toJSON()),
+    );
+  for (const box of pills) {
+    expect(box.left).toBeGreaterThanOrEqual(viewport.x);
+    expect(box.right).toBeLessThanOrEqual(viewport.x + viewport.width);
+  }
 });
 
 test("generated paths retain Graph as the default; topic length matches the API", async ({
