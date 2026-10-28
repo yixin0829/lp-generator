@@ -38,8 +38,7 @@ async def create_share(
 
     moderation_text = json.dumps(snapshot.model_dump(), ensure_ascii=False)
     moderation_input = [
-        moderation_text[index : index + 8_000]
-        for index in range(0, len(moderation_text), 8_000)
+        moderation_text[index : index + 8_000] for index in range(0, len(moderation_text), 8_000)
     ]
     try:
         await learning_path_service.check_moderation(moderation_input)
@@ -49,7 +48,9 @@ async def create_share(
     except ShareStorageDisabled as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ShareServiceError as exc:
-        raise HTTPException(status_code=503, detail="Share storage is temporarily unavailable.") from exc
+        raise HTTPException(
+            status_code=503, detail="Share storage is temporarily unavailable."
+        ) from exc
     return ShareCreateResponse(share_id=share_id)
 
 
@@ -65,7 +66,9 @@ async def get_share(
     except ShareStorageDisabled as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ShareServiceError as exc:
-        raise HTTPException(status_code=503, detail="Share storage is temporarily unavailable.") from exc
+        raise HTTPException(
+            status_code=503, detail="Share storage is temporarily unavailable."
+        ) from exc
     if snapshot is None:
         raise HTTPException(status_code=404, detail="Share not found.")
     return ShareResponse(share_id=share_id, snapshot=snapshot)

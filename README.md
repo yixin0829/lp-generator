@@ -26,11 +26,9 @@ Why did we build LearnAnything? You might ask. Well, we want you to think of Lea
     - Local FE+BE flow should call `http://localhost:8000/v1/lp/{term}`
 
 ### 3.2 Frontend Production Env (Vercel)
-- The repo keeps `client/.env.production` as:
-    - `VITE_API_BASE_URL=__PROD_API_BASE_URL_PLACEHOLDER__`
-- In Vercel Project Settings, set:
-    - `VITE_API_BASE_URL=https://<your-deployed-backend-url>`
-- This variable is required for production API calls.
+- The browser never calls Cloud Run directly. `client/.env.production` sets `VITE_API_BASE_URL=/api` (browser → Vercel serverless proxy in `client/api/`).
+- In Vercel Project Settings, set `BACKEND_BASE_URL=https://<cloud-run-url>` and `BACKEND_API_KEY=<backend API_KEY>` (server-only; the proxy adds `X-API-Key`).
+- See `DEPLOY.md` for the full setup.
 
 ### 3.3 With Docker Compose
 - Run from repo root: `docker compose up --build`
@@ -38,9 +36,7 @@ Why did we build LearnAnything? You might ask. Well, we want you to think of Lea
 - Backend served on `http://localhost:8000`
 
 ### 3.4 Backend Deployment (Cloud Run)
-- Build and deploy (example):
-    - `gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/lp-backend ./server`
-    - `gcloud run deploy lp-backend --image gcr.io/$GOOGLE_CLOUD_PROJECT/lp-backend --region <region> --platform managed --allow-unauthenticated --set-env-vars CORS_ORIGINS=https://<your-frontend-domain> --set-secrets OPENAI_API_KEY=OPENAI_API_KEY:latest`
+- Cloud Build triggers deploy automatically when `server/**` changes: `dev` → `lp-backend-staging`, `main` → `lp-backend-prod` (`server/cloudbuild.yaml`). See `DEPLOY.md` for env vars and rollback.
 - The container serves FastAPI with:
     - `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - Health check endpoint:

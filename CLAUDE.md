@@ -19,7 +19,7 @@ Learning Path Generator ("LearnAnything") — a full-stack app that uses OpenAI'
 
 ### Backend (`server/`)
 ```bash
-uv sync                          # Install dependencies
+uv sync --extra dev              # Install dependencies incl. pytest/ruff (plain `uv sync` omits them)
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000  # Run dev server
 make test                        # Run all tests (pytest)
 uv run pytest tests/test_routers_learning_paths.py  # Run a single test file
@@ -31,12 +31,16 @@ make check                       # lint + test
 
 ### Frontend (`client/`)
 ```bash
-npm install      # Install dependencies
+npm ci         # Install dependencies from the committed package-lock.json
 npm run dev      # Dev server at http://localhost:3000
-npm run build    # Production build
-npm run test     # Run tests (vitest)
+npm run build    # Production build + SEO prerender + SEO verification
+npm run test     # Unit tests (vitest)
 npm run test:watch  # Watch mode
+npm run test:e2e    # Browser tests (Playwright, backend mocked; first run: npx playwright install chromium)
 ```
+
+### CI
+`.github/workflows/ci.yml` runs on every PR and on pushes to `main`/`dev`: `backend` (`make lint` + `make test`), `frontend` (`npm run test` + `npm run build`) and `e2e` (`npm run test:e2e`). All three must pass before merging to `main`. Run the same commands locally before opening a PR.
 
 ### Docker
 ```bash
@@ -49,8 +53,8 @@ docker compose up --build   # Run full stack (FE :3000, BE :8000)
 FastAPI app with layered structure:
 - `main.py` — App wiring: CORS, rate limiting (slowapi), router mounting
 - `api/router.py` — Aggregates all routes under `/v1` prefix
-- `routers/` — Endpoint handlers: `learning_paths.py` (GET `/v1/lp/{topic}`), `stats.py` (GET `/v1/stats`)
-- `services/` — Business logic: `learning_path_service.py` (OpenAI calls + request-safe `LearningPathError` with status code), `counter_service.py` (generation counter, noop or Firestore), `cache_service.py` (learning path cache, noop or Firestore with TTL)
+- `routers/` — Endpoint handlers: `learning_paths.py` (GET `/v1/lp/{topic}`), `stats.py` (GET `/v1/stats`), `feedback.py` (POST `/v1/feedback`), `shares.py` (POST `/v1/shares`, GET `/v1/shares/{id}`)
+- `services/` — Business logic: `learning_path_service.py` (OpenAI calls + request-safe `LearningPathError` with status code), `counter_service.py` (generation counter, noop or Firestore), `cache_service.py` (learning path cache, noop or Firestore with TTL), `generation_timing_service.py` (progress estimate), `feedback_service.py`, `share_service.py` (immutable content-addressed shares)
 - `schemas/` — Pydantic models for request/response validation
 - `core/config.py` — `Settings` class loaded from env vars (cached via `@lru_cache`). Reads `.env` in non-production
 - `core/security.py` — API key auth (`X-API-Key` header) + rate limiter. Auth enforced when `REQUIRE_API_KEY=true`
@@ -61,7 +65,7 @@ React 19 + Vite SPA:
 - `pages/LearningPath/` — Main feature: renders generated learning path
 - `pages/HomePage/` — Search input for topics
 - `components/` — Shared UI: NavBar, Searchbar, Button
-- `client/api/` — Vercel serverless proxy routes (`v1/lp/[topic].js`, `v1/stats.js`) that forward requests to Cloud Run with `X-API-Key`, keeping secrets server-side
+- `client/api/` — Vercel serverless proxy routes (`v1/lp/[topic].js`, `v1/stats.js`, `v1/feedback.js`, `v1/shares/*`, `share/[shareId].js`) that forward requests to Cloud Run with `X-API-Key`, keeping secrets server-side
 
 ### Request Flow
 Browser → Vercel client → Vercel API proxy (adds `X-API-Key`) → Cloud Run backend → OpenAI API + Firestore
@@ -82,7 +86,7 @@ In local dev, the frontend calls the backend directly (no proxy needed).
 - `LP_RATE_LIMIT` / `STATS_RATE_LIMIT` — Rate limit strings (e.g. `15/minute`)
 
 ### Frontend
-- `VITE_API_BASE_URL` — API target. Set in `.env.development` (localhost) and Vercel env (prod)
+- `VITE_API_BASE_URL` — API target. Set in `.env.development` (localhost) and `.env.production` (`/api`, the Vercel proxy)
 - `BACKEND_BASE_URL` / `BACKEND_API_KEY` — Vercel serverless-only, never exposed to browser
 
 ## Deployment
@@ -93,4 +97,4 @@ In local dev, the frontend calls the backend directly (no proxy needed).
 ## Tech Stack
 - **Backend**: Python 3.12, FastAPI, OpenAI SDK, Pydantic, slowapi, Firestore, uv, ruff
 - **Frontend**: React 19, Vite, React Bootstrap, MUI, notistack, Sass, react-router-dom
-- **Testing**: pytest + pytest-asyncio + pytest-mock (backend), vitest + testing-library (frontend)
+- **Testing**: pytest + pytest-asyncio + pytest-mock (backend), vitest unit tests + Playwright browser tests (frontend; no component-test DOM environment yet)

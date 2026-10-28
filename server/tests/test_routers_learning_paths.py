@@ -26,9 +26,13 @@ class TestGetLpSuccess:
                 "topic": "React",
                 "completion": {
                     "nodes": [
-                        {"id": "jsx", "label": "JSX", "level": "Beginner",
-                         "summary": "A syntax extension for JavaScript.",
-                         "why": "Foundation of React UI."},
+                        {
+                            "id": "jsx",
+                            "label": "JSX",
+                            "level": "Beginner",
+                            "summary": "A syntax extension for JavaScript.",
+                            "why": "Foundation of React UI.",
+                        },
                     ],
                     "edges": [],
                     "Beginner": [
@@ -160,9 +164,13 @@ SAMPLE_LP = {
     "topic": "React",
     "completion": {
         "nodes": [
-            {"id": "jsx", "label": "JSX", "level": "Beginner",
-             "summary": "A syntax extension for JavaScript.",
-             "why": "Foundation of React UI."},
+            {
+                "id": "jsx",
+                "label": "JSX",
+                "level": "Beginner",
+                "summary": "A syntax extension for JavaScript.",
+                "why": "Foundation of React UI.",
+            },
         ],
         "edges": [],
         "Beginner": [
