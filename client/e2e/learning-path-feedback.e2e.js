@@ -178,8 +178,12 @@ test("only concept headings drag; summaries show details without reordering", as
   await handle.focus();
   await page.keyboard.press("Space");
   await expect(handle).toHaveAttribute("aria-pressed", "true");
+  // dnd-kit attaches its arrow-key listener in a setTimeout(0) after pickup;
+  // equal-delay timers run in order, so one zero-delay timer here runs after it.
+  await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 0)));
   await page.keyboard.press("ArrowDown");
   await expect(page.locator('[role="status"]')).toContainText("Functions");
+  await expect(page.locator(".concept-tooltip")).toHaveCount(0);
   await page.keyboard.press("Space");
   await expect(page.locator(".concept-drag-handle").first()).toContainText(
     "Functions",

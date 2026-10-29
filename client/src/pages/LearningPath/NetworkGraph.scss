@@ -128,7 +128,8 @@
   .graph-touch-help {
     display: none;
   }
-  // The graph script sets --graph-layout-height to the lanes' natural height.
+  // The graph script sets --graph-layout-height to the lanes' natural height
+  // and measures the result at once, so the height must not transition.
   .graph-viewport {
     flex: none;
     height: clamp(
@@ -136,6 +137,7 @@
       var(--graph-layout-height, 520px),
       var(--graph-max-height)
     );
+    transition: none !important;
   }
   .network-graph-svg {
     display: block;
