@@ -51,8 +51,10 @@ def _safe_cache_set(cache_service: BaseCacheService, key: str, payload: dict) ->
         logger.warning("Unexpected cache write failure: {}", e)
 
 
+# Topics may contain "/" (e.g. "CI/CD"). The ASGI server decodes %2F into a path
+# separator before routing, so the parameter must accept multiple segments.
 @router.get(
-    "/{topic}",
+    "/{topic:path}",
     response_model=LearningPathResponse,
     responses={
         status.HTTP_200_OK: {"model": LearningPathResponse},
@@ -76,6 +78,11 @@ async def get_lp(
     """Take any topic and call OpenAI to generate a learning path in JSON format."""
     started = perf_counter()
     normalized = service.normalize_topic(topic)
+    if not any(ch.isalnum() for ch in normalized):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Topic must contain letters or numbers.",
+        )
 
     # Try cache first. Cache reads are blocking network calls, so run them off
     # the event loop to avoid stalling other concurrent requests.

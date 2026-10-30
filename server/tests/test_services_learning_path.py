@@ -69,6 +69,11 @@ class TestNormalizeTopic:
     def test_title_case(self, service: LearningPathService):
         assert service.normalize_topic("javascript") == "Javascript"
 
+    def test_removes_slashes_so_cache_keys_are_valid_document_ids(
+        self, service: LearningPathService
+    ):
+        assert service.normalize_topic("CI/CD") == "Cicd"
+
 
 class TestValidateTopicLength:
     def test_accepts_valid_length(self, service: LearningPathService):
