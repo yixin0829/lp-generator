@@ -1,2 +1,7 @@
 LEARN.md
 .claude
+
+# Local secrets
+.env
+.env.local
+.env.*.local

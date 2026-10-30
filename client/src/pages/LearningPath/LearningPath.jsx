@@ -638,6 +638,7 @@ function SortableItem({ id, details }) {
     transform,
     transition,
     isDragging,
+    active,
   } = useSortable({ id });
   const style = {
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : "",
@@ -650,7 +651,9 @@ function SortableItem({ id, details }) {
         id={id}
         style={{ opacity: isDragging ? 0.5 : 1 }}
         details={details}
-        hideDetails={isDragging}
+        // Hide every concept's details during any drag: a tooltip opening under the
+        // pointer resizes the page and makes keyboard drags oscillate between targets.
+        hideDetails={active !== null}
         handleProps={{ ...attributes, ...listeners, ref: setActivatorNodeRef }}
       />
     </li>

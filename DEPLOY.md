@@ -49,8 +49,12 @@ flowchart LR
   - `FIRESTORE_COUNTER_FIELD=generated_count`
 - Firestore cache vars (learning path caching — skips OpenAI for repeat topics):
   - `CACHE_BACKEND=firestore` (set to `noop` to disable)
-  - `FIRESTORE_CACHE_COLLECTION` — staging uses `learning_path_cache_staging`, prod uses `learning_path_cache`
+  - `FIRESTORE_CACHE_COLLECTION` — staging uses `learning-path-cache-staging`, prod uses `learning-path-cache` (hyphens; generation timings live in `<collection>_timings`)
   - `CACHE_TTL_SECONDS=604800` (7 days; tune as needed)
+- Firestore feedback vars:
+  - `FEEDBACK_BACKEND=firestore` (default `noop`)
+  - `FIRESTORE_FEEDBACK_COLLECTION` — staging uses `feedback-staging`, prod uses `feedback`
+  - `FEEDBACK_RATE_LIMIT=10/minute`
 - Firestore immutable share vars:
   - `SHARE_BACKEND=firestore` (set to `noop` to disable sharing with `503` responses)
   - `FIRESTORE_SHARE_COLLECTION` — use separate staging and production collections, such as `learning_path_shares_staging` and `learning_path_shares`
