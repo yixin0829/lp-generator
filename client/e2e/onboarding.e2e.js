@@ -79,6 +79,16 @@ test("feedback routes topic seekers to Home, where the guide appears once", asyn
   await expect(page.getByRole("dialog")).not.toBeVisible();
 });
 
+test("a broken /learn/ link shows the not-found page without opening the guide", async ({ page }) => {
+  await page.goto("/learn/not-a-real-topic");
+  await expect(page.getByRole("heading", { level: 1, name: "Page not found." })).toBeVisible();
+  // Let effects flush so a late auto-open would have happened by now.
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0))));
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await page.goto("/learn/javascript");
+  await expect(page.getByRole("dialog")).toBeVisible();
+});
+
 test("blocked storage cannot silently claim opt-out was saved", async ({ page }) => {
   await page.addInitScript(() => {
     Storage.prototype.getItem = () => { throw new Error("Storage unavailable"); };

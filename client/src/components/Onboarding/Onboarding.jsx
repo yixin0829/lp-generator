@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { publicTopicBySlug } from "../../data/publicTopics";
 import "./Onboarding.scss";
 
 const PREFERENCE_KEY = "learnanything.onboarding.hidden.v1";
@@ -43,7 +44,9 @@ export function OnboardingProvider({ children }) {
   const previousFocus = useRef(null);
 
   useEffect(() => {
-    const learningPage = location.pathname === "/" || location.pathname === "/learningpath" || location.pathname.startsWith("/learn/");
+    // Unknown /learn/ slugs render the not-found page, which is not a learning page.
+    const learnSlug = location.pathname.match(/^\/learn\/([^/]+)\/?$/)?.[1];
+    const learningPage = location.pathname === "/" || location.pathname === "/learningpath" || publicTopicBySlug.has(learnSlug);
     if (!autoShown && learningPage) {
       setAutoShown(true);
       if (!readPreference()) {
