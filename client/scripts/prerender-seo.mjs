@@ -61,27 +61,39 @@ function cleanedTemplate() {
 }
 
 function headTags(route) {
-  const canonical = `${SITE_URL}${route.path === "/" ? "" : route.path}`;
+  // A page without a path (the 404 page) has no canonical URL.
+  const canonical = route.path && `${SITE_URL}${route.path === "/" ? "" : route.path}`;
   const tags = [
     `<title>${esc(route.title)}</title>`, `<meta name="description" content="${esc(route.description)}">`,
-    `<meta name="robots" content="${route.robots ?? "index,follow"}">`, `<link rel="canonical" href="${canonical}">`,
+    `<meta name="robots" content="${route.robots ?? "index,follow"}">`, ...(canonical ? [`<link rel="canonical" href="${canonical}">`] : []),
     `<meta property="og:title" content="${esc(route.title)}">`, `<meta property="og:description" content="${esc(route.description)}">`,
-    `<meta property="og:url" content="${canonical}">`, `<meta property="og:site_name" content="${SITE_NAME}">`, `<meta property="og:type" content="website">`,
+    ...(canonical ? [`<meta property="og:url" content="${canonical}">`] : []), `<meta property="og:site_name" content="${SITE_NAME}">`, `<meta property="og:type" content="website">`,
   ];
   if (route.jsonLd) tags.push(`<script type="application/ld+json">${JSON.stringify(route.jsonLd).replace(/<\//g, "<\\/")}</script>`);
   return tags.join("\n    ");
 }
 
+function renderPage(route) {
+  return cleanedTemplate().replace("</head>", `    ${headTags(route)}\n  </head>`).replace('<div id="root"></div>', `<div id="root"><div data-prerendered="true">${route.body}</div></div>`);
+}
+
 for (const route of routes) {
-  const html = cleanedTemplate().replace("</head>", `    ${headTags(route)}\n  </head>`).replace('<div id="root"></div>', `<div id="root"><div data-prerendered="true">${route.body}</div></div>`);
   const outDir = route.path === "/" ? DIST : join(DIST, ...route.path.split("/").filter(Boolean));
   mkdirSync(outDir, { recursive: true });
-  writeFileSync(join(outDir, "index.html"), html, "utf-8");
+  writeFileSync(join(outDir, "index.html"), renderPage(route), "utf-8");
   console.log(`[prerender] ${route.path}`);
 }
 
 // Vercel's dynamic share responder validates the ID before returning this noindex app shell.
 writeFileSync(join(DIST, "share-shell.html"), readFileSync(join(DIST, "share", "index.html"), "utf-8"), "utf-8");
+
+// Vercel serves 404.html with a 404 status for any URL outside /api that no file, rewrite or
+// function matches. It loads the app, so visitors get the app's own not-found page (and
+// analytics) instead of Vercel's plain-text error. The head and body mirror
+// src/pages/404/404.jsx for crawlers without JS.
+const notFoundPage = { title: `Page Not Found | ${SITE_NAME}`, description: "This page does not exist on LearnAnything.", robots: "noindex,follow", body: `<main><h1>Page not found.</h1><p>Check the address or head back to the home page.</p><p><a href="/">Back to home</a></p></main>` };
+writeFileSync(join(DIST, "404.html"), renderPage(notFoundPage), "utf-8");
+console.log("[prerender] 404.html");
 
 const indexableRoutes = routes.filter((route) => !route.robots?.includes("noindex"));
 if (indexableRoutes.length !== 27) throw new Error(`Expected exactly 27 indexable pages, found ${indexableRoutes.length}.`);
