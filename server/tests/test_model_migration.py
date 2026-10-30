@@ -1,11 +1,13 @@
 """Model migration checks using the real SDK over synthetic HTTP transports."""
 
 import asyncio
+import contextvars
 import json
 
 import httpx
 import pytest
 from openai import AsyncOpenAI
+from openai import _models as openai_models
 
 from app.core.config import Settings
 from app.core.dependencies import get_learning_path_service
@@ -119,6 +121,8 @@ async def test_generation_wire_contract(model, outcome):
             with pytest.raises(LearningPathError) as error:
                 await service.generate_learning_path("react")
             assert error.value.status_code == (429 if outcome == "rate-limit" else 500)
+            if outcome == "refusal":
+                assert "parsing failed" in str(error.value)
         else:
             result = await service.generate_learning_path("react")
             assert result["model"] == expected_model
@@ -130,6 +134,40 @@ async def test_generation_wire_contract(model, outcome):
             assert result["completion"]["nodes"][0]["id"] == "basics"
             assert result["completion"]["Beginner"][0]["name"] == "Basics"
     assert set(seen) == {"/v1/moderations", "/v1/responses"}
+
+
+@pytest.mark.asyncio
+async def test_generation_does_not_grow_sdk_type_cache():
+    # uvicorn runs each request in a fresh contextvars.Context, which empties pydantic's
+    # generic-class cache. responses.parse then built new ParsedResponse[...] classes on every
+    # request and kept a TypeAdapter for each in the SDK's unbounded lru_cache, leaking about
+    # 1 MiB per generation until Cloud Run killed the instance at 512 MiB.
+    def respond(request):
+        if request.url.path == "/v1/moderations":
+            return httpx.Response(
+                200, json={"id": "mod_synthetic", "results": [{"flagged": False}]}
+            )
+        return httpx.Response(200, json=response_payload("gpt-6-luna"))
+
+    async with AsyncOpenAI(
+        api_key="synthetic-key",
+        base_url="https://api.openai.com/v1",
+        max_retries=0,
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(respond)),
+    ) as sdk:
+        service = LearningPathService(sdk)
+        loop = asyncio.get_running_loop()
+
+        async def generate_like_uvicorn():
+            await contextvars.Context().run(
+                loop.create_task, service.generate_learning_path("react")
+            )
+
+        await generate_like_uvicorn()  # Let one-time caches fill first.
+        before = openai_models._CachedTypeAdapter.cache_info().currsize
+        for _ in range(20):
+            await generate_like_uvicorn()
+        assert openai_models._CachedTypeAdapter.cache_info().currsize == before
 
 
 @pytest.mark.asyncio
