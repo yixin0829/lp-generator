@@ -80,7 +80,7 @@ In local dev, the frontend calls the backend directly (no proxy needed).
 - `API_KEY` / `REQUIRE_API_KEY` — Backend auth (enabled by default in production)
 - `CORS_ORIGINS` — Comma-separated allowed origins (must be explicit in production)
 - `COUNTER_BACKEND` — `noop` (default) or `firestore`
-- `CACHE_BACKEND` — `noop` (default) or `firestore`. Caches generated learning paths to skip repeat OpenAI calls
+- `CACHE_BACKEND` — `noop` (default) or `firestore`. Caches generated learning paths to skip repeat OpenAI calls. Keys come from `LearningPathService.cache_key`; changing that scheme turns existing entries into misses (extra OpenAI calls) until they expire
 - `CACHE_TTL_SECONDS` — Cache entry lifetime (default: `604800` = 7 days)
 - Generation timing uses `<FIRESTORE_CACHE_COLLECTION>_timings` when caching uses Firestore, or process-local memory otherwise. `/v1/stats` includes an optional `generation_estimate` after five successful uncached requests for the configured model. History is bounded to the latest 100 samples from seven days; cached requests and errors are excluded. The estimate measures backend request time, not browser network latency. Bump the timing service's history version when generation work or reasoning settings change.
 - `LP_RATE_LIMIT` / `STATS_RATE_LIMIT` — Rate limit strings (e.g. `15/minute`)

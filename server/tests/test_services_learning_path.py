@@ -1,5 +1,7 @@
 """Service tests for LearningPathService with mocked OpenAI."""
 
+import re
+
 import pytest
 from openai import AsyncOpenAI
 
@@ -61,18 +63,70 @@ SAMPLE_GRAPH_DATA = {
 }
 
 
-class TestNormalizeTopic:
-    def test_removes_punctuation(self, service: LearningPathService):
-        assert service.normalize_topic("react!!!") == "React"
-        assert service.normalize_topic("python...") == "Python"
+class TestCleanTopic:
+    def test_trims_and_collapses_whitespace(self, service: LearningPathService):
+        assert service.clean_topic("  machine \t learning\n ") == "machine learning"
 
-    def test_title_case(self, service: LearningPathService):
-        assert service.normalize_topic("javascript") == "Javascript"
+    @pytest.mark.parametrize("topic", ["C++", "C#", "Node.js", "I/O", "CI / CD", "react!!!"])
+    def test_keeps_punctuation_and_case(self, service: LearningPathService, topic):
+        assert service.clean_topic(topic) == topic
 
-    def test_removes_slashes_so_cache_keys_are_valid_document_ids(
-        self, service: LearningPathService
+
+class TestCacheKey:
+    @pytest.mark.parametrize(
+        ("topic", "key"),
+        [
+            ("javascript", "Javascript"),
+            ("machine learning", "Machine Learning"),
+            ("3d printing", "3D Printing"),
+            ("机器学习", "机器学习"),
+            ("react!!!", "React"),
+            ("python...", "Python"),
+            ("Rubik's cube", "Rubiks Cube"),
+        ],
+    )
+    def test_keeps_previous_keys(self, service: LearningPathService, topic, key):
+        """These topics had the same keys under the old strip-and-title-case scheme."""
+        assert service.cache_key(topic) == key
+
+    def test_symbols_that_name_different_topics_stay_distinct(self, service: LearningPathService):
+        keys = {service.cache_key(t) for t in ["C++", "C#", "C", "C sharp", "C plus plus"]}
+        assert len(keys) == 5
+        assert service.cache_key("c++") == "C++"
+        assert service.cache_key("f#") == "F#"
+
+    def test_punctuation_between_words_separates_them(self, service: LearningPathService):
+        assert service.cache_key("I/O") == "I O"
+        assert service.cache_key("I/O") != service.cache_key("Io")
+        assert service.cache_key("Node.js") == "Node Js"
+
+    @pytest.mark.parametrize(
+        "variants",
+        [
+            ["CI / CD", "CI CD", "ci/cd", " CI-CD "],
+            ["MACHINE   LEARNING", "machine learning", "Machine Learning?"],
+            ["c++ templates", "C++  Templates"],
+        ],
+    )
+    def test_merges_case_spacing_and_separator_variants(
+        self, service: LearningPathService, variants
     ):
-        assert service.normalize_topic("CI/CD") == "Cicd"
+        assert len({service.cache_key(v) for v in variants}) == 1
+
+    @pytest.mark.parametrize(
+        "topic", ["a/b", "./x", "x/..", "__init__", "_x_", "a" * 5000, "机" * 1000, "C++" * 500]
+    )
+    def test_keys_are_valid_firestore_document_ids(self, service: LearningPathService, topic):
+        key = service.cache_key(topic)
+        assert key
+        assert "/" not in key
+        assert key not in {".", ".."}
+        assert not re.fullmatch(r"__.*__", key)
+        assert len(key.encode()) <= 1500
+
+    def test_overlong_keys_are_hashed_deterministically(self, service: LearningPathService):
+        assert service.cache_key("a" * 5000) == service.cache_key("A" * 5000)
+        assert service.cache_key("a" * 5000) != service.cache_key("a" * 4999)
 
 
 class TestValidateTopicLength:
@@ -235,7 +289,7 @@ class TestGenerateLearningPath:
         )
 
         result = await service.generate_learning_path("react")
-        assert result["topic"] == "React"
+        assert result["topic"] == "react"
         completion = result["completion"]
         assert "nodes" in completion
         assert "edges" in completion
@@ -248,6 +302,38 @@ class TestGenerateLearningPath:
         assert result["usage"]["prompt_tokens"] == 10
         assert result["usage"]["completion_tokens"] == 5
         assert result["model"] == "gpt-5-mini"
+
+    async def test_moderation_and_generation_get_cleaned_topic_with_punctuation(
+        self, service: LearningPathService, mock_client, mocker
+    ):
+        mock_client.moderations.create = mocker.AsyncMock(
+            return_value=mocker.Mock(results=[mocker.Mock(flagged=False)])
+        )
+        mock_client.responses.parse = mocker.AsyncMock(
+            return_value=mocker.Mock(
+                output_parsed=LearningPathGraphOutput(**SAMPLE_GRAPH_DATA),
+                usage=mocker.Mock(model_dump=lambda: {}),
+                model="gpt-5-mini",
+            )
+        )
+
+        result = await service.generate_learning_path("  C++   and Node.js \n")
+
+        assert result["topic"] == "C++ and Node.js"
+        mock_client.moderations.create.assert_awaited_once_with(input="C++ and Node.js")
+        user_message = mock_client.responses.parse.call_args.kwargs["input"][1]
+        assert user_message["content"] == 'Generate a learning path for "C++ and Node.js".'
+
+    async def test_length_limit_counts_punctuation(
+        self, service: LearningPathService, mock_client, mocker
+    ):
+        mock_client.moderations.create = mocker.AsyncMock()
+        mock_client.responses.parse = mocker.AsyncMock()
+
+        with pytest.raises(LearningPathError, match="exceeds maximum length") as exc_info:
+            await service.generate_learning_path("C++" * 41)
+        assert exc_info.value.status_code == 400
+        mock_client.responses.parse.assert_not_called()
 
     async def test_refusal_raises(self, service: LearningPathService, mock_client, mocker):
         mock_client.moderations.create = mocker.AsyncMock(
