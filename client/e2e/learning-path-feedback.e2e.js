@@ -190,7 +190,7 @@ test("only concept headings drag; summaries show details without reordering", as
   );
 });
 
-test("share action stays compact and the share link opens a new tab", async ({
+test("share leads as a compact filled action and its link opens a new tab", async ({
   page,
 }) => {
   await openGenerated(page);
@@ -198,7 +198,15 @@ test("share action stays compact and the share link opens a new tab", async ({
     route.fulfill({ json: { share_id: "abcdefghijklmnopqrstuv" } }),
   );
   const button = page.getByRole("button", { name: "Share path", exact: true });
-  expect((await button.boundingBox()).width).toBeLessThan(200);
+  const copy = page.getByRole("button", { name: "Copy path", exact: true });
+  await expect(button).toHaveClass(/primary-button/);
+  await expect(copy).toHaveClass(/secondary-button/);
+  const shareBox = await button.boundingBox();
+  expect(shareBox.width).toBeLessThan(200);
+  expect(shareBox.x).toBeLessThan((await copy.boundingBox()).x);
+  await expect(button).toHaveAccessibleDescription(
+    "Anyone with the link can view a copy of this path.",
+  );
   await button.click();
   const link = page.getByRole("link", { name: /Open share link/ });
   await expect(link).toHaveAttribute("target", "_blank");
@@ -209,6 +217,28 @@ test("share action stays compact and the share link opens a new tab", async ({
   await expect(popup).toHaveURL(/\/share\/abcdefghijklmnopqrstuv/);
   expect(page.url()).toBe(original);
   await popup.close();
+});
+
+test("a rejected share explains itself instead of showing raw errors", async ({
+  page,
+}) => {
+  await openGenerated(page);
+  await page.route("**/v1/shares", (route) =>
+    route.fulfill({
+      status: 422,
+      json: {
+        detail: [{ loc: ["body", "graph"], msg: "Invalid", type: "value_error" }],
+      },
+    }),
+  );
+  await page.getByRole("button", { name: "Share path", exact: true }).click();
+  await expect(
+    page.getByText("This path can't be shared. Use Copy to save it instead."),
+  ).toBeVisible();
+  await expect(page.getByText("[object Object]")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Share path", exact: true }),
+  ).toBeEnabled();
 });
 
 for (const width of [320, 375, 390]) {
@@ -243,5 +273,29 @@ for (const width of [320, 375, 390]) {
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBe(width);
+
+    // The row still fits while the share link is being created.
+    let release;
+    const held = new Promise((resolve) => {
+      release = resolve;
+    });
+    await page.route("**/v1/shares", async (route) => {
+      await held;
+      await route.fulfill({ json: { share_id: "abcdefghijklmnopqrstuv" } });
+    });
+    await page.getByRole("button", { name: "Share path", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: "Creating link...", exact: true }),
+    ).toBeDisabled();
+    expect(
+      await rowCount(".view-toggle, .copy-action, .share-action"),
+    ).toBeLessThan(4);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBe(width);
+    release();
+    await expect(
+      page.getByRole("link", { name: /Open share link/ }),
+    ).toBeVisible();
   });
 }
