@@ -19,6 +19,7 @@ from openai import (
     PermissionDeniedError,
     RateLimitError,
 )
+from openai.lib._parsing._responses import type_to_text_format_param
 from pydantic import BaseModel
 
 SYSTEM_PROMPT = """Generate a learning path as a directed graph for a given topic.
@@ -110,6 +111,26 @@ class LearningPathGraphOutput(BaseModel):
 
     nodes: list[GraphNode]
     edges: list[GraphEdge]
+
+
+# responses.parse(text_format=...) leaks memory under uvicorn in openai<3.16.2: each call creates
+# new ParsedResponse[...] classes and the SDK keeps a TypeAdapter for every one of them
+# (openai-python #3084). So generation sends the same strict JSON schema format through
+# responses.create and parses the reply with parse_graph_output. Once openai>=3.16.2 is locked,
+# responses.parse can return; test_generation_does_not_grow_sdk_type_cache guards the leak.
+LEARNING_PATH_TEXT_FORMAT = type_to_text_format_param(LearningPathGraphOutput)
+
+
+def parse_graph_output(response: Any) -> LearningPathGraphOutput | None:
+    """Validate every output_text part and return the first, as responses.parse does."""
+    graphs = [
+        LearningPathGraphOutput.model_validate_json(content.text)
+        for item in response.output
+        if item.type == "message"
+        for content in item.content
+        if content.type == "output_text"
+    ]
+    return graphs[0] if graphs else None
 
 
 class LearningPathOutput(BaseModel):
@@ -328,10 +349,10 @@ class LearningPathService:
             "total_tokens": total_tokens,
         }
 
-    async def _request_completion(self, topic: str) -> Any:
-        """Call OpenAI structured-output generation, mapping SDK errors."""
+    async def _request_completion(self, topic: str) -> tuple[Any, LearningPathGraphOutput | None]:
+        """Call OpenAI structured-output generation and parse it, mapping SDK and parse errors."""
         try:
-            return await self._client.responses.parse(
+            response = await self._client.responses.create(
                 model=self._model,
                 # Luna defaults to medium reasoning. Preserve the previous
                 # non-reasoning workload; other model overrides keep their behavior.
@@ -340,9 +361,10 @@ class LearningPathService:
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": f'Generate a learning path for "{topic}".'},
                 ],
-                text_format=LearningPathGraphOutput,
+                text={"format": LEARNING_PATH_TEXT_FORMAT},
                 store=True,
             )
+            return response, parse_graph_output(response)
         except Exception as e:
             raise self._map_upstream_error(e) from e
 
@@ -370,14 +392,14 @@ class LearningPathService:
                 await generation_task
             raise
 
-        response = await generation_task
+        response, parsed = await generation_task
 
-        if response.output_parsed is None:
-            msg = "Error while reading OpenAI's response.output_parsed for learning path."
+        if parsed is None:
+            msg = "Error while reading OpenAI's parsed output for learning path."
             logger.warning(f"Structured output parsing failed: {msg}")
             raise LearningPathError(f"Structured output parsing failed: {msg}", status_code=500)
 
-        graph = response.output_parsed.model_dump()
+        graph = parsed.model_dump()
         nodes = graph["nodes"]
         edges = break_cycles(nodes, graph["edges"])
 
