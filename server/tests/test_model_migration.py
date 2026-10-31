@@ -119,12 +119,12 @@ async def test_generation_wire_contract(model, outcome):
         service = LearningPathService(sdk, **({"model": model} if model else {}))
         if outcome != "success":
             with pytest.raises(LearningPathError) as error:
-                await service.generate_learning_path("react")
+                await service.generate_learning_path("React")
             assert error.value.status_code == (429 if outcome == "rate-limit" else 500)
             if outcome == "refusal":
                 assert "parsing failed" in str(error.value)
         else:
-            result = await service.generate_learning_path("react")
+            result = await service.generate_learning_path("React")
             assert result["model"] == expected_model
             assert result["usage"] == {
                 "prompt_tokens": 10,
@@ -196,7 +196,7 @@ async def test_flagged_moderation_cancels_luna_generation():
     ) as sdk:
         with pytest.raises(LearningPathError) as error:
             await asyncio.wait_for(
-                LearningPathService(sdk).generate_learning_path("react"), timeout=5
+                LearningPathService(sdk).generate_learning_path("React"), timeout=5
             )
         assert error.value.status_code == 400
         assert cancelled.is_set()

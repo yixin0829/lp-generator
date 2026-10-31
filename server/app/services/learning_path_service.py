@@ -2,6 +2,8 @@
 
 import asyncio
 import contextlib
+import hashlib
+import json
 import string
 from collections import defaultdict, deque
 from typing import Any
@@ -64,6 +66,18 @@ Abbreviated example for "JavaScript" showing multiple prerequisites; return 10-1
 }"""
 
 LEVEL_ORDER = {"Beginner": 0, "Intermediate": 1, "Advanced": 2}
+
+# Cache keys merge case and spacing variants of a topic. "+" and "#" name
+# different topics ("C++", "C#", "C"), so they stay. Apostrophes are dropped
+# ("Rubik's" -> "Rubiks"), and other ASCII punctuation separates words, so
+# "I/O" and "Io" differ while "CI/CD" and "CI CD" match. This leaves no "/",
+# "." or "_", so keys are valid Firestore document IDs. Topics with only
+# letters, numbers and single spaces keep the keys they had before this scheme.
+# Changing it turns cached entries into misses for up to CACHE_TTL_SECONDS.
+_CACHE_KEY_TRANSLATION = str.maketrans(
+    {**dict.fromkeys(string.punctuation, " "), "+": "+", "#": "#", "'": ""}
+)
+MAX_CACHE_KEY_BYTES = 1500  # Firestore's document ID limit
 
 
 class ConceptDetail(BaseModel):
@@ -249,9 +263,16 @@ class LearningPathService:
         self._model = model
         self._max_topic_length = max_topic_length
 
-    def normalize_topic(self, topic: str) -> str:
-        """Remove punctuation and title-case the topic."""
-        return topic.translate(str.maketrans("", "", string.punctuation)).title()
+    def clean_topic(self, topic: str) -> str:
+        """Trim the topic and collapse runs of whitespace, keeping punctuation."""
+        return " ".join(topic.split())
+
+    def cache_key(self, topic: str) -> str:
+        """Derive the cache key for a topic that contains a letter or number."""
+        key = " ".join(topic.translate(_CACHE_KEY_TRANSLATION).split()).title()
+        if len(key.encode()) > MAX_CACHE_KEY_BYTES:
+            key = hashlib.sha256(key.encode()).hexdigest()
+        return key
 
     def validate_topic_length(self, topic: str) -> None:
         """Raise LearningPathError(400) if topic exceeds max length."""
@@ -339,7 +360,13 @@ class LearningPathService:
                 reasoning={"effort": "none"} if self._model == "gpt-6-luna" else NOT_GIVEN,
                 input=[
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": f'Generate a learning path for "{topic}".'},
+                    # Topics keep their punctuation, so quote them as a JSON string:
+                    # a '"' in the topic cannot close the quotes and add instructions.
+                    {
+                        "role": "user",
+                        "content": "Generate a learning path for "
+                        f"{json.dumps(topic, ensure_ascii=False)}.",
+                    },
                 ],
                 text={"format": LEARNING_PATH_TEXT_FORMAT},
                 store=True,
@@ -354,7 +381,7 @@ class LearningPathService:
         Returns dict with topic, completion (nodes, edges, + level buckets), usage, model.
         Raises LearningPathError for expected request and upstream failures.
         """
-        topic = self.normalize_topic(topic)
+        topic = self.clean_topic(topic)
         self.validate_topic_length(topic)
 
         # Run content moderation and generation concurrently so the moderation
