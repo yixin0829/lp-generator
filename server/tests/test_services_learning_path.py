@@ -2,6 +2,7 @@
 
 import pytest
 from openai import AsyncOpenAI
+from pydantic import ValidationError
 
 from app.services.learning_path_service import (
     LearningPathError,
@@ -9,6 +10,7 @@ from app.services.learning_path_service import (
     LearningPathService,
     break_cycles,
     graph_to_levels,
+    parse_graph_output,
 )
 
 
@@ -20,6 +22,12 @@ def mock_client(mocker):
 @pytest.fixture
 def service(mock_client) -> LearningPathService:
     return LearningPathService(client=mock_client, model="gpt-5-mini", max_topic_length=120)
+
+
+def message_output(mocker, *texts):
+    """A Responses API output list with one message holding these output_text parts."""
+    parts = [mocker.Mock(type="output_text", text=text) for text in texts]
+    return [mocker.Mock(type="message", content=parts)]
 
 
 SAMPLE_GRAPH_DATA = {
@@ -220,9 +228,9 @@ class TestGenerateLearningPath:
         mock_client.moderations.create = mocker.AsyncMock(
             return_value=mocker.Mock(results=[mocker.Mock(flagged=False)])
         )
-        mock_client.responses.parse = mocker.AsyncMock(
+        mock_client.responses.create = mocker.AsyncMock(
             return_value=mocker.Mock(
-                output_parsed=LearningPathGraphOutput(**graph),
+                output=message_output(mocker, LearningPathGraphOutput(**graph).model_dump_json()),
                 usage=mocker.Mock(
                     model_dump=lambda: {
                         "input_tokens": 10,
@@ -254,10 +262,9 @@ class TestGenerateLearningPath:
             return_value=mocker.Mock(results=[mocker.Mock(flagged=False)])
         )
         refusal_block = mocker.Mock(type="refusal", refusal="Content refused")
-        output_item = mocker.Mock(content=[refusal_block])
-        mock_client.responses.parse = mocker.AsyncMock(
+        output_item = mocker.Mock(type="message", content=[refusal_block])
+        mock_client.responses.create = mocker.AsyncMock(
             return_value=mocker.Mock(
-                output_parsed=None,
                 output=[output_item],
                 usage=mocker.Mock(model_dump=lambda: {}),
                 model="gpt-5-mini",
@@ -268,15 +275,12 @@ class TestGenerateLearningPath:
             await service.generate_learning_path("react")
         assert exc_info.value.status_code == 500
 
-    async def test_none_output_parsed_raises(
-        self, service: LearningPathService, mock_client, mocker
-    ):
+    async def test_no_output_raises(self, service: LearningPathService, mock_client, mocker):
         mock_client.moderations.create = mocker.AsyncMock(
             return_value=mocker.Mock(results=[mocker.Mock(flagged=False)])
         )
-        mock_client.responses.parse = mocker.AsyncMock(
+        mock_client.responses.create = mocker.AsyncMock(
             return_value=mocker.Mock(
-                output_parsed=None,
                 output=[],
                 usage=mocker.Mock(model_dump=lambda: {}),
                 model="gpt-5-mini",
@@ -286,3 +290,47 @@ class TestGenerateLearningPath:
         with pytest.raises(LearningPathError, match="parsing") as exc_info:
             await service.generate_learning_path("react")
         assert exc_info.value.status_code == 500
+
+    @pytest.mark.parametrize(
+        "text", ["", '{"nodes": [', '{"nodes": []}'], ids=["empty", "truncated", "missing-edges"]
+    )
+    async def test_invalid_output_text_raises(
+        self, service: LearningPathService, mock_client, mocker, text
+    ):
+        mock_client.moderations.create = mocker.AsyncMock(
+            return_value=mocker.Mock(results=[mocker.Mock(flagged=False)])
+        )
+        mock_client.responses.create = mocker.AsyncMock(
+            return_value=mocker.Mock(output=message_output(mocker, text))
+        )
+
+        with pytest.raises(LearningPathError, match="Unexpected upstream") as exc_info:
+            await service.generate_learning_path("react")
+        assert exc_info.value.status_code == 500
+
+
+class TestParseGraphOutput:
+    def test_first_of_several_parts_wins(self, mocker):
+        first = LearningPathGraphOutput(**SAMPLE_GRAPH_DATA)
+        second = LearningPathGraphOutput(nodes=[], edges=[])
+        output = message_output(mocker, first.model_dump_json()) + message_output(
+            mocker, second.model_dump_json()
+        )
+        assert parse_graph_output(mocker.Mock(output=output)) == first
+
+    def test_any_invalid_part_raises(self, mocker):
+        valid = LearningPathGraphOutput(**SAMPLE_GRAPH_DATA).model_dump_json()
+        with pytest.raises(ValidationError):
+            parse_graph_output(mocker.Mock(output=message_output(mocker, valid, "")))
+
+    def test_skips_other_items_and_refusals(self, mocker):
+        graph = LearningPathGraphOutput(**SAMPLE_GRAPH_DATA)
+        message = mocker.Mock(
+            type="message",
+            content=[
+                mocker.Mock(type="refusal", refusal="Content refused"),
+                mocker.Mock(type="output_text", text=graph.model_dump_json()),
+            ],
+        )
+        output = [mocker.Mock(type="reasoning"), message]
+        assert parse_graph_output(mocker.Mock(output=output)) == graph
