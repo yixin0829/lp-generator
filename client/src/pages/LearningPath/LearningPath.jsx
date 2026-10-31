@@ -30,7 +30,10 @@ import { apiUrl } from "../../config/api";
 import { findPublicTopicByAlias } from "../../data/publicTopics";
 import Seo from "../../seo/Seo";
 import NetworkGraph from "./NetworkGraph";
-import { createShareSnapshot } from "../../util/shareSnapshot";
+import {
+  createShareSnapshot,
+  shareErrorMessage,
+} from "../../util/shareSnapshot";
 
 const LEVEL_ORDER = ["Beginner", "Intermediate", "Advanced"];
 const MODERATION_DETAIL_HINTS = ["content policy", "moderation", "flagged"];
@@ -172,8 +175,10 @@ export default function LearningPath() {
         ),
       });
       const body = await response.json().catch(() => ({}));
-      if (!response.ok || !body.share_id)
-        throw new Error(body.detail || "Unable to create share.");
+      if (!response.ok || !body.share_id) {
+        enqueueSnackbar(shareErrorMessage(response.status, body));
+        return;
+      }
       const createdUrl = `${window.location.origin}/share/${body.share_id}`;
       setShareUrl(createdUrl);
       if (navigator.clipboard?.writeText) {
@@ -188,8 +193,10 @@ export default function LearningPath() {
       } else {
         enqueueSnackbar("Share created. Copy the link shown below.");
       }
-    } catch (error) {
-      enqueueSnackbar(error.message || "Unable to create share.");
+    } catch {
+      enqueueSnackbar(
+        "Couldn't reach the server. Check your connection and try again.",
+      );
     } finally {
       setIsSharing(false);
     }
@@ -331,6 +338,30 @@ export default function LearningPath() {
               role="group"
               aria-label="Learning path actions"
             >
+              {/* Share leads as the filled button. As a secondary button
+                  after Copy, far fewer people shared. */}
+              <Button
+                className="share-action"
+                aria-describedby="share-visibility"
+                aria-label={isSharing ? "Creating link..." : "Share path"}
+                aria-busy={isSharing}
+                label={
+                  isSharing ? (
+                    // Phones keep the short label so the row still fits while
+                    // the link is created.
+                    <span>
+                      <span className="action-busy">Creating link...</span>
+                      <span className="action-busy-short">Share</span>
+                    </span>
+                  ) : (
+                    <span>
+                      Share<span className="action-noun"> path</span>
+                    </span>
+                  )
+                }
+                disabled={isSharing}
+                onClick={shareLearningPath}
+              />
               <Button
                 className="copy-action"
                 aria-label="Copy path"
@@ -344,23 +375,6 @@ export default function LearningPath() {
                 onClick={() =>
                   copyToClipboard(lp, conceptDetails, enqueueSnackbar)
                 }
-              />
-              <Button
-                className="share-action"
-                isSecondary
-                aria-describedby="share-visibility"
-                aria-label={isSharing ? undefined : "Share path"}
-                label={
-                  isSharing ? (
-                    "Creating link..."
-                  ) : (
-                    <span>
-                      Share<span className="action-noun"> path</span>
-                    </span>
-                  )
-                }
-                disabled={isSharing}
-                onClick={shareLearningPath}
               />
             </div>
           </div>

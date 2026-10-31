@@ -266,6 +266,9 @@
       margin: 0;
       padding: 10px 16px;
     }
+    .action-busy-short {
+      display: none;
+    }
     // Phones keep the view toggle and both actions on one row.
     @media (max-width: 480px) {
       flex-wrap: nowrap;
@@ -283,8 +286,12 @@
         padding: 9px 12px;
         white-space: nowrap;
       }
-      .action-noun {
+      .action-noun,
+      .action-busy {
         display: none;
+      }
+      .action-busy-short {
+        display: inline;
       }
     }
   }
