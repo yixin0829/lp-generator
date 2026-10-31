@@ -317,9 +317,11 @@ class TestGenerateLearningPath:
         mock_client.moderations.create = mocker.AsyncMock(
             return_value=mocker.Mock(results=[mocker.Mock(flagged=False)])
         )
-        mock_client.responses.parse = mocker.AsyncMock(
+        mock_client.responses.create = mocker.AsyncMock(
             return_value=mocker.Mock(
-                output_parsed=LearningPathGraphOutput(**SAMPLE_GRAPH_DATA),
+                output=message_output(
+                    mocker, LearningPathGraphOutput(**SAMPLE_GRAPH_DATA).model_dump_json()
+                ),
                 usage=mocker.Mock(model_dump=lambda: {}),
                 model="gpt-5-mini",
             )
@@ -329,19 +331,19 @@ class TestGenerateLearningPath:
 
         assert result["topic"] == "C++ and Node.js"
         mock_client.moderations.create.assert_awaited_once_with(input="C++ and Node.js")
-        user_message = mock_client.responses.parse.call_args.kwargs["input"][1]
+        user_message = mock_client.responses.create.call_args.kwargs["input"][1]
         assert user_message["content"] == 'Generate a learning path for "C++ and Node.js".'
 
     async def test_length_limit_counts_punctuation(
         self, service: LearningPathService, mock_client, mocker
     ):
         mock_client.moderations.create = mocker.AsyncMock()
-        mock_client.responses.parse = mocker.AsyncMock()
+        mock_client.responses.create = mocker.AsyncMock()
 
         with pytest.raises(LearningPathError, match="exceeds maximum length") as exc_info:
             await service.generate_learning_path("C++" * 41)
         assert exc_info.value.status_code == 400
-        mock_client.responses.parse.assert_not_called()
+        mock_client.responses.create.assert_not_called()
 
     async def test_refusal_raises(self, service: LearningPathService, mock_client, mocker):
         mock_client.moderations.create = mocker.AsyncMock(
