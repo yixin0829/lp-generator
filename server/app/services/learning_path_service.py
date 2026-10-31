@@ -3,6 +3,7 @@
 import asyncio
 import contextlib
 import hashlib
+import json
 import string
 from collections import defaultdict, deque
 from typing import Any
@@ -359,7 +360,13 @@ class LearningPathService:
                 reasoning={"effort": "none"} if self._model == "gpt-6-luna" else NOT_GIVEN,
                 input=[
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": f'Generate a learning path for "{topic}".'},
+                    # Topics keep their punctuation, so quote them as a JSON string:
+                    # a '"' in the topic cannot close the quotes and add instructions.
+                    {
+                        "role": "user",
+                        "content": "Generate a learning path for "
+                        f"{json.dumps(topic, ensure_ascii=False)}.",
+                    },
                 ],
                 text={"format": LEARNING_PATH_TEXT_FORMAT},
                 store=True,
