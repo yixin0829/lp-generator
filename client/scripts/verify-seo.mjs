@@ -49,5 +49,8 @@ const shareShellHtml = readFileSync(join(dist, "share-shell.html"), "utf-8");
 assert(shareShellHtml.includes('<meta name="robots" content="noindex,nofollow">'), "dynamic share shell must be noindex,nofollow");
 const rootHtml = readFileSync(join(dist, "index.html"), "utf-8");
 assert(rootHtml.includes("data-prerendered") && rootHtml.includes('href="/topics"'), "home page lacks crawlable raw HTML");
+const notFoundHtml = readFileSync(join(dist, "404.html"), "utf-8");
+assert(notFoundHtml.includes('<meta name="robots" content="noindex,follow">') && !notFoundHtml.includes('rel="canonical"'), "404 page must be noindex without a canonical");
+assert(notFoundHtml.includes("<h1>Page not found.</h1>") && /<script type="module"[^>]*src="\/assets\//.test(notFoundHtml), "404 page must show the not-found message and load the app");
 
-console.log("[verify-seo] 27 canonical pages, raw content, sitemap, and crawlable links verified.");
+console.log("[verify-seo] 27 canonical pages, raw content, sitemap, crawlable links, and the 404 page verified.");

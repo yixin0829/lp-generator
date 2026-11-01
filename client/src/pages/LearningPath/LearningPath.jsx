@@ -37,7 +37,10 @@ import { apiUrl } from "../../config/api";
 import { findPublicTopicByAlias } from "../../data/publicTopics";
 import Seo from "../../seo/Seo";
 import NetworkGraph from "./NetworkGraph";
-import { createShareSnapshot } from "../../util/shareSnapshot";
+import {
+  createShareSnapshot,
+  shareErrorMessage,
+} from "../../util/shareSnapshot";
 import ViewToggle from "../../components/ViewToggle/ViewToggle";
 import ViewSwap from "../../components/ViewSwap/ViewSwap";
 import {
@@ -240,8 +243,10 @@ export default function LearningPath() {
         ),
       });
       const body = await response.json().catch(() => ({}));
-      if (!response.ok || !body.share_id)
-        throw new Error(body.detail || "Unable to create share.");
+      if (!response.ok || !body.share_id) {
+        enqueueSnackbar(shareErrorMessage(response.status, body));
+        return;
+      }
       const createdUrl = `${window.location.origin}/share/${body.share_id}`;
       setShareUrl(createdUrl);
       if (navigator.clipboard?.writeText) {
@@ -256,8 +261,10 @@ export default function LearningPath() {
       } else {
         enqueueSnackbar("Share created. Copy the link shown below.");
       }
-    } catch (error) {
-      enqueueSnackbar(error.message || "Unable to create share.");
+    } catch {
+      enqueueSnackbar(
+        "Couldn't reach the server. Check your connection and try again.",
+      );
     } finally {
       setIsSharing(false);
     }
@@ -531,22 +538,21 @@ export default function LearningPath() {
               role="group"
               aria-label="Learning path actions"
             >
-              <Button
-                className="copy-action"
-                aria-label="Copy path"
-                // One inline span keeps the space that a flex button drops.
-                label={<CopyLabel copied={copied} />}
-                isSecondary
-                onClick={copyPath}
-              />
+              {/* Share leads as the filled button. As a secondary button
+                  after Copy, far fewer people shared. */}
               <Button
                 className="share-action"
-                isSecondary
                 aria-describedby="share-visibility"
-                aria-label={isSharing ? undefined : "Share path"}
+                aria-label={isSharing ? "Creating link..." : "Share path"}
+                aria-busy={isSharing}
                 label={
                   isSharing ? (
-                    "Creating link..."
+                    // Phones keep the short label so the row still fits while
+                    // the link is created.
+                    <span>
+                      <span className="action-busy">Creating link...</span>
+                      <span className="action-busy-short">Share</span>
+                    </span>
                   ) : (
                     <span>
                       Share<span className="action-noun"> path</span>
@@ -555,6 +561,14 @@ export default function LearningPath() {
                 }
                 disabled={isSharing}
                 onClick={shareLearningPath}
+              />
+              <Button
+                className="copy-action"
+                aria-label="Copy path"
+                // One inline span keeps the space that a flex button drops.
+                label={<CopyLabel copied={copied} />}
+                isSecondary
+                onClick={copyPath}
               />
             </div>
           </div>
@@ -938,6 +952,7 @@ function SortableItem({ id, details }) {
     transform,
     transition,
     isDragging,
+    active,
   } = useSortable({ id });
   const style = {
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : "",
@@ -950,7 +965,9 @@ function SortableItem({ id, details }) {
         id={id}
         style={{ opacity: isDragging ? 0.5 : 1 }}
         details={details}
-        hideDetails={isDragging}
+        // Hide every concept's details during any drag: a tooltip opening under the
+        // pointer resizes the page and makes keyboard drags oscillate between targets.
+        hideDetails={active !== null}
         handleProps={{ ...attributes, ...listeners, ref: setActivatorNodeRef }}
       />
     </li>

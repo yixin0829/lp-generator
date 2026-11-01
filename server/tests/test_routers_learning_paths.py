@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from app.core.dependencies import get_cache_service, get_counter_service, get_learning_path_service
 from app.main import app
 from app.services.cache_service import NoopCacheService
+from app.services.learning_path_service import LearningPathService
 
 
 @pytest.fixture(autouse=True)
@@ -15,20 +16,33 @@ def _reset_overrides():
     app.dependency_overrides.clear()
 
 
+def _service_mock(mocker):
+    """Mock service that normalizes topics with the real implementation."""
+    svc = mocker.Mock()
+    real = LearningPathService(client=mocker.Mock(), model="m")
+    svc.clean_topic.side_effect = real.clean_topic
+    svc.cache_key.side_effect = real.cache_key
+    return svc
+
+
 class TestGetLpSuccess:
     """Success cases for GET /v1/lp/{topic}."""
 
     def test_returns_learning_path(self, client: TestClient, mocker):
-        mock_svc = mocker.Mock()
+        mock_svc = _service_mock(mocker)
         mock_counter = mocker.Mock()
         mock_svc.generate_learning_path = mocker.AsyncMock(
             return_value={
                 "topic": "React",
                 "completion": {
                     "nodes": [
-                        {"id": "jsx", "label": "JSX", "level": "Beginner",
-                         "summary": "A syntax extension for JavaScript.",
-                         "why": "Foundation of React UI."},
+                        {
+                            "id": "jsx",
+                            "label": "JSX",
+                            "level": "Beginner",
+                            "summary": "A syntax extension for JavaScript.",
+                            "why": "Foundation of React UI.",
+                        },
                     ],
                     "edges": [],
                     "Beginner": [
@@ -70,7 +84,7 @@ class TestGetLpValidation:
     def test_topic_too_long_400(self, client: TestClient, mocker):
         from app.services.learning_path_service import LearningPathError
 
-        mock_svc = mocker.Mock()
+        mock_svc = _service_mock(mocker)
         mock_svc.generate_learning_path = mocker.AsyncMock(
             side_effect=LearningPathError(
                 "Input path parameter exceeds maximum length allowed (120 characters).",
@@ -83,6 +97,126 @@ class TestGetLpValidation:
         assert resp.status_code == 400
         assert "exceeds maximum length" in resp.json()["detail"]
 
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/v1/lp/%2F",
+            "/v1/lp/!!!",
+            "/v1/lp/%20",
+            "/v1/lp/%E2%80%A6",  # "…"
+            "/v1/lp/%E2%80%8B",  # zero-width space
+            "/v1/lp/%2B%2B",  # "++" keeps symbols in its cache key, but has no letters
+            "/v1/lp/%23",  # "#"
+        ],
+    )
+    def test_topic_without_letters_or_numbers_400(self, client: TestClient, mocker, path):
+        mock_svc = _service_mock(mocker)
+        mock_svc.generate_learning_path = mocker.AsyncMock()
+        mock_cache = mocker.Mock()
+        app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
+        app.dependency_overrides[get_cache_service] = lambda: mock_cache
+
+        resp = client.get(path)
+        assert resp.status_code == 400
+        assert resp.json()["detail"] == "Topic must contain letters or numbers."
+        mock_cache.get.assert_not_called()
+        mock_svc.generate_learning_path.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "path", ["/v1/lp/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0", "/v1/lp/C%2B%2B"]
+    )
+    def test_non_latin_and_symbol_heavy_topics_pass_the_guard(
+        self, client: TestClient, mocker, path
+    ):
+        mock_svc = _service_mock(mocker)
+        mock_svc.generate_learning_path = mocker.AsyncMock(
+            return_value={"topic": "t", "completion": {}, "usage": {}, "model": "m"}
+        )
+        app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
+        app.dependency_overrides[get_counter_service] = lambda: mocker.Mock()
+
+        resp = client.get(path)
+        assert resp.status_code == 200
+        mock_svc.generate_learning_path.assert_awaited_once()
+
+
+class TestGetLpSlashTopics:
+    """Topics may contain "/", which arrives decoded as a path separator."""
+
+    @pytest.mark.parametrize(
+        ("path", "topic"),
+        [
+            ("/v1/lp/CI%2FCD", "CI/CD"),
+            ("/v1/lp/CI/CD", "CI/CD"),
+            ("/v1/lp/TCP%2FIP%20networking", "TCP/IP networking"),
+            ("/v1/lp/input%2Foutput%2F", "input/output/"),
+        ],
+    )
+    def test_generates_for_topic_with_slash(self, client: TestClient, mocker, path, topic):
+        mock_svc = _service_mock(mocker)
+        mock_svc.generate_learning_path = mocker.AsyncMock(
+            return_value={"topic": "Cicd", "completion": {}, "usage": {}, "model": "m"}
+        )
+        app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
+        app.dependency_overrides[get_counter_service] = lambda: mocker.Mock()
+
+        resp = client.get(path)
+        assert resp.status_code == 200
+        mock_svc.cache_key.assert_called_once_with(topic)
+        mock_svc.generate_learning_path.assert_awaited_once_with(topic)
+
+
+class TestGetLpCacheKeys:
+    """Cache keys keep distinct topics apart and merge trivial variants."""
+
+    def _cache_key_for(self, client: TestClient, mocker, path: str) -> str:
+        mock_svc = _service_mock(mocker)
+        mock_svc.generate_learning_path = mocker.AsyncMock(
+            return_value={"topic": "t", "completion": {}, "usage": {}, "model": "m"}
+        )
+        mock_cache = mocker.Mock()
+        mock_cache.get.return_value = None
+        app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
+        app.dependency_overrides[get_counter_service] = lambda: mocker.Mock()
+        app.dependency_overrides[get_cache_service] = lambda: mock_cache
+
+        resp = client.get(path)
+        assert resp.status_code == 200
+        (key,) = mock_cache.get.call_args.args
+        mock_cache.set.assert_called_once()
+        assert mock_cache.set.call_args.args[0] == key
+        return key
+
+    def test_symbols_and_separators_keep_topics_apart(self, client: TestClient, mocker):
+        paths = {
+            "/v1/lp/C%2B%2B": "C++",
+            "/v1/lp/C%23": "C#",
+            "/v1/lp/C": "C",
+            "/v1/lp/I%2FO": "I O",
+            "/v1/lp/Io": "Io",
+        }
+        assert {p: self._cache_key_for(client, mocker, p) for p in paths} == paths
+
+    @pytest.mark.parametrize(
+        "path", ["/v1/lp/CI%20%2F%20CD", "/v1/lp/CI%20CD", "/v1/lp/ci%2Fcd", "/v1/lp/CI%20%20CD"]
+    )
+    def test_case_spacing_and_separator_variants_share_a_key(
+        self, client: TestClient, mocker, path
+    ):
+        assert self._cache_key_for(client, mocker, path) == "Ci Cd"
+
+    def test_generation_gets_the_topic_with_punctuation(self, client: TestClient, mocker):
+        mock_svc = _service_mock(mocker)
+        mock_svc.generate_learning_path = mocker.AsyncMock(
+            return_value={"topic": "t", "completion": {}, "usage": {}, "model": "m"}
+        )
+        app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
+        app.dependency_overrides[get_counter_service] = lambda: mocker.Mock()
+
+        resp = client.get("/v1/lp/Node.js")
+        assert resp.status_code == 200
+        mock_svc.generate_learning_path.assert_awaited_once_with("Node.js")
+
 
 class TestGetLpModerationFlagged:
     """Content moderation flagged cases."""
@@ -90,7 +224,7 @@ class TestGetLpModerationFlagged:
     def test_moderation_flagged_400(self, client: TestClient, mocker):
         from app.services.learning_path_service import LearningPathError
 
-        mock_svc = mocker.Mock()
+        mock_svc = _service_mock(mocker)
         mock_svc.generate_learning_path = mocker.AsyncMock(
             side_effect=LearningPathError(
                 "User input does not complies with OpenAI's content policy.",
@@ -110,7 +244,7 @@ class TestGetLpError:
     def test_malformed_response_500(self, client: TestClient, mocker):
         from app.services.learning_path_service import LearningPathError
 
-        mock_svc = mocker.Mock()
+        mock_svc = _service_mock(mocker)
         mock_svc.generate_learning_path = mocker.AsyncMock(
             side_effect=LearningPathError(
                 "Error while parsing OpenAI's response for learning path.",
@@ -126,7 +260,7 @@ class TestGetLpError:
     def test_openai_rate_limit_429(self, client: TestClient, mocker):
         from app.services.learning_path_service import LearningPathError
 
-        mock_svc = mocker.Mock()
+        mock_svc = _service_mock(mocker)
         mock_svc.generate_learning_path = mocker.AsyncMock(
             side_effect=LearningPathError(
                 "Rate limit exceeded. Please try again later.",
@@ -142,7 +276,7 @@ class TestGetLpError:
     def test_openai_service_unavailable_503(self, client: TestClient, mocker):
         from app.services.learning_path_service import LearningPathError
 
-        mock_svc = mocker.Mock()
+        mock_svc = _service_mock(mocker)
         mock_svc.generate_learning_path = mocker.AsyncMock(
             side_effect=LearningPathError(
                 "AI service temporarily unavailable. Please try again later.",
@@ -160,9 +294,13 @@ SAMPLE_LP = {
     "topic": "React",
     "completion": {
         "nodes": [
-            {"id": "jsx", "label": "JSX", "level": "Beginner",
-             "summary": "A syntax extension for JavaScript.",
-             "why": "Foundation of React UI."},
+            {
+                "id": "jsx",
+                "label": "JSX",
+                "level": "Beginner",
+                "summary": "A syntax extension for JavaScript.",
+                "why": "Foundation of React UI.",
+            },
         ],
         "edges": [],
         "Beginner": [
@@ -185,8 +323,7 @@ class TestGetLpCacheHit:
     """Cache hit cases — OpenAI should NOT be called."""
 
     def test_cache_hit_returns_cached_data(self, client: TestClient, mocker):
-        mock_svc = mocker.Mock()
-        mock_svc.normalize_topic.return_value = "React"
+        mock_svc = _service_mock(mocker)
         mock_counter = mocker.Mock()
         mock_cache = mocker.Mock()
         mock_cache.get.return_value = {**SAMPLE_LP}
@@ -206,8 +343,7 @@ class TestGetLpCacheHit:
     def test_cache_read_failure_falls_through_to_generation(self, client: TestClient, mocker):
         from app.services.cache_service import CacheServiceError
 
-        mock_svc = mocker.Mock()
-        mock_svc.normalize_topic.return_value = "React"
+        mock_svc = _service_mock(mocker)
         mock_svc.generate_learning_path = mocker.AsyncMock(return_value={**SAMPLE_LP})
         mock_counter = mocker.Mock()
         mock_cache = mocker.Mock()
@@ -228,8 +364,7 @@ class TestGetLpCacheMiss:
     """Cache miss cases — OpenAI is called, result is cached."""
 
     def test_cache_miss_generates_and_caches(self, client: TestClient, mocker):
-        mock_svc = mocker.Mock()
-        mock_svc.normalize_topic.return_value = "React"
+        mock_svc = _service_mock(mocker)
         mock_svc.generate_learning_path = mocker.AsyncMock(return_value={**SAMPLE_LP})
         mock_counter = mocker.Mock()
         mock_cache = mocker.Mock()
@@ -253,8 +388,7 @@ class TestGetLpCacheMiss:
     def test_cache_write_failure_still_returns_response(self, client: TestClient, mocker):
         from app.services.cache_service import CacheServiceError
 
-        mock_svc = mocker.Mock()
-        mock_svc.normalize_topic.return_value = "React"
+        mock_svc = _service_mock(mocker)
         mock_svc.generate_learning_path = mocker.AsyncMock(return_value={**SAMPLE_LP})
         mock_counter = mocker.Mock()
         mock_cache = mocker.Mock()

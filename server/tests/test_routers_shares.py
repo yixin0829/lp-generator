@@ -61,9 +61,7 @@ def test_disabled_storage_returns_503(client):
 
 def test_malformed_graph_is_rejected_before_storage(client):
     payload = sample_snapshot().model_dump()
-    payload["graph"]["edges"] = [
-        {"source": "missing", "target": "jsx", "relationship": "invalid"}
-    ]
+    payload["graph"]["edges"] = [{"source": "missing", "target": "jsx", "relationship": "invalid"}]
     response = client.post("/v1/shares", json=payload)
     assert response.status_code == 422
 

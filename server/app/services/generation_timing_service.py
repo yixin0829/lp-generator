@@ -39,7 +39,7 @@ class GenerationTimingService:
         self.model = model
         self._client = client
         # Bump the version when generation work or reasoning settings change.
-        key = hashlib.sha256(f"v1:{model}".encode()).hexdigest()
+        key = hashlib.sha256(f"v2:{model}".encode()).hexdigest()
         self._document = client.collection(collection).document(key) if client else None
         self._samples: list[dict] = []
         self._lock = Lock()

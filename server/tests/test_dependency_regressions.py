@@ -11,7 +11,11 @@ import httpx
 import pytest
 from openai import AsyncOpenAI
 
-from app.services.learning_path_service import LearningPathGraphOutput
+from app.services.learning_path_service import (
+    LEARNING_PATH_TEXT_FORMAT,
+    LearningPathGraphOutput,
+    parse_graph_output,
+)
 
 
 @pytest.mark.parametrize(
@@ -128,10 +132,12 @@ async def test_openai_structured_output_over_mock_http():
         max_retries=0,
         http_client=httpx.AsyncClient(transport=httpx.MockTransport(respond)),
     ) as sdk:
-        response = await sdk.responses.parse(
-            model="synthetic-model", input="Synthetic test", text_format=LearningPathGraphOutput
+        response = await sdk.responses.create(
+            model="synthetic-model",
+            input="Synthetic test",
+            text={"format": LEARNING_PATH_TEXT_FORMAT},
         )
-    assert response.output_parsed == LearningPathGraphOutput(nodes=[], edges=[])
+    assert parse_graph_output(response) == LearningPathGraphOutput(nodes=[], edges=[])
     assert len(requests) == 1
     # HTTPX normalizes IDNs before AnyIO receives them, matching the advisory workaround.
     assert httpx.URL("https://faß.example").raw_host == b"xn--fa-hia.example"

@@ -51,8 +51,10 @@ def _safe_cache_set(cache_service: BaseCacheService, key: str, payload: dict) ->
         logger.warning("Unexpected cache write failure: {}", e)
 
 
+# Topics may contain "/" (e.g. "CI/CD"). The ASGI server decodes %2F into a path
+# separator before routing, so the parameter must accept multiple segments.
 @router.get(
-    "/{topic}",
+    "/{topic:path}",
     response_model=LearningPathResponse,
     responses={
         status.HTTP_200_OK: {"model": LearningPathResponse},
@@ -75,12 +77,17 @@ async def get_lp(
 ) -> dict:
     """Take any topic and call OpenAI to generate a learning path in JSON format."""
     started = perf_counter()
-    normalized = service.normalize_topic(topic)
+    if not any(ch.isalnum() for ch in service.clean_topic(topic)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Topic must contain letters or numbers.",
+        )
+    cache_key = service.cache_key(topic)
 
     # Try cache first. Cache reads are blocking network calls, so run them off
     # the event loop to avoid stalling other concurrent requests.
     try:
-        cached = await run_in_threadpool(cache_service.get, normalized)
+        cached = await run_in_threadpool(cache_service.get, cache_key)
     except CacheServiceError as e:
         logger.warning("Cache read failed, proceeding without cache: {}", e)
         cached = None
@@ -113,7 +120,7 @@ async def get_lp(
 
     # Cache write and counter increment are not on the critical path; run them
     # after the response is sent so generation latency is not inflated.
-    background_tasks.add_task(_safe_cache_set, cache_service, normalized, payload)
+    background_tasks.add_task(_safe_cache_set, cache_service, cache_key, payload)
     background_tasks.add_task(_safe_increment_counter, counter_service)
     background_tasks.add_task(timing_service.record, duration_seconds)
 

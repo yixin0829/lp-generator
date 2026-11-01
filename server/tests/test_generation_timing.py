@@ -63,7 +63,8 @@ def test_only_successful_cache_misses_are_recorded(client, mocker, kind):
     cache = mocker.Mock()
     cache.get.return_value = payload if kind == "cached" else None
     generator = mocker.Mock()
-    generator.normalize_topic.return_value = "Rust"
+    generator.clean_topic.return_value = "Rust"
+    generator.cache_key.return_value = "Rust"
     generator.generate_learning_path = mocker.AsyncMock(
         return_value=payload,
         side_effect=LearningPathError("Unavailable", status_code=503) if kind == "failed" else None,

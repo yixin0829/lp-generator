@@ -16,7 +16,8 @@ export default function Seo({
   noindex = false,
   jsonLd,
 }) {
-  const canonicalUrl = `${SITE_URL}${path}`;
+  // path={null} marks a page with no canonical URL, such as the not-found page.
+  const canonicalUrl = path === null ? null : `${SITE_URL}${path}`;
   const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
   const robotsContent = noindex ? "noindex,follow" : robots;
 
@@ -25,12 +26,12 @@ export default function Seo({
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       <meta name="robots" content={robotsContent} />
-      <link rel="canonical" href={canonicalUrl} />
+      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
 
       {/* OpenGraph */}
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
-      <meta property="og:url" content={canonicalUrl} />
+      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:type" content={ogType} />
       <meta property="og:image" content="https://www.learn-anything.ca/og-img.png" />
@@ -38,7 +39,7 @@ export default function Seo({
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta property="twitter:domain" content="learn-anything.ca" />
-      <meta property="twitter:url" content={canonicalUrl} />
+      {canonicalUrl && <meta property="twitter:url" content={canonicalUrl} />}
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content="https://www.learn-anything.ca/og-img.png" />

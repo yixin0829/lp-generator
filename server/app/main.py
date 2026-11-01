@@ -44,7 +44,7 @@ app.include_router(router)
 
 @app.get("/")
 async def get_root():
-    return {"Hello": f"this is Learning Path Generator's BE v1!"}
+    return {"Hello": "this is Learning Path Generator's BE v1!"}
 
 
 @app.get("/health")

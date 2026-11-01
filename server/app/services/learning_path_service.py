@@ -2,6 +2,8 @@
 
 import asyncio
 import contextlib
+import hashlib
+import json
 import string
 from collections import defaultdict, deque
 from typing import Any
@@ -18,6 +20,7 @@ from openai import (
     PermissionDeniedError,
     RateLimitError,
 )
+from openai.lib._parsing._responses import type_to_text_format_param
 from pydantic import BaseModel
 
 SYSTEM_PROMPT = """Generate a learning path as a directed graph for a given topic.
@@ -64,6 +67,18 @@ Abbreviated example for "JavaScript" showing multiple prerequisites; return 10-1
 
 LEVEL_ORDER = {"Beginner": 0, "Intermediate": 1, "Advanced": 2}
 
+# Cache keys merge case and spacing variants of a topic. "+" and "#" name
+# different topics ("C++", "C#", "C"), so they stay. Apostrophes are dropped
+# ("Rubik's" -> "Rubiks"), and other ASCII punctuation separates words, so
+# "I/O" and "Io" differ while "CI/CD" and "CI CD" match. This leaves no "/",
+# "." or "_", so keys are valid Firestore document IDs. Topics with only
+# letters, numbers and single spaces keep the keys they had before this scheme.
+# Changing it turns cached entries into misses for up to CACHE_TTL_SECONDS.
+_CACHE_KEY_TRANSLATION = str.maketrans(
+    {**dict.fromkeys(string.punctuation, " "), "+": "+", "#": "#", "'": ""}
+)
+MAX_CACHE_KEY_BYTES = 1500  # Firestore's document ID limit
+
 
 class ConceptDetail(BaseModel):
     """A single concept with enriched metadata for the learning path."""
@@ -97,6 +112,26 @@ class LearningPathGraphOutput(BaseModel):
 
     nodes: list[GraphNode]
     edges: list[GraphEdge]
+
+
+# responses.parse(text_format=...) leaks memory under uvicorn in openai<3.16.2: each call creates
+# new ParsedResponse[...] classes and the SDK keeps a TypeAdapter for every one of them
+# (openai-python #3084). So generation sends the same strict JSON schema format through
+# responses.create and parses the reply with parse_graph_output. Once openai>=3.16.2 is locked,
+# responses.parse can return; test_generation_does_not_grow_sdk_type_cache guards the leak.
+LEARNING_PATH_TEXT_FORMAT = type_to_text_format_param(LearningPathGraphOutput)
+
+
+def parse_graph_output(response: Any) -> LearningPathGraphOutput | None:
+    """Validate every output_text part and return the first, as responses.parse does."""
+    graphs = [
+        LearningPathGraphOutput.model_validate_json(content.text)
+        for item in response.output
+        if item.type == "message"
+        for content in item.content
+        if content.type == "output_text"
+    ]
+    return graphs[0] if graphs else None
 
 
 class LearningPathOutput(BaseModel):
@@ -228,9 +263,16 @@ class LearningPathService:
         self._model = model
         self._max_topic_length = max_topic_length
 
-    def normalize_topic(self, topic: str) -> str:
-        """Remove punctuation and title-case the topic."""
-        return topic.translate(str.maketrans("", "", string.punctuation)).title()
+    def clean_topic(self, topic: str) -> str:
+        """Trim the topic and collapse runs of whitespace, keeping punctuation."""
+        return " ".join(topic.split())
+
+    def cache_key(self, topic: str) -> str:
+        """Derive the cache key for a topic that contains a letter or number."""
+        key = " ".join(topic.translate(_CACHE_KEY_TRANSLATION).split()).title()
+        if len(key.encode()) > MAX_CACHE_KEY_BYTES:
+            key = hashlib.sha256(key.encode()).hexdigest()
+        return key
 
     def validate_topic_length(self, topic: str) -> None:
         """Raise LearningPathError(400) if topic exceeds max length."""
@@ -308,21 +350,28 @@ class LearningPathService:
             "total_tokens": total_tokens,
         }
 
-    async def _request_completion(self, topic: str) -> Any:
-        """Call OpenAI structured-output generation, mapping SDK errors."""
+    async def _request_completion(self, topic: str) -> tuple[Any, LearningPathGraphOutput | None]:
+        """Call OpenAI structured-output generation and parse it, mapping SDK and parse errors."""
         try:
-            return await self._client.responses.parse(
+            response = await self._client.responses.create(
                 model=self._model,
                 # Luna defaults to medium reasoning. Preserve the previous
                 # non-reasoning workload; other model overrides keep their behavior.
                 reasoning={"effort": "none"} if self._model == "gpt-6-luna" else NOT_GIVEN,
                 input=[
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": f'Generate a learning path for "{topic}".'},
+                    # Topics keep their punctuation, so quote them as a JSON string:
+                    # a '"' in the topic cannot close the quotes and add instructions.
+                    {
+                        "role": "user",
+                        "content": "Generate a learning path for "
+                        f"{json.dumps(topic, ensure_ascii=False)}.",
+                    },
                 ],
-                text_format=LearningPathGraphOutput,
+                text={"format": LEARNING_PATH_TEXT_FORMAT},
                 store=True,
             )
+            return response, parse_graph_output(response)
         except Exception as e:
             raise self._map_upstream_error(e) from e
 
@@ -332,7 +381,7 @@ class LearningPathService:
         Returns dict with topic, completion (nodes, edges, + level buckets), usage, model.
         Raises LearningPathError for expected request and upstream failures.
         """
-        topic = self.normalize_topic(topic)
+        topic = self.clean_topic(topic)
         self.validate_topic_length(topic)
 
         # Run content moderation and generation concurrently so the moderation
@@ -350,14 +399,14 @@ class LearningPathService:
                 await generation_task
             raise
 
-        response = await generation_task
+        response, parsed = await generation_task
 
-        if response.output_parsed is None:
-            msg = "Error while reading OpenAI's response.output_parsed for learning path."
+        if parsed is None:
+            msg = "Error while reading OpenAI's parsed output for learning path."
             logger.warning(f"Structured output parsing failed: {msg}")
             raise LearningPathError(f"Structured output parsing failed: {msg}", status_code=500)
 
-        graph = response.output_parsed.model_dump()
+        graph = parsed.model_dump()
         nodes = graph["nodes"]
         edges = break_cycles(nodes, graph["edges"])
 
