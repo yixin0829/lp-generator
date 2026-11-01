@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { EASE_OUT, play, prefersReducedMotion } from "../../motion/motion";
 import "./Onboarding.scss";
 
 const PREFERENCE_KEY = "learnanything.onboarding.hidden.v1";
@@ -41,6 +42,10 @@ export function OnboardingProvider({ children }) {
   const [storageError, setStorageError] = useState(false);
   const dialogRef = useRef(null);
   const previousFocus = useRef(null);
+  const previousStep = useRef(step);
+  const titleRef = useRef(null);
+  const descriptionRef = useRef(null);
+  const exampleRef = useRef(null);
 
   useEffect(() => {
     const learningPage = location.pathname === "/" || location.pathname === "/learningpath" || location.pathname.startsWith("/learn/");
@@ -58,9 +63,28 @@ export function OnboardingProvider({ children }) {
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) {
       dialog.close();
-      previousFocus.current?.focus?.();
+      // A client-side arrival saves a link of the page that has since been swapped out.
+      const back = previousFocus.current;
+      (back?.isConnected ? back : document.getElementById("main-content"))?.focus?.();
     }
   }, [open]);
+
+  // Each step's text slides in from the direction of travel; replay's reset to step 0 does not animate.
+  useLayoutEffect(() => {
+    const from = previousStep.current;
+    previousStep.current = step;
+    if (from === step || !dialogRef.current.open) return;
+    const reduced = prefersReducedMotion();
+    const dx = step > from ? 16 : -16;
+    const keyframes = reduced
+      ? [{ opacity: 0 }, { opacity: 1 }]
+      : [{ opacity: 0, translate: `${dx}px 0` }, { opacity: 1, translate: "0 0" }];
+    const animations = [titleRef, descriptionRef, exampleRef].map((ref, index) => play(ref.current, keyframes, {
+      duration: reduced ? 120 : 240, delay: reduced ? 0 : index * 30, easing: EASE_OUT, fill: "backwards",
+    }));
+    // A quick Next or Back replaces the running slide instead of stacking on it.
+    return () => animations.forEach((animation) => animation?.cancel());
+  }, [step]);
 
   function replay() {
     previousFocus.current = document.activeElement;
@@ -116,9 +140,9 @@ export function OnboardingProvider({ children }) {
           <button type="button" className="onboarding-close" aria-label="Close guide" onClick={finish}>×</button>
         </div>
         <p className="onboarding-progress" aria-live="polite">Step {step + 1} of {steps.length}</p>
-        <h2 id="onboarding-title">{current.title}</h2>
-        <p id="onboarding-description">{current.text}</p>
-        <p className="onboarding-example" aria-hidden="true">{current.example}</p>
+        <h2 id="onboarding-title" ref={titleRef}>{current.title}</h2>
+        <p id="onboarding-description" ref={descriptionRef}>{current.text}</p>
+        <p className="onboarding-example" aria-hidden="true" ref={exampleRef}>{current.example}</p>
         <label className="onboarding-preference">
           <input type="checkbox" checked={hideAgain} onChange={(event) => { setHideAgain(event.target.checked); setStorageError(false); }} />
           Don’t show this again

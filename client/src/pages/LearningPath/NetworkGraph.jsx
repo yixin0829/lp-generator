@@ -1,9 +1,26 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { LEVELS, fitLayout, layeredLayout } from "./graphGeometry";
+import {
+  EASE_IN_OUT,
+  EASE_OUT,
+  SPRING,
+  SPRING_MS,
+  cancelAnimationsWithin,
+  onDone,
+  play,
+  prefersReducedMotion,
+} from "../../motion/motion";
+import {
+  LEVELS,
+  fitLayout,
+  layeredLayout,
+  revealSchedule,
+} from "./graphGeometry";
 import "./NetworkGraph.scss";
 
 const EMPTY = [];
+// The reveal's last link ends at about 850 ms.
+const REVEAL_WINDOW_MS = 900;
 
 // Rounded on the left only, so the level accent follows the pill's corners.
 function accentPath(node, radius) {
@@ -17,7 +34,11 @@ function accentPath(node, radius) {
   );
 }
 
-export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
+export default function NetworkGraph({
+  nodes = EMPTY,
+  edges = EMPTY,
+  reveal = false,
+}) {
   const svgRef = useRef(null);
   const viewportRef = useRef(null);
   const inspectorRef = useRef(null);
@@ -27,6 +48,9 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
   const [selectedId, setSelectedId] = useState(null);
   const [dragEnabled, setDragEnabled] = useState(false);
   const [zoomPercent, setZoomPercent] = useState(100);
+  // Only the first build of an instance mounted with reveal plays it.
+  const [revealsOnBuild] = useState(reveal);
+  const selectionShownRef = useRef(false);
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
   const markerId = "graph-arrow-" + id;
   const selected = nodes.find((node) => node.id === selectedId);
@@ -52,13 +76,55 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
     setSelectedId(null);
   }
 
-  useEffect(() => {
+  // A layout effect, so muting and first animation frames land before paint.
+  useLayoutEffect(() => {
     controllerRef.current?.select(selectedId);
-    if (inspectorRef.current) inspectorRef.current.scrollTop = 0;
+    const inspector = inspectorRef.current;
+    if (inspector) inspector.scrollTop = 0;
+    if (!selectionShownRef.current) {
+      selectionShownRef.current = true;
+      return;
+    }
+    const reduced = prefersReducedMotion();
+    if (selectedId && !reduced) {
+      // The ring springs out from under the pill.
+      play(
+        svgRef.current?.querySelector(
+          `[data-node-id="${CSS.escape(selectedId)}"] .graph-node-ring`,
+        ),
+        [
+          { scale: "0.86", opacity: 0 },
+          { scale: "1", opacity: 1 },
+        ],
+        { duration: SPRING_MS, easing: SPRING },
+      );
+    }
+    if (!inspector) return;
+    // The content was replaced, so the new content rises in fresh.
+    cancelAnimationsWithin(inspector);
+    const rise = reduced
+      ? [{ opacity: 0 }, { opacity: 1 }]
+      : [
+          { opacity: 0, translate: "0 8px" },
+          { opacity: 1, translate: "0 0" },
+        ];
+    const timing = {
+      duration: reduced ? 120 : 200,
+      easing: EASE_OUT,
+      fill: "backwards",
+    };
+    for (const child of inspector.children)
+      if (child.tagName !== "UL") play(child, rise, timing);
+    inspector
+      .querySelectorAll(".graph-connections > li")
+      .forEach((row, index) =>
+        play(row, rise, { ...timing, delay: reduced ? 0 : 60 + 30 * index }),
+      );
   }, [selectedId]);
 
   // The layout rebuilds for new data or a new width. Theme is CSS only.
-  useEffect(() => {
+  // A layout effect, so the card has its final height before paint.
+  useLayoutEffect(() => {
     if (!svgRef.current || !viewportRef.current) return;
     const svg = d3.select(svgRef.current);
     const viewport = viewportRef.current;
@@ -66,6 +132,12 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
     let layout = null;
     let fitOnResize = true;
     let disposed = false;
+    let laneRects = d3.select(null);
+    let laneLabels = d3.select(null);
+    let glide = null;
+    let revealStart = null;
+    let revealing = [];
+    const now = () => document.timeline?.currentTime ?? performance.now();
     const coarse = () => window.matchMedia("(pointer: coarse)").matches;
     const canPan = () => !coarse() || dragEnabledRef.current;
     svg.selectAll("*").remove();
@@ -97,7 +169,11 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
       .on("zoom", (event) => {
         scene.attr("transform", event.transform);
         setZoomPercent(Math.round(event.transform.k * 100));
-        if (event.sourceEvent) fitOnResize = false;
+        // A wheel, drag or pinch continues from the real state, not the glide.
+        if (event.sourceEvent) {
+          fitOnResize = false;
+          cancelGlide();
+        }
       });
     svg.call(zoom).on("dblclick.zoom", null);
 
@@ -112,7 +188,7 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
         .data(layout.lanes)
         .join("g")
         .attr("data-level", (lane) => lane.level);
-      lanes
+      laneRects = lanes
         .append("rect")
         .attr("class", "graph-lane")
         .attr("x", (lane) => lane.x)
@@ -130,7 +206,7 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
         .attr("d", (edge) => edge.d)
         .attr("marker-end", "url(#" + markerId + ")");
       // Labels sit above the arrows so a crossing arrow never hides them.
-      scene
+      laneLabels = scene
         .append("g")
         .attr("aria-hidden", "true")
         .selectAll("text")
@@ -220,12 +296,126 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
         "--graph-layout-height",
         Math.ceil(layout.height) + "px",
       );
-      size.height = viewport.getBoundingClientRect().height;
+      // Computed sizes ignore ancestor transforms, like a view's entrance scale.
+      size.height = parseFloat(getComputedStyle(viewport).height);
       select(selectedRef.current);
     }
     function fit() {
       const t = fitLayout(layout, size.width, size.height);
       svg.call(zoom.transform, d3.zoomIdentity.translate(t.x, t.y).scale(t.k));
+    }
+    function cancelGlide() {
+      glide?.cancel();
+      glide = null;
+    }
+    // Code-driven zoom applies at once, as before, so the state and the readout
+    // stay exact; the scene then glides there from what is on screen.
+    function glideTo(apply) {
+      const node = scene.node();
+      let from = d3.zoomTransform(svg.node());
+      if (glide) {
+        const m = new DOMMatrixReadOnly(getComputedStyle(node).transform);
+        from = { k: m.a, x: m.e, y: m.f };
+        cancelGlide();
+      }
+      apply();
+      const to = d3.zoomTransform(svg.node());
+      if (
+        prefersReducedMotion() ||
+        (Math.abs(to.k - from.k) < 1e-4 &&
+          Math.abs(to.x - from.x) < 0.5 &&
+          Math.abs(to.y - from.y) < 0.5)
+      )
+        return;
+      const css = (t) => `translate(${t.x}px, ${t.y}px) scale(${t.k})`;
+      const animation = play(
+        node,
+        [{ transform: css(from) }, { transform: css(to) }],
+        { duration: 220, easing: EASE_OUT },
+      );
+      glide = animation;
+      onDone(animation, () => {
+        if (glide === animation) glide = null;
+      });
+    }
+    // Lanes wipe in, nodes pop in by lane and each link draws after its source.
+    // elapsed continues a reveal on rebuilt elements.
+    function playReveal(elapsed) {
+      const schedule = revealSchedule(layout);
+      const started = [];
+      const start = (target, keyframes, timing) => {
+        const animation = play(target, keyframes, {
+          easing: EASE_OUT,
+          fill: "backwards",
+          ...timing,
+        });
+        if (animation) {
+          if (elapsed) animation.currentTime = elapsed;
+          started.push(animation);
+        }
+        return animation;
+      };
+      const wipe = [
+        { clipPath: "inset(0 100% 0 0)" },
+        { clipPath: "inset(0 0% 0 0)" },
+      ];
+      for (const lanePart of [laneRects, laneLabels])
+        lanePart.each(function (lane, index) {
+          start(this, wipe, { duration: 360, delay: schedule.lanes[index] });
+        });
+      groups.each(function (node) {
+        // CSS transform replaces the attribute, so keyframes repeat its translate.
+        const place = `translate(${node.x}px, ${node.y}px)`;
+        start(
+          this,
+          [
+            { opacity: 0, transform: `${place} scale(0.96)` },
+            { opacity: 1, transform: `${place} scale(1)` },
+          ],
+          { duration: 260, delay: schedule.nodes.get(node.id) },
+        );
+      });
+      // Read every length before touching markers: one style invalidation.
+      const drawn = [];
+      links.each(function (edge, index) {
+        let length = 0;
+        try {
+          length = this.getTotalLength();
+        } catch {
+          length = 0;
+        }
+        if (length) drawn.push([this, length, schedule.edges[index]]);
+      });
+      for (const [path, length, delay] of drawn) {
+        // The arrowhead lands with the line.
+        const marker = path.getAttribute("marker-end");
+        path.removeAttribute("marker-end");
+        const dash = `${length} ${length}`;
+        const draw = start(
+          path,
+          [
+            { strokeDasharray: dash, strokeDashoffset: length },
+            { strokeDasharray: dash, strokeDashoffset: 0 },
+          ],
+          { duration: 320, delay, easing: EASE_IN_OUT },
+        );
+        onDone(draw, () => {
+          if (marker && !path.hasAttribute("marker-end"))
+            path.setAttribute("marker-end", marker);
+        });
+      }
+      return started;
+    }
+    // A rebuild inside the reveal window (a classic scrollbar appearing, a
+    // resize) continues the reveal instead of dropping it. A cancelled reveal
+    // stays cancelled.
+    function revealContinues() {
+      return (
+        revealStart !== null &&
+        now() - revealStart < REVEAL_WINDOW_MS &&
+        !prefersReducedMotion() &&
+        revealing.every((animation) => animation.playState !== "idle")
+      );
     }
     function reveal(nodeId, onlyIfOutside = false) {
       const node = layout.nodes.find((n) => n.id === nodeId);
@@ -244,14 +434,16 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
         return;
       fitOnResize = false;
       const scale = onlyIfOutside ? transform.k : Math.max(transform.k, 1);
-      svg.call(
-        zoom.transform,
-        d3.zoomIdentity
-          .translate(
-            size.width / 2 - node.x * scale,
-            size.height / 2 - node.y * scale,
-          )
-          .scale(scale),
+      glideTo(() =>
+        svg.call(
+          zoom.transform,
+          d3.zoomIdentity
+            .translate(
+              size.width / 2 - node.x * scale,
+              size.height / 2 - node.y * scale,
+            )
+            .scale(scale),
+        ),
       );
     }
     function select(nodeId) {
@@ -282,7 +474,7 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
       links.filter(".is-connected").raise();
     }
 
-    size.width = viewport.getBoundingClientRect().width;
+    size.width = parseFloat(getComputedStyle(viewport).width);
     const known = new Set(nodes.map((node) => node.id));
     if (!known.has(selectedRef.current)) {
       selectedRef.current = null;
@@ -290,19 +482,28 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
     }
     build();
     fit();
+    if (revealsOnBuild && !prefersReducedMotion()) {
+      revealStart = now();
+      revealing = playReveal(0);
+    }
     const resize = new ResizeObserver((entries) => {
       if (disposed) return;
       const { width: nextWidth, height: nextHeight } = entries[0].contentRect;
       if (!nextWidth || !nextHeight) return;
       if (Math.abs(nextWidth - size.width) >= 1) {
         // A new width reflows the lanes, so earlier pan and zoom no longer apply.
+        const continues = revealContinues();
+        revealing.forEach((animation) => animation.cancel());
+        revealing = [];
+        cancelGlide();
         size = { width: nextWidth, height: nextHeight };
         fitOnResize = true;
         build();
         fit();
+        if (continues) revealing = playReveal(now() - revealStart);
       } else if (Math.abs(nextHeight - size.height) >= 1) {
         size.height = nextHeight;
-        if (fitOnResize) fit();
+        if (fitOnResize) glideTo(fit);
       }
     });
     resize.observe(viewport);
@@ -311,20 +512,24 @@ export default function NetworkGraph({ nodes = EMPTY, edges = EMPTY }) {
       reveal,
       fit: () => {
         fitOnResize = true;
-        fit();
+        glideTo(fit);
       },
       zoomBy: (factor) => {
         fitOnResize = false;
-        svg.call(zoom.scaleBy, factor, [size.width / 2, size.height / 2]);
+        glideTo(() =>
+          svg.call(zoom.scaleBy, factor, [size.width / 2, size.height / 2]),
+        );
       },
     };
     return () => {
       disposed = true;
       resize.disconnect();
       svg.on(".zoom", null);
+      cancelGlide();
+      revealing.forEach((animation) => animation.cancel());
       controllerRef.current = null;
     };
-  }, [nodes, edges, id, markerId]);
+  }, [nodes, edges, id, markerId, revealsOnBuild]);
 
   if (!nodes.length)
     return <p className="graph-empty">No concepts to show yet.</p>;

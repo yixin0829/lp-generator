@@ -1,18 +1,107 @@
+import { useLayoutEffect, useRef } from "react";
+import { flushSync } from "react-dom";
+
 import { useTheme } from "../../context/ThemeContext";
+import {
+  EASE_DRAWER,
+  SPRING,
+  SPRING_MS,
+  play,
+  prefersReducedMotion,
+} from "../../motion/motion";
+import {
+  canViewTransition,
+  startViewTransition,
+} from "../../motion/viewTransition";
 import "./ThemeToggle.scss";
+
+let fadeTimer = 0;
 
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
+  const icon = useRef(null);
+  const shownTheme = useRef(theme);
+
+  // The sun and moon swap with a turn; inside a theme transition this runs in
+  // the live new view, so the circle reveals it first.
+  useLayoutEffect(() => {
+    if (shownTheme.current === theme) return;
+    shownTheme.current = theme;
+    if (prefersReducedMotion()) return;
+    const turn = theme === "dark" ? -90 : 90;
+    const animation = play(
+      icon.current,
+      [
+        { transform: `rotate(${turn}deg) scale(0.55)`, opacity: 0 },
+        { transform: "rotate(0deg) scale(1)", opacity: 1 },
+      ],
+      { duration: SPRING_MS, easing: SPRING },
+    );
+    return () => animation?.cancel();
+  }, [theme]);
+
+  // The new theme opens as a circle from the click; the change happens inside
+  // the transition's update so the new snapshot already has it.
+  const switchTheme = (event) => {
+    const toggle = () => flushSync(toggleTheme);
+    const reduced = prefersReducedMotion();
+    if (!canViewTransition()) {
+      if (reduced) {
+        toggleTheme();
+        return;
+      }
+      const root = document.documentElement;
+      root.classList.add("theme-fading");
+      toggle();
+      clearTimeout(fadeTimer);
+      fadeTimer = setTimeout(() => root.classList.remove("theme-fading"), 300);
+      return;
+    }
+    if (reduced) {
+      startViewTransition("theme-fade", toggle);
+      return;
+    }
+    let x = event.clientX;
+    let y = event.clientY;
+    // Keyboard clicks carry no point; open from the button's centre.
+    if (event.detail === 0) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      x = rect.left + rect.width / 2;
+      y = rect.top + rect.height / 2;
+    }
+    const radius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y),
+    );
+    startViewTransition("theme", toggle, {
+      onReady: () =>
+        play(
+          document.documentElement,
+          {
+            clipPath: [
+              `circle(0px at ${x}px ${y}px)`,
+              `circle(${radius}px at ${x}px ${y}px)`,
+            ],
+          },
+          {
+            duration: 450,
+            easing: EASE_DRAWER,
+            pseudoElement: "::view-transition-new(root)",
+          },
+        ),
+    });
+  };
 
   return (
     <button
       className="theme-toggle"
-      onClick={toggleTheme}
+      onClick={switchTheme}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       title={`Switch to ${isDark ? "light" : "dark"} mode`}
     >
       <svg
+        ref={icon}
         className="theme-toggle-icon"
         viewBox="0 0 24 24"
         fill="none"

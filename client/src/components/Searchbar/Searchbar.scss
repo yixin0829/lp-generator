@@ -9,43 +9,71 @@
   box-shadow: var(--shadow-sm);
   outline: none;
   border: none;
-  transition: box-shadow 300ms, padding 300ms, background-color 300ms;
 
   &::placeholder {
-    transition: opacity 300ms, transform 700ms;
     color: var(--input-placeholder);
-  }
-
-  &:focus::placeholder {
-    opacity: 0;
-  }
-
-  &:hover {
-    box-shadow: var(--shadow-md);
-    padding: 12px 30px;
-    transition: box-shadow 500ms, padding 500ms;
-  }
-
-  &:focus {
-    box-shadow: var(--shadow-focus);
-    padding: 12px 25px;
-    transition: box-shadow 500ms, padding 500ms;
   }
 
   @media (max-width: 767px) {
     font-size: 14px;
     margin: 2px 0px;
     padding: 12px 22px;
-    &:hover {
-      padding: 12px 22px;
-    }
-    &:focus {
-      padding: 12px 22px;
-    }
   }
 }
 
-.text-input-search-placeholder-transition::placeholder {
-  transform: translateY(10px);
-  opacity: 0;
+.search-field {
+  position: relative;
+  width: 100%;
+}
+
+// The focus ring eases in; settled, it matches the 3px outline at a 4px offset.
+@supports selector(:has(*)) {
+  .search-field > .text-input-search:focus-visible {
+    outline: none;
+  }
+  .search-field::after {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border: 3px solid var(--text-link);
+    border-radius: 17px;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.98);
+    transition: opacity 100ms ease, transform 150ms var(--ease-out);
+  }
+  .search-field:has(> .text-input-search:focus-visible)::after {
+    opacity: 1;
+    transform: none;
+    transition: opacity 150ms ease, transform 150ms var(--ease-out);
+  }
+}
+
+// Rotating examples over the real placeholder, which stays but turns transparent.
+.search-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-items: center;
+  padding: 0 calc(1rem + 1px); // the input's padding + border
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--input-placeholder);
+  font-size: 1rem;
+  white-space: nowrap;
+
+  > span {
+    grid-area: 1 / 1;
+    overflow: hidden;
+    text-overflow: clip;
+  }
+}
+
+.search-field.is-rotating {
+  > .text-input-search::placeholder {
+    color: transparent;
+  }
+  > .text-input-search:not(:placeholder-shown) ~ .search-placeholder {
+    visibility: hidden;
+  }
 }

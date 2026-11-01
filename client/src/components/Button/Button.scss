@@ -8,7 +8,8 @@
   font-weight: 700;
   margin: 2px;
   cursor: pointer;
-  transition: transform 200ms, background-color 200ms, color 200ms;
+  // Hover and release ride the spring; disabled <-> enabled crossfades.
+  transition: transform 600ms var(--spring), background-color 200ms ease, color 200ms ease, opacity 200ms ease;
   user-select: none;
   box-shadow: var(--btn-shadow);
   justify-content: center;
@@ -19,12 +20,11 @@
 
   &:hover {
     transform: scale(1.03);
-    transition: transform 200ms;
   }
 
   &:active {
     transform: scale(0.97);
-    transition: transform 100ms;
+    transition: transform 100ms var(--ease-out), background-color 200ms ease, color 200ms ease, opacity 200ms ease;
   }
 
   @media (max-width: 767px) {

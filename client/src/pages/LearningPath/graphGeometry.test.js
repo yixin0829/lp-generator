@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { fitLayout, labelLines, layeredLayout } from "./graphGeometry";
+import {
+  fitLayout,
+  labelLines,
+  layeredLayout,
+  revealSchedule,
+} from "./graphGeometry";
 
 const NODES = [
   ["syntax", "Syntax and Values", "Beginner"],
@@ -171,5 +176,26 @@ describe("layered graph layout", () => {
     expect(t.k).toBeCloseTo(0.5);
     expect(t.y).toBeCloseTo(0);
     expect(t.x + layout.width * t.k).toBeLessThanOrEqual(390);
+  });
+
+  it("schedules the reveal by lane, then row and x, with links after their source", () => {
+    const layout = layeredLayout(NODES, EDGES, 390);
+    const schedule = revealSchedule(layout);
+    expect(schedule.lanes).toEqual([170, 240, 310]);
+    layout.lanes.forEach((lane, laneIndex) => {
+      layout.nodes
+        .filter((node) => node.level === lane.level)
+        .sort((a, b) => a.row - b.row || a.x - b.x)
+        .forEach((node, index) =>
+          expect(schedule.nodes.get(node.id)).toBe(
+            schedule.lanes[laneIndex] + 90 + 20 * index,
+          ),
+        );
+    });
+    layout.edges.forEach((edge, index) =>
+      expect(schedule.edges[index]).toBe(
+        schedule.nodes.get(edge.source.id) + 170,
+      ),
+    );
   });
 });

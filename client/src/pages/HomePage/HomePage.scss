@@ -60,6 +60,20 @@
     border-radius: 12px;
     color: var(--text-primary);
     background: var(--surface-card);
+    transition: transform 200ms var(--ease-out), border-color 150ms ease,
+      box-shadow 200ms ease;
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        transform: translateY(-1px);
+        border-color: var(--recommended-border-hover);
+        box-shadow: var(--shadow-lift);
+      }
+    }
+    &:active {
+      transform: scale(0.97);
+      transition: transform 100ms var(--ease-out), border-color 150ms ease,
+        box-shadow 200ms ease;
+    }
   }
   .subtitle-count {
     display: block;

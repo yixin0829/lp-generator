@@ -1,0 +1,15 @@
+.view-swap {
+  position: relative;
+
+  .view-swap-item {
+    transform-origin: 50% 0;
+  }
+  // The outgoing view stays exactly where it was while the new one takes its place.
+  .view-swap-item.is-leaving {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+  }
+}

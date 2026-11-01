@@ -13,11 +13,26 @@ function validEstimate(value) {
   );
 }
 
+// The bar's document rect, which the learning path opens out of.
+function measureBar(container, bar) {
+  // A direct link's entrance must not bake its rise into the rect.
+  for (const animation of container.getAnimations()) animation.finish();
+  const rect = bar.getBoundingClientRect();
+  return {
+    left: rect.left,
+    top: rect.top + window.scrollY,
+    width: rect.width,
+    height: rect.height,
+  };
+}
+
 export default function LoadingProgress({
   estimateGeneration = false,
   complete = false,
   onComplete,
 }) {
+  const containerRef = useRef(null);
+  const barRef = useRef(null);
   const fillRef = useRef(null);
   const [estimate, setEstimate] = useState(null);
   const [elapsed, setElapsed] = useState(0);
@@ -83,7 +98,9 @@ export default function LoadingProgress({
         // Paint the full bar before replacing it with the learning path.
         frame = requestAnimationFrame(() => {
           frame = requestAnimationFrame(() => {
-            if (!cancelled) onComplete?.();
+            if (!cancelled) {
+              onComplete?.(measureBar(containerRef.current, barRef.current));
+            }
           });
         });
       })
@@ -111,11 +128,13 @@ export default function LoadingProgress({
 
   return (
     <div
+      ref={containerRef}
       className="loading-progress-container"
       role="status"
       aria-live="polite"
     >
       <div
+        ref={barRef}
         className={`preparing-progress${estimate ? " is-estimated" : ""}${overdue ? " is-overdue" : ""}`}
         role="progressbar"
         aria-label="Preparing your learning path"

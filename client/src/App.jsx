@@ -1,12 +1,14 @@
 import { Analytics } from "@vercel/analytics/react";
-import { SnackbarProvider } from "notistack";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 
 import { ThemeProvider } from "./context/ThemeContext";
 import NavBar from "./components/NavBar/NavBar";
 import { OnboardingProvider } from "./components/Onboarding/Onboarding";
+import { MotionSnackbarProvider } from "./components/SnackbarTransition/SnackbarTransition";
 import ScrollToTop from "./components/misc/ScrollToTop/ScrollToTop";
+import { useRouteTransition } from "./motion/routeTransition";
 import "./App.css";
+import "./motion/viewTransitions.scss";
 import { pages } from "./util/pages";
 
 const appRoutes = [...pages.main, ...pages.hidden];
@@ -14,14 +16,14 @@ const appRoutes = [...pages.main, ...pages.hidden];
 export default function App() {
   return (
     <ThemeProvider>
-      <SnackbarProvider>
+      <MotionSnackbarProvider>
         <BrowserRouter>
           <Analytics />
           <OnboardingProvider>
             <TransitionRoutes />
           </OnboardingProvider>
         </BrowserRouter>
-      </SnackbarProvider>
+      </MotionSnackbarProvider>
     </ThemeProvider>
   );
 }
@@ -33,13 +35,15 @@ function Page404Route() {
 
 function TransitionRoutes() {
   const location = useLocation();
-  const transitionKey = `${location.pathname}${location.search}`;
+  // Pages render from the shown location, which trails the router's by one transition.
+  const shown = useRouteTransition(location);
+  const transitionKey = `${shown.pathname}${shown.search}`;
 
   return (
     <>
       <NavBar />
-      <ScrollToTop />
-      <Routes location={location}>
+      <ScrollToTop pathname={shown.pathname} search={shown.search} />
+      <Routes location={shown}>
         {appRoutes.map((page) => {
           const PageComponent = page.component;
           return (
@@ -51,7 +55,7 @@ function TransitionRoutes() {
                   key={transitionKey}
                   id="main-content"
                   tabIndex={-1}
-                  className="page route-transition"
+                  className="page"
                 >
                   <PageComponent />
                 </div>

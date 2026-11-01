@@ -79,6 +79,16 @@
 
   --li-hover-bg: #80808028;
 
+  /* Motion. The springs are linear() curves sampled over 600 ms; always pair them with 600 ms. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --spring: var(--ease-out);
+  --spring-soft: var(--ease-out);
+  --shadow-lift: 0 2px 8px rgba(15, 23, 42, 0.07);
+  --graph-node-hover-shadow: rgba(15, 23, 42, 0.18);
+  --progress-sheen: rgba(255, 255, 255, 0.42);
+
   color-scheme: light;
 }
 
@@ -161,7 +171,20 @@
 
   --li-hover-bg: #ffffff12;
 
+  --shadow-lift: 0 2px 10px rgba(0, 0, 0, 0.45);
+  --graph-node-hover-shadow: rgba(0, 0, 0, 0.6);
+  --progress-sheen: rgba(17, 17, 19, 0.3);
+
   color-scheme: dark;
+}
+
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    /* 0.4 s spring, bounce 0.25: peaks at 1.028 around 300 ms */
+    --spring: linear(0, 0.042, 0.143, 0.273, 0.411, 0.543, 0.661, 0.761, 0.842, 0.905, 0.952, 0.985, 1.007, 1.02, 1.026, 1.028, 1.027, 1.025, 1.021, 1.017, 1.013, 1.01, 1.007, 1.005, 1.003, 1.001, 1.001, 1, 0.999, 0.999, 1);
+    /* 0.45 s spring, bounce 0.1: 95% at 290 ms, no visible overshoot */
+    --spring-soft: linear(0, 0.033, 0.112, 0.214, 0.323, 0.431, 0.53, 0.619, 0.696, 0.761, 0.815, 0.859, 0.894, 0.922, 0.943, 0.96, 0.972, 0.981, 0.988, 0.993, 0.996, 0.998, 1, 1.001, 1.001, 1.001, 1.002, 1.001, 1.001, 1.001, 1);
+  }
 }
 
 html {
@@ -180,10 +203,6 @@ body {
 .page {
   position: relative;
   min-height: calc(100svh - 72px);
-}
-
-.route-transition {
-  animation: none;
 }
 
 ::-webkit-scrollbar {

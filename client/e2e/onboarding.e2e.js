@@ -135,16 +135,16 @@ for (const [name, viewport, theme] of [
     const box = await guide.boundingBox();
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
-    await page.screenshot({ path: `../evidence/onboarding-${name}-initial.png` });
+    await page.screenshot({ path: `../evidence/onboarding-${name}-initial.png`, animations: "disabled" });
     await guide.getByRole("checkbox").check();
-    await page.screenshot({ path: `../evidence/onboarding-${name}-optout.png` });
+    await page.screenshot({ path: `../evidence/onboarding-${name}-optout.png`, animations: "disabled" });
     await guide.getByRole("button", { name: "Skip for now" }).click();
     await page.reload();
     await expect(guide).not.toBeVisible();
-    await page.screenshot({ path: `../evidence/onboarding-${name}-returning.png` });
+    await page.screenshot({ path: `../evidence/onboarding-${name}-returning.png`, animations: "disabled" });
     await page.getByRole("button", { name: "How to use", exact: true }).click();
     await guide.getByRole("button", { name: "Next", exact: true }).click();
-    await page.screenshot({ path: `../evidence/onboarding-${name}-replay.png` });
+    await page.screenshot({ path: `../evidence/onboarding-${name}-replay.png`, animations: "disabled" });
     await expect(guide).toBeVisible();
   });
 }

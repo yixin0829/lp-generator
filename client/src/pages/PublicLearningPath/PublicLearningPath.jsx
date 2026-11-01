@@ -27,7 +27,8 @@ export default function PublicLearningPath() {
       <Seo title={`${topic.topic} Learning Path`} description={topic.excerpt} path={`/learn/${topic.slug}`} jsonLd={jsonLd} />
       <nav className="breadcrumbs" aria-label="Breadcrumb"><Link to="/">Home</Link> / <Link to="/topics">Topics</Link> / {topic.topic}</nav>
       <p className="topic-category">{topic.category} · Reviewed {topic.reviewedDate}</p>
-      <h1>{topic.topic} learning path</h1>
+      {/* Two spans, so a route transition can fly the typed topic into place. */}
+      <h1><span className="title-topic">{topic.topic}</span> <span className="title-rest">learning path</span></h1>
       <p className="introduction">{topic.introduction}</p>
       <div className="learning-meta">
         <section><h2>Prerequisites</h2><ul>{topic.prerequisites.map((item) => <li key={item}>{item}</li>)}</ul></section>
