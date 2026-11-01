@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useId, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import LoadingProgress from "../LoadingProgress/LoadingProgress";
 import {
@@ -34,6 +41,33 @@ import {
   createShareSnapshot,
   shareErrorMessage,
 } from "../../util/shareSnapshot";
+import ViewToggle from "../../components/ViewToggle/ViewToggle";
+import ViewSwap from "../../components/ViewSwap/ViewSwap";
+import {
+  EASE_OUT,
+  SPRING_MS,
+  SPRING_SOFT,
+  cancelAnimationsWithin,
+  onDone,
+  play,
+  playsFirstLoadEntrance,
+  prefersReducedMotion,
+  readOpacity,
+} from "../../motion/motion";
+import { rememberTopicMorph } from "../../motion/topicMorph";
+
+// A direct link rises in like Home's hero.
+const ENTRANCE = [
+  { opacity: 0, translate: "0 6px", filter: "blur(4px)" },
+  { opacity: 1, translate: "0 0", filter: "blur(0px)" },
+];
+const FADE_IN = [{ opacity: 0 }, { opacity: 1 }];
+const REVEAL_CONTROLS = [
+  ":scope > .path-helper",
+  ":scope > .search-more",
+  ":scope > .learning-path-controls",
+  ":scope > .share-hint",
+];
 
 const LEVEL_ORDER = ["Beginner", "Intermediate", "Advanced"];
 const MODERATION_DETAIL_HINTS = ["content policy", "moderation", "flagged"];
@@ -111,10 +145,11 @@ function extractConceptData(completion) {
   return { flat, details, graphData };
 }
 
+// Resolves true only after a successful write.
 async function copyToClipboard(lp, conceptDetails, showSnackbar) {
   if (!lp) {
     showSnackbar("Please wait until the learning path is generated!");
-    return;
+    return false;
   }
   const hasDetails = conceptDetails && Object.keys(conceptDetails).length > 0;
   let out = "";
@@ -133,10 +168,12 @@ async function copyToClipboard(lp, conceptDetails, showSnackbar) {
   try {
     await navigator.clipboard.writeText(out.trimEnd());
     showSnackbar("Copied to clipboard!");
+    return true;
   } catch {
     showSnackbar(
       "Could not copy. Check your browser clipboard permission and try again.",
     );
+    return false;
   }
 }
 
@@ -151,14 +188,45 @@ export default function LearningPath() {
   const [badRequest, setBadRequest] = useState(false);
   const [isModeratedTopic, setIsModeratedTopic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const revealPath = useCallback(() => setIsLoading(false), []);
+  const mainRef = useRef(null);
+  const viewRef = useRef(null);
+  // The loading bar's document rect at completion; the card opens out of it.
+  const barRef = useRef(null);
+  const revealPath = useCallback((bar) => {
+    barRef.current = bar ?? null;
+    setIsLoading(false);
+  }, []);
+  const [ghost, setGhost] = useState(null);
+  const clearGhost = useCallback(() => setGhost(null), []);
+  const [entrance] = useState(playsFirstLoadEntrance);
+  const entranceStart = useRef(null);
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef(null);
   const [shareUrl, setShareUrl] = useState("");
+  const shareRowRef = useRef(null);
+  const shareFromTop = useRef(null);
   const [searchParams] = useSearchParams();
   const topic = searchParams.get("term")?.trim() ?? "";
   const { enqueueSnackbar } = useSnackbar();
+  const revealed = Boolean(lp) && !isLoading && !badRequest;
+  const hasShareRow = Boolean(shareUrl);
+
+  async function copyPath() {
+    if (!(await copyToClipboard(lp, conceptDetails, enqueueSnackbar))) return;
+    // Repeated copies extend the Copied state instead of queueing another.
+    clearTimeout(copiedTimer.current);
+    setCopied(true);
+    copiedTimer.current = setTimeout(() => setCopied(false), 1500);
+  }
+
+  useEffect(() => () => clearTimeout(copiedTimer.current), []);
 
   async function shareLearningPath() {
     if (!lp || !graphData || isSharing) return;
+    const view = viewRef.current;
+    shareFromTop.current = view
+      ? view.getBoundingClientRect().top + window.scrollY
+      : null;
     setIsSharing(true);
     try {
       const response = await fetch(apiUrl("/v1/shares"), {
@@ -247,6 +315,155 @@ export default function LearningPath() {
     };
   }, [topic, retryCount]);
 
+  // A direct link rises in; client-side arrivals get the route crossfade.
+  useLayoutEffect(() => {
+    const title = mainRef.current?.querySelector(":scope > .title-container");
+    if (!entrance || !title || prefersReducedMotion()) return;
+    entranceStart.current = performance.now();
+    const animation = play(title, ENTRANCE, {
+      duration: 400,
+      easing: EASE_OUT,
+      fill: "backwards",
+    });
+    return () => animation?.cancel();
+  }, [entrance]);
+
+  // The bar follows the title 60 ms later; loading starts one render after mount.
+  useLayoutEffect(() => {
+    const start = entranceStart.current;
+    const container = mainRef.current?.querySelector(
+      ".loading-progress-container",
+    );
+    if (!isLoading || start === null || !container) return;
+    entranceStart.current = null;
+    const animation = play(container, ENTRANCE, {
+      duration: 400,
+      delay: Math.max(0, 60 - (performance.now() - start)),
+      easing: EASE_OUT,
+      fill: "backwards",
+    });
+    return () => animation?.cancel();
+  }, [isLoading]);
+
+  // Runs after the children's layout effects, so the graph is built and the pill placed.
+  useLayoutEffect(() => {
+    const main = mainRef.current;
+    const view = viewRef.current;
+    const bar = barRef.current;
+    barRef.current = null;
+    if (!revealed || !main || !view) return;
+    const controls = REVEAL_CONTROLS.map((selector) =>
+      main.querySelector(selector),
+    );
+    const animations = [];
+    if (prefersReducedMotion()) {
+      for (const element of [...controls, view]) {
+        animations.push(
+          play(element, FADE_IN, {
+            duration: 150,
+            easing: "ease",
+            fill: "backwards",
+          }),
+        );
+      }
+      return () => animations.forEach((animation) => animation?.cancel());
+    }
+    // Read every rect before anything starts moving.
+    const card = view.getBoundingClientRect();
+    const opens =
+      bar !== null && view.querySelector(".network-graph-container") !== null;
+    controls.forEach((element, index) => {
+      animations.push(
+        play(
+          element,
+          [
+            { opacity: 0, translate: "0 6px" },
+            { opacity: 1, translate: "0 0" },
+          ],
+          {
+            duration: 320,
+            delay: 80 + 40 * index,
+            easing: EASE_OUT,
+            fill: "backwards",
+          },
+        ),
+      );
+    });
+    if (opens) {
+      // The card's visible window starts as the bar and grows into the card.
+      const b = { ...bar, top: bar.top - window.scrollY };
+      const side = Math.max(0, (card.width - b.width) / 2);
+      const dx = b.left + b.width / 2 - (card.left + card.width / 2);
+      const dy = b.top - card.top;
+      const bottom = Math.max(0, card.height - b.height);
+      // Opening under the risen controls keeps them readable on phones.
+      view.classList.add("is-opening");
+      const opening = play(
+        view,
+        [
+          {
+            translate: `${dx}px ${dy}px`,
+            clipPath: `inset(0px ${side}px ${bottom}px ${side}px round ${b.height / 2}px)`,
+          },
+          {
+            translate: "0px 0px",
+            clipPath: "inset(0px 0px 0px 0px round 16px)",
+          },
+        ],
+        { duration: SPRING_MS, easing: SPRING_SOFT, fill: "backwards" },
+      );
+      onDone(opening, () => view.classList.remove("is-opening"));
+      animations.push(opening);
+      setGhost(b);
+    } else {
+      // A list is not a card, so it rises instead.
+      animations.push(
+        play(
+          view,
+          [
+            { opacity: 0, translate: "0 12px" },
+            { opacity: 1, translate: "0 0" },
+          ],
+          { duration: 450, delay: 120, easing: EASE_OUT, fill: "backwards" },
+        ),
+      );
+    }
+    return () => animations.forEach((animation) => animation?.cancel());
+  }, [revealed]);
+
+  // The first share row rises, and the view glides down to make room for it.
+  useLayoutEffect(() => {
+    const row = shareRowRef.current;
+    const view = viewRef.current;
+    if (!hasShareRow || !row) return;
+    const reduced = prefersReducedMotion();
+    const animations = [
+      play(
+        row,
+        reduced
+          ? FADE_IN
+          : [
+              { opacity: 0, translate: "0 -4px" },
+              { opacity: 1, translate: "0 0" },
+            ],
+        { duration: reduced ? 120 : 240, easing: reduced ? "ease" : EASE_OUT },
+      ),
+    ];
+    const fromTop = shareFromTop.current;
+    if (!reduced && view && fromTop !== null) {
+      const shift = fromTop - (view.getBoundingClientRect().top + window.scrollY);
+      if (Math.abs(shift) >= 1) {
+        animations.push(
+          play(view, [{ translate: `0 ${shift}px` }, { translate: "0 0" }], {
+            duration: SPRING_MS,
+            easing: SPRING_SOFT,
+          }),
+        );
+      }
+    }
+    return () => animations.forEach((animation) => animation?.cancel());
+  }, [hasShareRow]);
+
   if (!topic) {
     return (
       <main className="learning-path-page">
@@ -260,7 +477,7 @@ export default function LearningPath() {
   const hasGraph = graphData?.nodes?.length > 0;
 
   return (
-    <main className="learning-path-page">
+    <main className="learning-path-page" ref={mainRef}>
       <Seo
         title={`Learn ${topic}`}
         description={`AI-generated learning path for ${topic}: beginner to advanced concepts.`}
@@ -268,10 +485,14 @@ export default function LearningPath() {
         noindex
       />
       <div className="title-container">
-        <h1>{topic} learning path</h1>
+        {/* Two spans, so a route transition can fly the typed topic into place. */}
+        <h1>
+          <span className="title-topic">{topic}</span>{" "}
+          <span className="title-rest">learning path</span>
+        </h1>
       </div>
       {lp && !isLoading && (
-        <p>
+        <p className="path-helper">
           {viewMode === "graph"
             ? "Select a concept to see how it connects to the others."
             : "Drag and drop concepts to reorder them, then copy the path to your notes!"}
@@ -311,28 +532,7 @@ export default function LearningPath() {
       ) : lp && !isLoading ? (
         <>
           <div className="learning-path-controls">
-            {hasGraph && (
-              <div
-                className="view-toggle"
-                role="group"
-                aria-label="Learning path view"
-              >
-                <button
-                  aria-pressed={viewMode === "graph"}
-                  className={viewMode === "graph" ? "active" : ""}
-                  onClick={() => setViewMode("graph")}
-                >
-                  Graph
-                </button>
-                <button
-                  aria-pressed={viewMode === "list"}
-                  className={viewMode === "list" ? "active" : ""}
-                  onClick={() => setViewMode("list")}
-                >
-                  List
-                </button>
-              </div>
-            )}
+            {hasGraph && <ViewToggle view={viewMode} onChange={setViewMode} />}
             <div
               className="path-actions"
               role="group"
@@ -366,15 +566,9 @@ export default function LearningPath() {
                 className="copy-action"
                 aria-label="Copy path"
                 // One inline span keeps the space that a flex button drops.
-                label={
-                  <span>
-                    Copy<span className="action-noun"> path</span>
-                  </span>
-                }
+                label={<CopyLabel copied={copied} />}
                 isSecondary
-                onClick={() =>
-                  copyToClipboard(lp, conceptDetails, enqueueSnackbar)
-                }
+                onClick={copyPath}
               />
             </div>
           </div>
@@ -382,27 +576,35 @@ export default function LearningPath() {
             Anyone with the link can view a copy of this path.
           </p>
           {shareUrl && (
-            <p className="share-result">
+            <p className="share-result" ref={shareRowRef}>
               <a href={shareUrl} target="_blank" rel="noopener noreferrer">
                 Open share link <span aria-hidden="true">↗</span>
               </a>
               <span className="share-url">{shareUrl}</span>
             </p>
           )}
-          {viewMode === "graph" && hasGraph ? (
-            <NetworkGraph
-              key={topic}
-              nodes={graphData.nodes}
-              edges={graphData.edges}
-            />
-          ) : (
-            <LPItems
-              key={topic}
-              lp={lp}
-              setLp={setLp}
-              conceptDetails={conceptDetails}
-            />
-          )}
+          <ViewSwap
+            ref={viewRef}
+            view={viewMode === "graph" && hasGraph ? "graph" : "list"}
+          >
+            {(view, { initial }) =>
+              view === "graph" ? (
+                <NetworkGraph
+                  key={topic}
+                  nodes={graphData.nodes}
+                  edges={graphData.edges}
+                  reveal={initial}
+                />
+              ) : (
+                <LPItems
+                  key={topic}
+                  lp={lp}
+                  setLp={setLp}
+                  conceptDetails={conceptDetails}
+                />
+              )
+            }
+          </ViewSwap>
         </>
       ) : (
         <div
@@ -426,7 +628,103 @@ export default function LearningPath() {
         </div>
       )}
       <div style={{ height: "30px" }} />
+      {ghost && <BarGhost bar={ghost} onGone={clearGhost} />}
     </main>
+  );
+}
+
+// The full loading bar, painted where it was and dissolving over the opening card.
+function BarGhost({ bar, onGone }) {
+  const ref = useRef(null);
+  useLayoutEffect(() => {
+    const animation = play(ref.current, [{ opacity: 1 }, { opacity: 0 }], {
+      duration: 200,
+      easing: "ease",
+      fill: "forwards",
+    });
+    onDone(animation, onGone);
+    return () => animation?.cancel();
+  }, [onGone]);
+  return (
+    <div
+      ref={ref}
+      className="bar-ghost"
+      aria-hidden="true"
+      style={{
+        left: bar.left,
+        top: bar.top,
+        width: bar.width,
+        height: bar.height,
+      }}
+    />
+  );
+}
+
+// "Copy path" rolls to a drawn check and "Copied"; the button never changes width.
+function CopyLabel({ copied }) {
+  const labelRef = useRef(null);
+  const mounted = useRef(false);
+
+  useLayoutEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    const label = labelRef.current;
+    const text = label.querySelector(".copy-label-text");
+    const done = label.querySelector(".copy-label-done");
+    const outEl = copied ? text : done;
+    const inEl = copied ? done : text;
+    // Read before cancelling, so a swap mid-roll continues from where it is.
+    const outFrom = readOpacity(outEl);
+    const inFrom = readOpacity(inEl);
+    cancelAnimationsWithin(label);
+    outEl.style.opacity = "0";
+    inEl.style.opacity = "1";
+    if (prefersReducedMotion()) return;
+    play(
+      outEl,
+      [
+        { opacity: outFrom, translate: "0 0", filter: "blur(0px)" },
+        { opacity: 0, translate: "0 -6px", filter: "blur(2px)" },
+      ],
+      { duration: 160, easing: EASE_OUT },
+    );
+    play(
+      inEl,
+      [
+        { opacity: inFrom, translate: "0 6px", filter: "blur(2px)" },
+        { opacity: 1, translate: "0 0", filter: "blur(0px)" },
+      ],
+      { duration: 240, delay: 40, easing: EASE_OUT, fill: "backwards" },
+    );
+    if (copied) {
+      play(
+        label.querySelector(".copy-check path"),
+        [{ strokeDashoffset: 14 }, { strokeDashoffset: 0 }],
+        { duration: 300, delay: 100, easing: EASE_OUT, fill: "backwards" },
+      );
+    }
+  }, [copied]);
+
+  useEffect(() => {
+    const label = labelRef.current;
+    return () => cancelAnimationsWithin(label);
+  }, []);
+
+  // The text span keeps the space that a flex container drops.
+  return (
+    <span className="copy-label" ref={labelRef}>
+      <span className="copy-label-text">
+        Copy<span className="action-noun"> path</span>
+      </span>
+      <span className="copy-label-done" aria-hidden="true">
+        <svg className="copy-check" viewBox="0 0 16 16">
+          <path d="M3.5 8.5l3 3 6-6.5" />
+        </svg>
+        <span className="copy-done-text">Copied</span>
+      </span>
+    </span>
   );
 }
 
@@ -434,12 +732,14 @@ function SearchMore() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
-  function goSearch() {
+  function goSearch(form) {
     const trimmedTerm = searchTerm.trim();
     if (!trimmedTerm) {
       return;
     }
 
+    // The typed topic flies into the next page's heading.
+    rememberTopicMorph(trimmedTerm, form);
     const publicTopic = findPublicTopicByAlias(trimmedTerm);
     if (publicTopic) {
       navigate(`/learn/${publicTopic.slug}`);
@@ -457,7 +757,7 @@ function SearchMore() {
       className="search-more topic-search"
       onSubmit={(event) => {
         event.preventDefault();
-        goSearch();
+        goSearch(event.currentTarget);
       }}
     >
       <SearchbarHome onChange={setSearchTerm} />
@@ -679,6 +979,47 @@ function Item({ id, style, details, handleProps, hideDetails = false }) {
   const [expanded, setExpanded] = useState(false);
   const detailId = useId();
   const showDetails = !hideDetails && (hovered || expanded);
+  // The tooltip stays mounted through its exit; reopening reverses the same element.
+  const [tooltipShown, setTooltipShown] = useState(false);
+  if (showDetails && !tooltipShown) setTooltipShown(true);
+  const tooltipRef = useRef(null);
+  const detailsOpen = useRef(showDetails);
+
+  useLayoutEffect(() => {
+    detailsOpen.current = showDetails;
+    const tooltip = tooltipRef.current;
+    if (!tooltip) return;
+    const reduced = prefersReducedMotion();
+    let from = showDetails
+      ? { opacity: 0, scale: "0.96" }
+      : { opacity: 1, scale: "1" };
+    if (tooltip.getAnimations().length > 0) {
+      const { scale } = getComputedStyle(tooltip);
+      from = {
+        opacity: readOpacity(tooltip),
+        scale: scale && scale !== "none" ? scale : "1",
+      };
+    }
+    // A finished exit still holds opacity 0 with its forwards fill, untracked.
+    for (const animation of tooltip.getAnimations()) animation.cancel();
+    const to = showDetails
+      ? { opacity: 1, scale: "1" }
+      : { opacity: 0, scale: "0.98" };
+    const keyframes = reduced
+      ? [{ opacity: from.opacity }, { opacity: to.opacity }]
+      : [from, to];
+    const animation = play(tooltip, keyframes, {
+      duration: showDetails && !reduced ? 150 : 100,
+      easing: EASE_OUT,
+      fill: showDetails ? "none" : "forwards",
+    });
+    if (!showDetails) {
+      onDone(animation, () => {
+        if (!detailsOpen.current) setTooltipShown(false);
+      });
+    }
+  }, [showDetails]);
+
   return (
     <div style={style} className="concept-item">
       {handleProps ? (
@@ -715,12 +1056,15 @@ function Item({ id, style, details, handleProps, hideDetails = false }) {
           >
             {details.summary}
           </button>
-          {showDetails && (
+          {tooltipShown && (
             <div
-              className="concept-tooltip"
+              ref={tooltipRef}
+              className={`concept-tooltip${showDetails ? "" : " is-closing"}`}
               id={detailId}
               role="region"
               aria-label={id + " details"}
+              aria-hidden={showDetails ? undefined : "true"}
+              inert={!showDetails}
             >
               <h4>{id}</h4>
               <div className="tooltip-section">

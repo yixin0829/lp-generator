@@ -15,6 +15,21 @@
   button { cursor: pointer; font: inherit; border-radius: 8px; min-height: 44px; padding: 9px 14px; }
   button:focus-visible, input:focus-visible { outline: 3px solid var(--text-link); outline-offset: 3px; }
 }
+// The dialog scales up from 0.96 as it fades in; the exit is faster and needs overlay to stay in the top layer.
+.onboarding-dialog { transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out); }
+.onboarding-dialog::backdrop { transition: opacity 200ms ease; }
+@starting-style { .onboarding-dialog[open] { opacity: 0; transform: scale(0.96); } .onboarding-dialog[open]::backdrop { opacity: 0; } }
+@supports (overlay: auto) {
+  .onboarding-dialog { transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out), overlay 200ms allow-discrete, display 200ms allow-discrete; }
+  .onboarding-dialog::backdrop { transition: opacity 200ms ease, overlay 200ms allow-discrete, display 200ms allow-discrete; }
+  .onboarding-dialog:not([open]) { opacity: 0; transform: scale(0.96); transition-duration: 150ms; pointer-events: none; }
+  .onboarding-dialog:not([open])::backdrop { opacity: 0; transition-duration: 150ms; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-dialog, .onboarding-dialog::backdrop { transition-duration: 120ms !important; }
+  .onboarding-dialog, .onboarding-dialog:not([open]) { transform: none !important; }
+  @starting-style { .onboarding-dialog[open] { transform: none !important; } }
+}
 .onboarding-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text-secondary); }
 .onboarding-close { background: transparent; color: var(--text-primary); border: 0; font-size: 24px !important; }
 .onboarding-progress { color: var(--text-link); margin: 12px 0 0; font-weight: 600; }

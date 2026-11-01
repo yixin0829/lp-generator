@@ -15,7 +15,6 @@
   border-radius: 16px;
   background: var(--graph-bg);
   overflow: hidden;
-  animation: none;
 
   .graph-details-link {
     display: none;
@@ -86,6 +85,17 @@
     min-height: 40px;
     background: var(--surface-card);
     padding: 6px 10px;
+    // Press in fast, release on the spring.
+    transition:
+      transform 600ms var(--spring),
+      background-color 150ms ease;
+  }
+  .graph-tools button:active,
+  .graph-detail-heading button:active {
+    transform: scale(0.95);
+    transition:
+      transform 100ms var(--ease-out),
+      background-color 150ms ease;
   }
   .graph-tools button:active {
     background: var(--bg-secondary);
@@ -150,6 +160,33 @@
   .network-graph-svg,
   .network-graph-svg * {
     transition: none !important;
+  }
+  // Paint properties of nodes and links fade again; the scene transform never
+  // transitions, so wheel, drag and pinch stay 1:1. The zoom glide is WAAPI.
+  .network-graph-svg .graph-scene {
+    transform-origin: 0 0;
+  }
+  .network-graph-svg .graph-node {
+    transition:
+      translate 150ms var(--ease-out),
+      opacity 200ms ease !important;
+  }
+  .network-graph-svg .graph-node-pill {
+    transition:
+      fill 150ms ease,
+      stroke 150ms ease,
+      filter 150ms ease !important;
+  }
+  .network-graph-svg .graph-node-ring {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: stroke 120ms ease !important;
+  }
+  // Never stroke or stroke widths: the incoming and outgoing colours snap.
+  .network-graph-svg .graph-links path {
+    transition:
+      opacity 200ms ease,
+      stroke-opacity 200ms ease !important;
   }
   .graph-viewport.is-draggable .network-graph-svg {
     touch-action: none;
@@ -217,6 +254,26 @@
     }
     .network-graph-svg {
       cursor: grab;
+    }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    // translate composes with the node's transform attribute.
+    .graph-node:hover {
+      translate: 0 -1px;
+    }
+    .graph-node:hover .graph-node-pill {
+      filter: drop-shadow(0 2px 3px var(--graph-node-hover-shadow));
+    }
+  }
+  // The rules above outrank the global reduced-motion rule.
+  @media (prefers-reduced-motion: reduce) {
+    .network-graph-svg .graph-node,
+    .network-graph-svg .graph-links path,
+    .network-graph-svg .graph-node-pill {
+      transition-duration: 120ms !important;
+    }
+    .graph-node:hover {
+      translate: none;
     }
   }
   .graph-node.is-selected .graph-node-ring {

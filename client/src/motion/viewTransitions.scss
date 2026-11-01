@@ -1,0 +1,38 @@
+// Every view-transition-name and pseudo rule is scoped to the html class of the
+// running transition (vt-<kind>), so nothing is cut out of other transitions.
+
+// Route changes: the nav and toasts hold still while the page crossfades; the typed topic flies into the heading.
+html.vt-route .navbar-container { view-transition-name: la-nav; }
+html.vt-route .notistack-SnackbarContainer { view-transition-name: la-snacks; }
+html.vt-route::view-transition-old(root),
+html.vt-route::view-transition-new(root) { animation-duration: 200ms; animation-timing-function: ease; }
+html.vt-route::view-transition-group(la-topic) { animation-duration: 600ms; animation-timing-function: var(--spring-soft); }
+html.vt-route::view-transition-old(la-topic) { animation: topic-out 220ms var(--ease-out) both; }
+html.vt-route::view-transition-new(la-topic) { animation: topic-in 320ms var(--ease-out) 30ms both; }
+// "learning path" follows the topic in, so the heading assembles in reading order.
+html.vt-route::view-transition-new(la-title-rest) { animation: title-rest-in 300ms var(--ease-out) 300ms both; }
+@keyframes topic-out { to { opacity: 0; } }
+@keyframes topic-in { from { opacity: 0; } }
+@keyframes title-rest-in { from { opacity: 0; transform: translateX(-12px); } }
+html.vt-route-fade::view-transition-group(*),
+html.vt-route-fade::view-transition-old(*),
+html.vt-route-fade::view-transition-new(*) { animation-duration: 120ms; animation-timing-function: ease; }
+.topic-proxy { position: fixed; z-index: 2147482000; margin: 0; white-space: pre; pointer-events: none; }
+
+// Theme: the live new view shows its final colours at once, so the circle reveals them.
+html.vt-theme, html.vt-theme *, html.vt-theme *::before, html.vt-theme *::after,
+html.vt-theme-fade, html.vt-theme-fade *, html.vt-theme-fade *::before, html.vt-theme-fade *::after { transition: none !important; }
+// The graph's re-enabled paint transitions outrank the rule above.
+html.vt-theme .network-graph-container .network-graph-svg *,
+html.vt-theme-fade .network-graph-container .network-graph-svg * { transition: none !important; }
+// The default plus-lighter crossfade would brighten the circle's edge.
+html.vt-theme::view-transition-old(root),
+html.vt-theme::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+html.vt-theme-fade::view-transition-group(root),
+html.vt-theme-fade::view-transition-old(root),
+html.vt-theme-fade::view-transition-new(root) { animation-duration: 150ms; animation-timing-function: ease; }
+// Without View Transitions the colours fade instead.
+html.theme-fading *, html.theme-fading *::before, html.theme-fading *::after {
+  transition: background-color 250ms ease, color 250ms ease, border-color 250ms ease, fill 250ms ease, stroke 250ms ease, box-shadow 250ms ease !important;
+}
+html.theme-fading .network-graph-container .network-graph-svg * { transition: fill 250ms ease, stroke 250ms ease !important; }

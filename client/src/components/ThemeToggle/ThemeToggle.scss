@@ -11,7 +11,8 @@
   cursor: pointer;
   margin: 10px 10px 10px 2px;
   padding: 0;
-  transition: transform 300ms, background-color 300ms;
+  // Hover and release ride the spring; the press itself is quick.
+  transition: transform 600ms var(--spring), background-color 200ms ease;
   color: var(--text-primary);
 
   &:hover {
@@ -21,11 +22,11 @@
 
   &:active {
     transform: scale(0.95);
+    transition: transform 100ms var(--ease-out), background-color 200ms ease;
   }
 }
 
 .theme-toggle-icon {
   width: 20px;
   height: 20px;
-  transition: transform 400ms ease;
 }

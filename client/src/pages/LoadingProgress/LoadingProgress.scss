@@ -15,6 +15,8 @@
   }
 
   .preparing-progress-fill {
+    position: relative;
+    overflow: hidden;
     width: 40%;
     height: 100%;
     border-radius: inherit;
@@ -22,6 +24,24 @@
     transform-origin: left center;
     // Generation provides no percentage, so this indicates activity only.
     animation: preparing-progress-travel 1600ms ease-in-out infinite alternate !important;
+
+    // The sheen rides the fill, so it shows activity, never progress.
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 60%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        var(--progress-sheen),
+        transparent
+      );
+      transform: translateX(-100%);
+      animation: progress-sheen 1800ms var(--ease-in-out) infinite;
+    }
   }
 
   .is-estimated .preparing-progress-fill {
@@ -38,6 +58,7 @@
   .preparing-estimate {
     margin-top: -12px;
     font-size: 13px;
+    animation: estimate-in 240ms var(--ease-out) backwards;
   }
 
   p {
@@ -66,9 +87,39 @@
   }
 }
 
+@keyframes progress-sheen {
+  0% {
+    transform: translateX(-100%);
+  }
+  65%,
+  100% {
+    transform: translateX(170%);
+  }
+}
+
+@keyframes estimate-in {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+
+@keyframes estimate-fade {
+  from {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .loading-progress-container .preparing-progress .preparing-progress-fill {
     animation: none !important;
     transition: none;
+  }
+  .loading-progress-container .preparing-progress-fill::after {
+    display: none;
+  }
+  // A class selector and !important outrank the global reduced-motion rule.
+  .loading-progress-container .preparing-estimate {
+    animation: estimate-fade 120ms ease backwards !important;
   }
 }

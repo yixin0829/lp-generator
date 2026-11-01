@@ -272,3 +272,25 @@ export function fitLayout(layout, width, height) {
     k,
   };
 }
+
+// Start times (ms) for the first reveal: lanes wipe in from the top, each
+// lane's nodes pop in row then x order, and each link draws after its source.
+export function revealSchedule(layout) {
+  const lanes = layout.lanes.map((lane, index) => 170 + 70 * index);
+  const laneStart = new Map(
+    layout.lanes.map((lane, index) => [lane.level, lanes[index]]),
+  );
+  const nodes = new Map();
+  for (const lane of layout.lanes) {
+    layout.nodes
+      .filter((node) => node.level === lane.level)
+      .sort((a, b) => a.row - b.row || a.x - b.x)
+      .forEach((node, index) =>
+        nodes.set(node.id, laneStart.get(lane.level) + 90 + 20 * index),
+      );
+  }
+  const edges = layout.edges.map(
+    (edge) => (nodes.get(edge.source.id) ?? 170) + 170,
+  );
+  return { lanes, nodes, edges };
+}

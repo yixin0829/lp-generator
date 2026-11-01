@@ -1,0 +1,57 @@
+.view-toggle.has-pill {
+  position: relative;
+
+  > button {
+    position: relative;
+    z-index: 1;
+  }
+  // The pill is the active surface; page styles must not paint a second one.
+  > button.active,
+  > button[aria-pressed="true"] {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .view-toggle-pill {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  // Each page sets --view-toggle-pill-filter to match its active-button shadow.
+  // A box-shadow would be cut by the clip, so the shadow is a filter on an unclipped wrapper.
+  .view-toggle-pill-shadow {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    filter: var(--view-toggle-pill-filter, none);
+  }
+  .view-toggle-pill-surface,
+  .view-toggle-pill-labels {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    transition: clip-path 600ms var(--spring);
+  }
+  .view-toggle-pill-surface {
+    background: var(--view-toggle-active-bg);
+  }
+  // Same layout as the real buttons, so the copies sit exactly on them.
+  .view-toggle-pill-labels {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+  }
+  .view-toggle-pill.is-instant .view-toggle-pill-surface,
+  .view-toggle-pill.is-instant .view-toggle-pill-labels {
+    transition: none;
+  }
+  .view-toggle-pill-labels > button {
+    flex: none;
+    background: transparent !important;
+    color: var(--view-toggle-active-text) !important;
+    box-shadow: none !important;
+    transition: none !important;
+  }
+}
