@@ -80,9 +80,8 @@ test.describe("direct link entrance", () => {
       });
     }
     expect(title.options.delay ?? 0).toBe(0);
-    // Loading starts a render after mount; the delay keeps the 60 ms stagger.
-    expect(bar.options.delay).toBeGreaterThan(0);
-    expect(bar.options.delay).toBeLessThanOrEqual(60);
+    // The bar is on the first frame, so the stagger is the whole 60 ms.
+    expect(bar.options.delay).toBe(60);
     release();
     await expect(page.locator(".graph-node")).toHaveCount(3);
     await expectSettled(page);

@@ -23,6 +23,8 @@ from openai import (
 from openai.lib._parsing._responses import type_to_text_format_param
 from pydantic import BaseModel
 
+from app.schemas.learning_path import FailureCode
+
 SYSTEM_PROMPT = """Generate a learning path as a directed graph for a given topic.
 
 Return 10-15 concepts as nodes, each with:
@@ -243,11 +245,18 @@ def graph_to_levels(nodes: list[dict], edges: list[dict]) -> dict[str, list[dict
 
 
 class LearningPathError(Exception):
-    """Base exception for request-safe learning path failures."""
+    """Base exception for request-safe learning path failures.
 
-    def __init__(self, detail: str, status_code: int = 500) -> None:
+    `code` says why in a form the client can act on. Without one, the client
+    falls back to the status code.
+    """
+
+    def __init__(
+        self, detail: str, status_code: int = 500, code: FailureCode | None = None
+    ) -> None:
         super().__init__(detail)
         self.status_code = status_code
+        self.code = code
 
 
 class LearningPathService:
@@ -280,26 +289,40 @@ class LearningPathService:
             raise LearningPathError(
                 f"Input path parameter exceeds maximum length allowed ({self._max_topic_length} characters).",
                 status_code=400,
+                code=FailureCode.TOPIC_TOO_LONG,
             )
 
     def _map_upstream_error(self, error: Exception) -> LearningPathError:
         """Map OpenAI SDK errors to service-domain exceptions."""
         if isinstance(error, RateLimitError):
             return LearningPathError(
-                "Rate limit exceeded. Please try again later.", status_code=429
+                "Rate limit exceeded. Please try again later.",
+                status_code=429,
+                code=FailureCode.RATE_LIMITED,
             )
         if isinstance(error, (AuthenticationError, PermissionDeniedError)):
             return LearningPathError(
-                "Service configuration error. Please contact support.", status_code=502
+                "Service configuration error. Please contact support.",
+                status_code=502,
+                code=FailureCode.MISCONFIGURED,
             )
         if isinstance(error, BadRequestError):
-            return LearningPathError("Invalid request to AI service.", status_code=400)
+            return LearningPathError(
+                "Invalid request to AI service.",
+                status_code=400,
+                code=FailureCode.UPSTREAM_REJECTED,
+            )
         if isinstance(error, (APIConnectionError, APITimeoutError, InternalServerError)):
             return LearningPathError(
                 "AI service temporarily unavailable. Please try again later.",
                 status_code=503,
+                code=FailureCode.UPSTREAM_DOWN,
             )
-        return LearningPathError("Unexpected upstream AI service error.", status_code=500)
+        return LearningPathError(
+            "Unexpected upstream AI service error.",
+            status_code=500,
+            code=FailureCode.GENERATION_FAILED,
+        )
 
     async def check_moderation(self, topic: str | list[str]) -> None:
         """Check one or more text chunks. Raise LearningPathError(400) if any are flagged."""
@@ -327,6 +350,7 @@ class LearningPathService:
                     "https://beta.openai.com/docs/usage-policies/content-policy"
                 ),
                 status_code=400,
+                code=FailureCode.MODERATED,
             )
 
     def _build_usage_dict(self, usage: Any) -> dict[str, int]:
@@ -404,7 +428,11 @@ class LearningPathService:
         if parsed is None:
             msg = "Error while reading OpenAI's parsed output for learning path."
             logger.warning(f"Structured output parsing failed: {msg}")
-            raise LearningPathError(f"Structured output parsing failed: {msg}", status_code=500)
+            raise LearningPathError(
+                f"Structured output parsing failed: {msg}",
+                status_code=500,
+                code=FailureCode.GENERATION_FAILED,
+            )
 
         graph = parsed.model_dump()
         nodes = graph["nodes"]

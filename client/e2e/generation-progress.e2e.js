@@ -231,3 +231,138 @@ test("switching topics during completion resets the next loading bar", async ({
   finishNext();
   await expect(page.getByRole("alert")).toBeVisible();
 });
+
+function mockStats(page) {
+  return page.route("**/v1/stats", (route) =>
+    route.fulfill({ json: { learning_paths_generated: 42 } }),
+  );
+}
+
+const retryButton = (page) =>
+  page.getByRole("button", { name: "Try again", exact: true });
+
+test("a direct link's first frame is the loading bar", async ({ page }) => {
+  await mockStats(page);
+  // Generation never answers, so the page stays on its first state.
+  await page.route("**/v1/lp/**", () => new Promise(() => {}));
+  await page.addInitScript(() => {
+    window.pageFrames = [];
+    new MutationObserver(() => {
+      const main = document.querySelector("main.learning-path-page");
+      if (!main) return;
+      window.pageFrames.push(
+        main.querySelector('[role="progressbar"]') ? "bar" : "empty",
+      );
+    }).observe(document, { childList: true, subtree: true });
+  });
+  await page.goto("/learningpath?term=First%20frame");
+  await expect(page.getByRole("progressbar")).toBeVisible();
+  const frames = await page.evaluate(() => window.pageFrames);
+  expect(frames.length).toBeGreaterThan(0);
+  expect(frames).not.toContain("empty");
+});
+
+for (const failure of [
+  {
+    name: "a moderated topic is known by its code, not its wording",
+    status: 400,
+    json: { detail: "This topic breaks our usage rules.", code: "moderated" },
+    text: "flagged by content moderation",
+    retry: false,
+  },
+  {
+    name: "a request the AI service refuses is not blamed on the topic's length",
+    status: 400,
+    json: { detail: "Invalid request to AI service.", code: "upstream_rejected" },
+    text: "Something is wrong on our side",
+    retry: false,
+  },
+  {
+    name: "a misconfigured server offers no retry",
+    status: 502,
+    json: {
+      detail: "Service configuration error. Please contact support.",
+      code: "misconfigured",
+    },
+    text: "trying again won't help right now",
+    retry: false,
+  },
+  {
+    name: "a proxy timeout says so and can retry",
+    status: 504,
+    body: "An error occurred with your deployment",
+    text: "The request timed out. Please try again.",
+    retry: true,
+  },
+  {
+    name: "an unknown code falls back to the status",
+    status: 503,
+    json: { detail: "Unavailable", code: "not_known_to_this_client" },
+    text: "Try again with the same topic, or enter something else.",
+    retry: true,
+  },
+]) {
+  test(failure.name, async ({ page }) => {
+    await mockStats(page);
+    await page.route("**/v1/lp/**", (route) =>
+      route.fulfill(
+        failure.json
+          ? { status: failure.status, json: failure.json }
+          : {
+              status: failure.status,
+              contentType: "text/plain",
+              body: failure.body,
+            },
+      ),
+    );
+    await page.goto("/learningpath?term=Failure%20fixture");
+    await expect(page.getByRole("alert")).toContainText(failure.text);
+    await expect(retryButton(page)).toHaveCount(failure.retry ? 1 : 0);
+    await expect(page.getByRole("progressbar")).toHaveCount(0);
+  });
+}
+
+test("a lost connection says so and can retry", async ({ page }) => {
+  await mockStats(page);
+  await page.route("**/v1/lp/**", (route) => route.abort());
+  await page.goto("/learningpath?term=Offline%20fixture");
+  await expect(page.getByRole("alert")).toContainText(
+    "Couldn't reach the server. Check your connection and try again.",
+  );
+  await expect(retryButton(page)).toBeEnabled();
+});
+
+test("a rate-limited request waits out the window before it can retry", async ({
+  page,
+}) => {
+  await mockStats(page);
+  let attempts = 0;
+  await page.route("**/v1/lp/**", (route) => {
+    attempts += 1;
+    return attempts === 1
+      ? route.fulfill({
+          status: 429,
+          json: { error: "Rate limit exceeded: 15 per 1 minute" },
+        })
+      : route.fulfill({
+          json: { completion: { Beginner: [{ name: "Retry concept" }] } },
+        });
+  });
+  await page.clock.install();
+  await page.goto("/learningpath?term=Busy%20fixture");
+  await expect(page.getByRole("alert")).toContainText(
+    "Wait a minute, then try again.",
+  );
+  const retry = retryButton(page);
+  await expect(retry).toBeDisabled();
+  await expect(retry).toHaveText(/^Try again in \d+ s$/);
+  await page.clock.fastForward(30_000);
+  await expect(retry).toBeDisabled();
+  expect(attempts).toBe(1);
+  await page.clock.fastForward(31_000);
+  await expect(retry).toBeEnabled();
+  await expect(retry).toHaveText("Try again");
+  await retry.click();
+  await expect(page.getByRole("button", { name: "Copy path" })).toBeVisible();
+  expect(attempts).toBe(2);
+});

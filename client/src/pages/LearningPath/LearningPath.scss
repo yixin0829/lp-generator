@@ -366,6 +366,10 @@
     min-width: 0;
     user-select: all;
   }
+  .share-stale {
+    color: var(--text-tertiary);
+    min-width: 0;
+  }
 
   // While the card opens out of the loading bar, both paint under the risen controls.
   .view-swap.is-opening {

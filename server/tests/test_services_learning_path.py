@@ -2,6 +2,8 @@
 
 import re
 
+import httpx
+import openai
 import pytest
 from openai import AsyncOpenAI
 from pydantic import ValidationError
@@ -445,3 +447,62 @@ class TestParseGraphOutput:
         )
         output = [mocker.Mock(type="reasoning"), message]
         assert parse_graph_output(mocker.Mock(output=output)) == graph
+
+
+class TestFailureCodes:
+    """Each request-safe failure says why, for the client's error screen."""
+
+    def test_too_long_topic(self, service: LearningPathService):
+        with pytest.raises(LearningPathError) as exc_info:
+            service.validate_topic_length("a" * 121)
+        assert exc_info.value.code == "topic_too_long"
+
+    async def test_flagged_topic(self, service: LearningPathService, mock_client, mocker):
+        mock_client.moderations.create = mocker.AsyncMock(
+            return_value=mocker.Mock(results=[mocker.Mock(flagged=True)])
+        )
+        with pytest.raises(LearningPathError) as exc_info:
+            await service.check_moderation("badword")
+        assert exc_info.value.code == "moderated"
+
+    @pytest.mark.parametrize(
+        ("error_type", "status_code", "code"),
+        [
+            (openai.RateLimitError, 429, "rate_limited"),
+            (openai.AuthenticationError, 502, "misconfigured"),
+            (openai.PermissionDeniedError, 502, "misconfigured"),
+            (openai.BadRequestError, 400, "upstream_rejected"),
+            (openai.InternalServerError, 503, "upstream_down"),
+        ],
+    )
+    def test_openai_status_errors(
+        self, service: LearningPathService, error_type, status_code, code
+    ):
+        request = httpx.Request("POST", "https://api.openai.com/v1/responses")
+        upstream = error_type(
+            "upstream said no", response=httpx.Response(418, request=request), body=None
+        )
+        error = service._map_upstream_error(upstream)
+        assert (error.status_code, error.code) == (status_code, code)
+
+    def test_openai_connection_errors(self, service: LearningPathService):
+        request = httpx.Request("POST", "https://api.openai.com/v1/responses")
+        for upstream in (
+            openai.APIConnectionError(request=request),
+            openai.APITimeoutError(request=request),
+        ):
+            error = service._map_upstream_error(upstream)
+            assert (error.status_code, error.code) == (503, "upstream_down")
+
+    def test_anything_else_is_generation_failed(self, service: LearningPathService):
+        error = service._map_upstream_error(ValueError("not from the SDK"))
+        assert (error.status_code, error.code) == (500, "generation_failed")
+
+    async def test_unreadable_output(self, service: LearningPathService, mock_client, mocker):
+        mock_client.moderations.create = mocker.AsyncMock(
+            return_value=mocker.Mock(results=[mocker.Mock(flagged=False)])
+        )
+        mock_client.responses.create = mocker.AsyncMock(return_value=mocker.Mock(output=[]))
+        with pytest.raises(LearningPathError) as exc_info:
+            await service.generate_learning_path("react")
+        assert exc_info.value.code == "generation_failed"

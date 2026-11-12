@@ -402,9 +402,42 @@ test.describe("theme", () => {
       }
     });
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-    expect(await page.evaluate(() => localStorage.getItem("theme"))).toBe(
-      "light",
-    );
+    expect(
+      await page.evaluate(() =>
+        localStorage.getItem("learnanything.theme.choice.v1"),
+      ),
+    ).toBe("light");
+    await expectSettled(page);
+  });
+
+  test("follows the system theme until the toggle picks one", async ({
+    page,
+  }) => {
+    const html = page.locator("html");
+    const savedThemes = () =>
+      page.evaluate(() =>
+        Object.keys(localStorage).filter((key) => key.includes("theme")),
+      );
+    await page.emulateMedia({ colorScheme: "dark" });
+    await open(page, "/");
+    await expect(html).toHaveAttribute("data-theme", "dark");
+    // Nothing was picked, so nothing is saved and the system still leads.
+    expect(await savedThemes()).toEqual([]);
+    await page.emulateMedia({ colorScheme: "light" });
+    await expect(html).toHaveAttribute("data-theme", "light");
+    expect(await savedThemes()).toEqual([]);
+
+    await page.locator(".theme-toggle").click();
+    await expect(html).toHaveAttribute("data-theme", "dark");
+    await waitForMotion(page);
+    expect(await savedThemes()).toEqual(["learnanything.theme.choice.v1"]);
+    // A pick outlives system changes and reloads.
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.emulateMedia({ colorScheme: "light" });
+    await expect(html).toHaveAttribute("data-theme", "dark");
+    await page.reload();
+    await expect(html).toHaveAttribute("data-theme", "dark");
+    await waitForMotion(page);
     await expectSettled(page);
   });
 

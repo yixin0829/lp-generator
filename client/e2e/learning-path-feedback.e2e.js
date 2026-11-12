@@ -299,3 +299,147 @@ for (const width of [320, 375, 390]) {
     ).toBeVisible();
   });
 }
+
+test("a click shuts a pinned concept card while the pointer stays on it", async ({
+  page,
+}) => {
+  await openGenerated(page);
+  await page.getByRole("button", { name: "List", exact: true }).click();
+  const summary = page.locator(".concept-summary").first();
+  const card = page.locator(".concept-tooltip");
+  await summary.hover();
+  await expect(card).toBeVisible();
+  // Pinned: it stays open when the pointer leaves.
+  await summary.click();
+  await page.mouse.move(5, 5);
+  await expect(card).toBeVisible();
+  await expect(summary).toHaveAttribute("aria-expanded", "true");
+  // Shut by a click, with the pointer still over the concept.
+  await summary.click();
+  await expect(summary).toHaveAttribute("aria-expanded", "false");
+  await expect(card).toHaveCount(0);
+  // It peeks again only after the pointer has left and come back.
+  const box = await summary.boundingBox();
+  await page.mouse.move(box.x + 6, box.y + 6);
+  await expect(card).toHaveCount(0);
+  await page.mouse.move(5, 5);
+  await summary.hover();
+  await expect(card).toBeVisible();
+});
+
+test("Escape shuts an open concept card", async ({ page }) => {
+  await openGenerated(page);
+  await page.getByRole("button", { name: "List", exact: true }).click();
+  const summary = page.locator(".concept-summary").first();
+  await summary.click();
+  await expect(page.locator(".concept-tooltip")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".concept-tooltip")).toHaveCount(0);
+  await expect(summary).toHaveAttribute("aria-expanded", "false");
+});
+
+test.describe("touch", () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+
+  test("a tap opens a concept card and the next tap shuts it", async ({
+    page,
+  }) => {
+    await openGenerated(page);
+    await page.getByRole("button", { name: "List", exact: true }).tap();
+    const summary = page.locator(".concept-summary").first();
+    const card = page.locator(".concept-tooltip");
+    await summary.tap();
+    await expect(card).toBeVisible();
+    await summary.tap();
+    await expect(card).toHaveCount(0);
+    await summary.tap();
+    await expect(card).toBeVisible();
+  });
+});
+
+async function countClipboardWrites(page) {
+  await page.addInitScript(() => {
+    window.clipboardWrites = [];
+    navigator.clipboard.writeText = (text) => {
+      window.clipboardWrites.push(text);
+      return Promise.resolve();
+    };
+  });
+}
+
+test("sharing an unchanged path again copies the link without a new request", async ({
+  page,
+}) => {
+  await countClipboardWrites(page);
+  await openGenerated(page);
+  let posts = 0;
+  await page.route("**/v1/shares", (route) => {
+    posts += 1;
+    return route.fulfill({ json: { share_id: "abcdefghijklmnopqrstuv" } });
+  });
+  const share = page.getByRole("button", { name: "Share path", exact: true });
+  await share.click();
+  await expect(page.locator(".share-url")).toContainText(
+    "/share/abcdefghijklmnopqrstuv",
+  );
+  await share.click();
+  // Switching the view is not a change to the path.
+  await page.getByRole("button", { name: "List", exact: true }).click();
+  await share.click();
+  await expect
+    .poll(() => page.evaluate(() => window.clipboardWrites.length))
+    .toBe(3);
+  expect(
+    new Set(await page.evaluate(() => window.clipboardWrites)).size,
+  ).toBe(1);
+  expect(posts).toBe(1);
+  await expect(page.locator(".share-url")).toBeVisible();
+});
+
+test("reordering marks the share link as the earlier order until it is shared again", async ({
+  page,
+}) => {
+  await countClipboardWrites(page);
+  await openGenerated(page);
+  const ids = ["aaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbb"];
+  const posts = [];
+  await page.route("**/v1/shares", (route) => {
+    posts.push(route.request().postDataJSON());
+    return route.fulfill({ json: { share_id: ids[posts.length - 1] } });
+  });
+  await page.getByRole("button", { name: "List", exact: true }).click();
+  const share = page.getByRole("button", { name: "Share path", exact: true });
+  const link = page.getByRole("link", { name: /Open share link/ });
+  await share.click();
+  await expect(page.locator(".share-url")).toContainText(ids[0]);
+
+  const handle = page.locator(".concept-drag-handle").first();
+  await handle.focus();
+  await page.keyboard.press("Space");
+  await expect(handle).toHaveAttribute("aria-pressed", "true");
+  // dnd-kit attaches its arrow-key listener in a setTimeout(0) after pickup.
+  await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 0)));
+  await page.keyboard.press("ArrowDown");
+  await expect(page.locator('[role="status"]')).toContainText("Functions");
+  await page.keyboard.press("Space");
+  await expect(page.locator(".concept-drag-handle").first()).toContainText(
+    "Functions",
+  );
+
+  await expect(page.locator(".share-result")).toContainText(
+    "Shows the earlier order. Share again for a new link.",
+  );
+  await expect(page.locator(".share-url")).toHaveCount(0);
+  await expect(link).toHaveAttribute("href", new RegExp(ids[0]));
+
+  await share.click();
+  await expect(page.locator(".share-url")).toContainText(ids[1]);
+  await expect(link).toHaveAttribute("href", new RegExp(ids[1]));
+  expect(posts).toHaveLength(2);
+  expect(posts[0].levels.Beginner[0]).toBe("Variables");
+  expect(posts[1].levels.Beginner[0]).toBe("Functions");
+});

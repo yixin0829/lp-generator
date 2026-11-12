@@ -2,8 +2,9 @@
 
 from time import perf_counter
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import JSONResponse
 from loguru import logger
 
 from app.core.config import get_config
@@ -14,7 +15,7 @@ from app.core.dependencies import (
     get_learning_path_service,
 )
 from app.core.security import limiter, require_api_key
-from app.schemas.learning_path import HTTPError, LearningPathResponse
+from app.schemas.learning_path import FailureCode, HTTPError, LearningPathResponse
 from app.services.cache_service import BaseCacheService, CacheServiceError
 from app.services.counter_service import BaseCounterService, CounterServiceError
 from app.services.generation_timing_service import GenerationTimingService
@@ -29,6 +30,14 @@ router = APIRouter(
     tags=["learning-paths"],
     dependencies=[Depends(require_api_key)],
 )
+
+
+def _failure(status_code: int, detail: str, code: FailureCode | None) -> JSONResponse:
+    """Error body: `detail` for people and logs, `code` for the client's error screen."""
+    content = {"detail": detail}
+    if code is not None:
+        content["code"] = code
+    return JSONResponse(status_code=status_code, content=content)
 
 
 def _safe_increment_counter(counter_service: BaseCounterService) -> None:
@@ -74,13 +83,14 @@ async def get_lp(
     counter_service: BaseCounterService = Depends(get_counter_service),
     cache_service: BaseCacheService = Depends(get_cache_service),
     timing_service: GenerationTimingService = Depends(get_generation_timing_service),
-) -> dict:
+) -> dict | JSONResponse:
     """Take any topic and call OpenAI to generate a learning path in JSON format."""
     started = perf_counter()
     if not any(ch.isalnum() for ch in service.clean_topic(topic)):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Topic must contain letters or numbers.",
+        return _failure(
+            status.HTTP_400_BAD_REQUEST,
+            "Topic must contain letters or numbers.",
+            FailureCode.TOPIC_INVALID,
         )
     cache_key = service.cache_key(topic)
 
@@ -107,13 +117,14 @@ async def get_lp(
             logger.error("Learning path request failed: {}", e)
         else:
             logger.warning("Learning path request rejected: {}", e)
-        raise HTTPException(status_code=e.status_code, detail=str(e)) from e
+        return _failure(e.status_code, str(e), e.code)
     except Exception as e:
         logger.exception("Unexpected error generating learning path: {}", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while generating the learning path.",
-        ) from e
+        return _failure(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "An unexpected error occurred while generating the learning path.",
+            FailureCode.GENERATION_FAILED,
+        )
 
     payload["cached"] = False
     duration_seconds = perf_counter() - started
