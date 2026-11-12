@@ -196,6 +196,9 @@ test.describe("motion", () => {
     await generate(page);
     await waitForMotion(page);
     const revealCount = (await logged(page, "graph-lane")).length;
+    // The last link ends about 50 ms before the 900 ms reveal window closes, and a
+    // width change inside the window continues the reveal. Resize once it has closed.
+    await page.waitForTimeout(200);
     await page.setViewportSize({ width: 1100, height: 900 });
     await page.getByRole("button", { name: "List", exact: true }).click();
     await page.getByRole("button", { name: "Graph", exact: true }).click();
