@@ -1,37 +1,69 @@
-import { createContext, useContext, useLayoutEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useLayoutEffect,
+  useState,
+  useSyncExternalStore,
+} from "react";
+
+import {
+  readThemePreference,
+  resolveTheme,
+  saveThemeChoice,
+  toggledTheme,
+} from "./themePreference";
 
 const ThemeContext = createContext();
 
-function getInitialTheme() {
+const DARK_QUERY = "(prefers-color-scheme: dark)";
+
+function systemTheme() {
+  return window.matchMedia(DARK_QUERY).matches ? "dark" : "light";
+}
+
+function subscribeSystemTheme(onChange) {
+  const query = window.matchMedia(DARK_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+// Reading the property itself throws when the browser blocks storage.
+function themeStorage() {
   try {
-    const stored = localStorage.getItem("theme");
-    if (stored === "dark" || stored === "light") return stored;
+    return window.localStorage;
   } catch {
-    // Restricted storage should not prevent the app or guide from opening.
+    return null;
   }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
 }
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(getInitialTheme);
+  const system = useSyncExternalStore(
+    subscribeSystemTheme,
+    systemTheme,
+    () => "light",
+  );
+  // "system" until the reader picks a theme with the toggle.
+  const [preference, setPreference] = useState(() =>
+    readThemePreference(themeStorage()),
+  );
+  const theme = resolveTheme(preference, system);
 
   // A layout effect, so a toggle inside the theme transition lands before its new snapshot.
   useLayoutEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
-    try {
-      localStorage.setItem("theme", theme);
-    } catch {
-      /* Keep the active theme for this visit. */
-    }
     document
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute("content", theme === "dark" ? "#111113" : "#fafafc");
   }, [theme]);
 
+  // Only a pick is saved; following the system leaves storage alone.
+  useLayoutEffect(() => {
+    if (preference !== "system") saveThemeChoice(themeStorage(), preference);
+  }, [preference]);
+
+  // Read from the latest state: a queued theme transition may run an older click's toggle.
   const toggleTheme = () =>
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    setPreference((current) => toggledTheme(current, systemTheme()));
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>

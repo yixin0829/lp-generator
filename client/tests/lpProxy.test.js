@@ -55,3 +55,56 @@ describe("learning path proxy topic", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 });
+
+describe("learning path proxy failures", () => {
+  beforeEach(() => {
+    vi.stubEnv("BACKEND_BASE_URL", "https://backend.example");
+    vi.stubEnv("BACKEND_API_KEY", "test-key");
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("says a malformed topic is the topic's fault", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const res = response();
+    await handler({ method: "GET", url: "/api/v1/lp/%E0%A4%A" }, res);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: "topic_invalid" }),
+    );
+  });
+
+  it("says a missing backend setting is on our side", async () => {
+    vi.stubEnv("BACKEND_API_KEY", "");
+    vi.stubGlobal("fetch", vi.fn());
+    const res = response();
+    await handler({ method: "GET", url: "/api/v1/lp/React" }, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: "misconfigured" }),
+    );
+  });
+
+  it("says an unreachable backend can be retried", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("down")));
+    const res = response();
+    await handler({ method: "GET", url: "/api/v1/lp/React" }, res);
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: "upstream_down" }),
+    );
+  });
+
+  it("passes the backend's status and body through untouched", async () => {
+    const body = JSON.stringify({ detail: "Flagged.", code: "moderated" });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(body, { status: 400 })),
+    );
+    const res = response();
+    await handler({ method: "GET", url: "/api/v1/lp/React" }, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith(body);
+  });
+});

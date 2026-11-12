@@ -404,3 +404,67 @@ class TestGetLpCacheMiss:
         data = resp.json()
         assert data["topic"] == "React"
         assert data["cached"] is False
+
+
+class TestGetLpFailureCode:
+    """Error bodies carry a `code` the client picks its error screen from."""
+
+    @pytest.mark.parametrize(
+        ("status_code", "code"),
+        [
+            (400, "moderated"),
+            (400, "topic_too_long"),
+            (400, "upstream_rejected"),
+            (429, "rate_limited"),
+            (502, "misconfigured"),
+            (503, "upstream_down"),
+            (500, "generation_failed"),
+        ],
+    )
+    def test_service_failure_keeps_detail_and_adds_code(
+        self, client: TestClient, mocker, status_code, code
+    ):
+        from app.schemas.learning_path import FailureCode
+        from app.services.learning_path_service import LearningPathError
+
+        mock_svc = _service_mock(mocker)
+        mock_svc.generate_learning_path = mocker.AsyncMock(
+            side_effect=LearningPathError(
+                "Reworded freely.", status_code=status_code, code=FailureCode(code)
+            )
+        )
+        app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
+
+        resp = client.get("/v1/lp/react")
+        assert resp.status_code == status_code
+        assert resp.json() == {"detail": "Reworded freely.", "code": code}
+
+    def test_topic_without_letters_or_numbers_is_topic_invalid(self, client: TestClient, mocker):
+        app.dependency_overrides[get_learning_path_service] = lambda: _service_mock(mocker)
+
+        resp = client.get("/v1/lp/!!!")
+        assert resp.status_code == 400
+        assert resp.json()["code"] == "topic_invalid"
+
+    def test_unexpected_error_is_generation_failed(self, client: TestClient, mocker):
+        mock_svc = _service_mock(mocker)
+        mock_svc.generate_learning_path = mocker.AsyncMock(side_effect=RuntimeError("boom"))
+        app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
+
+        resp = client.get("/v1/lp/react")
+        assert resp.status_code == 500
+        assert resp.json()["code"] == "generation_failed"
+        assert "boom" not in resp.json()["detail"]
+
+    def test_failure_without_a_code_omits_it(self, client: TestClient, mocker):
+        from app.services.learning_path_service import LearningPathError
+
+        mock_svc = _service_mock(mocker)
+        mock_svc.generate_learning_path = mocker.AsyncMock(
+            side_effect=LearningPathError("Unavailable", status_code=503)
+        )
+        app.dependency_overrides[get_learning_path_service] = lambda: mock_svc
+
+        resp = client.get("/v1/lp/react")
+        assert resp.status_code == 503
+        assert resp.json() == {"detail": "Unavailable"}

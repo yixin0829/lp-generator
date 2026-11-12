@@ -1,5 +1,7 @@
 export const maxDuration = 60;
 
+// The errors a page request can meet here carry a `code` like the backend's, so
+// the page shows the right screen (see src/pages/LearningPath/generationFailure.js).
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res
@@ -14,7 +16,9 @@ export default async function handler(req, res) {
   );
   const backendApiKey = process.env.BACKEND_API_KEY?.trim();
   if (!backendBaseUrl || !backendApiKey) {
-    return res.status(500).json({ detail: "Backend proxy is not configured." });
+    return res
+      .status(500)
+      .json({ detail: "Backend proxy is not configured.", code: "misconfigured" });
   }
 
   // Vercel also puts route parameters in the query string; they aren't topic text.
@@ -23,10 +27,14 @@ export default async function handler(req, res) {
     const pathname = new URL(req.url, "http://localhost").pathname;
     topic = decodeURIComponent(pathname.split("/").pop() ?? "").trim();
   } catch {
-    return res.status(400).json({ detail: "Invalid topic encoding." });
+    return res
+      .status(400)
+      .json({ detail: "Invalid topic encoding.", code: "topic_invalid" });
   }
   if (!topic) {
-    return res.status(400).json({ detail: "Missing topic." });
+    return res
+      .status(400)
+      .json({ detail: "Missing topic.", code: "topic_invalid" });
   }
 
   try {
@@ -46,6 +54,8 @@ export default async function handler(req, res) {
       .setHeader("content-type", contentType)
       .send(body);
   } catch {
-    return res.status(502).json({ detail: "Failed to reach backend service." });
+    return res
+      .status(502)
+      .json({ detail: "Failed to reach backend service.", code: "upstream_down" });
   }
 }

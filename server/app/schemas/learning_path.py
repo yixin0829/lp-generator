@@ -1,6 +1,27 @@
 """Learning path API schemas."""
 
+from enum import StrEnum
+
 from pydantic import BaseModel, ConfigDict
+
+
+class FailureCode(StrEnum):
+    """Why a learning path request failed.
+
+    Sent as `code` beside `detail`. The client picks its error screen from the
+    code, so `detail` can be reworded freely. Adding a code needs a matching
+    entry in the client's generationFailure.js; an unknown code falls back to
+    the HTTP status there.
+    """
+
+    MODERATED = "moderated"
+    TOPIC_TOO_LONG = "topic_too_long"
+    TOPIC_INVALID = "topic_invalid"
+    RATE_LIMITED = "rate_limited"
+    UPSTREAM_DOWN = "upstream_down"
+    UPSTREAM_REJECTED = "upstream_rejected"
+    MISCONFIGURED = "misconfigured"
+    GENERATION_FAILED = "generation_failed"
 
 
 class LearningPathResponse(BaseModel):
@@ -72,3 +93,4 @@ class HTTPError(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {"detail": "HTTPException raised."}})
 
     detail: str
+    code: FailureCode | None = None
