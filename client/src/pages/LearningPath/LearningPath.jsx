@@ -56,7 +56,7 @@ import {
   readOpacity,
 } from "../../motion/motion";
 import { rememberTopicMorph } from "../../motion/topicMorph";
-import { isDetailsOpen, nextDetails } from "./conceptDetails";
+import { isDetailsOpen, nextDetails } from "./detailsCard";
 import {
   failureCopy,
   failureReason,
@@ -963,12 +963,13 @@ function SortableItem({ id, details }) {
 }
 
 function Item({ id, style, details, handleProps, hideDetails = false }) {
-  // closed, peek, pinned or dismissed: see conceptDetails.js.
+  // closed, peek, pinned or dismissed: see detailsCard.js.
   const [mode, setMode] = useState("closed");
-  const send = (event) => setMode((current) => nextDetails(current, event));
+  const send = (transition) =>
+    setMode((current) => nextDetails(current, transition));
   // A finger never hovers: on touch the card opens and shuts by tapping.
-  const sendHover = (event, pointer) => {
-    if (pointer.pointerType !== "touch") send(event);
+  const sendHover = (transition, pointerEvent) => {
+    if (pointerEvent.pointerType !== "touch") send(transition);
   };
   const detailId = useId();
   const showDetails = !hideDetails && isDetailsOpen(mode);

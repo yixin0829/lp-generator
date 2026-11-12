@@ -1,7 +1,7 @@
 export const maxDuration = 60;
 
-// Errors raised here carry the same `code` the backend sends, so the page shows
-// the right screen (see src/pages/LearningPath/generationFailure.js).
+// The errors a page request can meet here carry a `code` like the backend's, so
+// the page shows the right screen (see src/pages/LearningPath/generationFailure.js).
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res

@@ -472,6 +472,10 @@ class TestFailureCodes:
             (openai.AuthenticationError, 502, "misconfigured"),
             (openai.PermissionDeniedError, 502, "misconfigured"),
             (openai.BadRequestError, 400, "upstream_rejected"),
+            # Keeps its earlier 500, but a retry would get the same answer.
+            (openai.NotFoundError, 500, "upstream_rejected"),
+            (openai.ConflictError, 500, "upstream_rejected"),
+            (openai.UnprocessableEntityError, 500, "upstream_rejected"),
             (openai.InternalServerError, 503, "upstream_down"),
         ],
     )

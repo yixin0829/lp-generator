@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { isDetailsOpen, nextDetails } from "./conceptDetails";
+import { isDetailsOpen, nextDetails } from "./detailsCard";
 
 const run = (events, from = "closed") => events.reduce(nextDetails, from);
 
-describe("concept details", () => {
+describe("details card", () => {
   it("peeks while hovered and shuts when the pointer leaves", () => {
     expect(run(["enter"])).toBe("peek");
     expect(run(["enter", "leave"])).toBe("closed");

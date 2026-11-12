@@ -13,9 +13,9 @@ const TRANSITIONS = {
   dismissed: { leave: "closed", enter: "peek", toggle: "pinned" },
 };
 
-// event is "enter", "leave", "toggle" or "escape".
-export function nextDetails(mode, event) {
-  return TRANSITIONS[mode]?.[event] ?? mode;
+// transition is "enter", "leave", "toggle" or "escape".
+export function nextDetails(mode, transition) {
+  return TRANSITIONS[mode]?.[transition] ?? mode;
 }
 
 export function isDetailsOpen(mode) {

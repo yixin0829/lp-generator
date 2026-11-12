@@ -62,7 +62,7 @@ FastAPI app with layered structure:
 ### Frontend (`client/src/`)
 React 19 + Vite SPA:
 - `config/api.js` — Centralized API base URL resolution (`VITE_API_BASE_URL`). In dev hits `localhost:8000` directly; in prod hits `/api` (Vercel proxy)
-- `pages/LearningPath/` — Main feature: renders generated learning path. Its lifecycle, share link and details card are reducers beside the page (`generationMachine.js`, `shareMachine.js`, `conceptDetails.js`); state changes go through them and their unit tests
+- `pages/LearningPath/` — Main feature: renders generated learning path. Its lifecycle, share link and details card are reducers beside the page (`generationMachine.js`, `shareMachine.js`, `detailsCard.js`); state changes go through them and their unit tests
 - `pages/HomePage/` — Search input for topics
 - `components/` — Shared UI: NavBar, Searchbar, Button
 - `client/api/` — Vercel serverless proxy routes (`v1/lp/[topic].js`, `v1/stats.js`, `v1/feedback.js`, `v1/shares/*`, `share/[shareId].js`) that forward requests to Cloud Run with `X-API-Key`, keeping secrets server-side
@@ -73,7 +73,7 @@ Browser → Vercel client → Vercel API proxy (adds `X-API-Key`) → Cloud Run 
 In local dev, the frontend calls the backend directly (no proxy needed).
 
 ### Failure codes
-`/v1/lp` errors carry a `code` beside `detail` (`FailureCode` in `schemas/learning_path.py`; the proxy adds its own in `client/api/v1/lp/[topic].js`). The page picks its error screen from the code in `pages/LearningPath/generationFailure.js`, so `detail` wording is free to change. A new code needs an entry on both sides; a code the client does not know falls back to the HTTP status. Deploy the backend before the frontend when codes change.
+Errors raised by the `/v1/lp` route and its service carry a `code` beside `detail` (`FailureCode` in `schemas/learning_path.py`; the proxy adds its own in `client/api/v1/lp/[topic].js`). The page picks its error screen from the code in `pages/LearningPath/generationFailure.js`, so `detail` wording is free to change. A new code needs an entry on both sides. A response without a code the client knows falls back to the HTTP status there: the rate limiter's 429, the API-key 401/403 and the platform's 504 have none. Deploy the backend before the frontend when codes change.
 
 ## Key Environment Variables
 

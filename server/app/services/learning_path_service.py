@@ -16,9 +16,12 @@ from openai import (
     AsyncOpenAI,
     AuthenticationError,
     BadRequestError,
+    ConflictError,
     InternalServerError,
+    NotFoundError,
     PermissionDeniedError,
     RateLimitError,
+    UnprocessableEntityError,
 )
 from openai.lib._parsing._responses import type_to_text_format_param
 from pydantic import BaseModel
@@ -317,6 +320,14 @@ class LearningPathService:
                 "AI service temporarily unavailable. Please try again later.",
                 status_code=503,
                 code=FailureCode.UPSTREAM_DOWN,
+            )
+        if isinstance(error, (NotFoundError, ConflictError, UnprocessableEntityError)):
+            # OpenAI answered, and would answer the same way again (an unknown
+            # model, for one), so the client must not offer a retry.
+            return LearningPathError(
+                "Unexpected upstream AI service error.",
+                status_code=500,
+                code=FailureCode.UPSTREAM_REJECTED,
             )
         return LearningPathError(
             "Unexpected upstream AI service error.",

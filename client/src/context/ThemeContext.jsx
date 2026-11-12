@@ -44,7 +44,7 @@ export function ThemeProvider({ children }) {
   );
   // "system" until the reader picks a theme with the toggle.
   const [preference, setPreference] = useState(() =>
-    readThemePreference(themeStorage(), systemTheme()),
+    readThemePreference(themeStorage()),
   );
   const theme = resolveTheme(preference, system);
 

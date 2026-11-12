@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  LEGACY_THEME_KEY,
   THEME_CHOICE_KEY,
   readThemePreference,
   resolveTheme,
@@ -25,15 +24,12 @@ const blockedStorage = {
   setItem() {
     throw new Error("blocked");
   },
-  removeItem() {
-    throw new Error("blocked");
-  },
 };
 
 describe("theme preference", () => {
   it("is system on a first visit and saves nothing", () => {
     const storage = memoryStorage();
-    expect(readThemePreference(storage, "dark")).toBe("system");
+    expect(readThemePreference(storage)).toBe("system");
     expect(storage.dump()).toEqual({});
   });
 
@@ -49,38 +45,27 @@ describe("theme preference", () => {
     expect(toggledTheme("dark", "light")).toBe("light");
   });
 
-  it("returns a saved pick whatever the system says", () => {
+  it("returns a saved pick", () => {
     const storage = memoryStorage();
     saveThemeChoice(storage, "dark");
-    expect(readThemePreference(storage, "light")).toBe("dark");
-    expect(readThemePreference(storage, "dark")).toBe("dark");
-  });
-
-  it("drops a legacy theme that matches the system", () => {
-    const storage = memoryStorage({ [LEGACY_THEME_KEY]: "dark" });
-    expect(readThemePreference(storage, "dark")).toBe("system");
-    expect(storage.dump()).toEqual({});
-  });
-
-  it("keeps a legacy theme that differs from the system as a pick", () => {
-    const storage = memoryStorage({ [LEGACY_THEME_KEY]: "dark" });
-    expect(readThemePreference(storage, "light")).toBe("dark");
     expect(storage.dump()).toEqual({ [THEME_CHOICE_KEY]: "dark" });
-    // The next visit reads the pick, even after the system catches up.
-    expect(readThemePreference(storage, "dark")).toBe("dark");
+    expect(readThemePreference(storage)).toBe("dark");
   });
 
-  it("ignores values that are not themes", () => {
-    const storage = memoryStorage({
-      [THEME_CHOICE_KEY]: "blue",
-      [LEGACY_THEME_KEY]: "sepia",
-    });
-    expect(readThemePreference(storage, "light")).toBe("system");
+  it("neither reads nor touches a theme saved by an earlier version", () => {
+    const storage = memoryStorage({ theme: "dark" });
+    expect(readThemePreference(storage)).toBe("system");
+    expect(storage.dump()).toEqual({ theme: "dark" });
+  });
+
+  it("ignores a saved value that is not a theme", () => {
+    const storage = memoryStorage({ [THEME_CHOICE_KEY]: "blue" });
+    expect(readThemePreference(storage)).toBe("system");
   });
 
   it("is system when storage is blocked or missing", () => {
-    expect(readThemePreference(blockedStorage, "dark")).toBe("system");
-    expect(readThemePreference(null, "dark")).toBe("system");
+    expect(readThemePreference(blockedStorage)).toBe("system");
+    expect(readThemePreference(null)).toBe("system");
     expect(() => saveThemeChoice(blockedStorage, "dark")).not.toThrow();
     expect(() => saveThemeChoice(null, "dark")).not.toThrow();
   });
